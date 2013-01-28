@@ -1,0 +1,31 @@
+Meeting on 1/25/13
+Attendees: Sophia, Jarib
+Questions:
+    -how to organize work for PA1
+Decisions:
+    -sophia+jarib both read ch. 3 UDP
+    -sophia reads ch. 4 UDP
+    -jarib reads ch. 5 UDP
+    -meet on Sunday or Monday (after Prof. Appavoo creates the git repo) to set up clone on curzon + work on code
+    -set up weekly meeting time
+Todo: by Sunday 1/27
+    Jarib: ch. 3,5
+    Sophia: ch. 3,4
+    Both: read CTF wiki page, look at skeleton code
+Comments/Notes:
+
+Mon Jan 28 18:16:00 EST 2013
+Attendees: Sophia, Jarib, Zheng
+Questions:
+    -only one person sets up on curzon or all three?
+    -clone on own home dir on csa2?
+    -how to divide the client, server, net files.
+Decisions:
+    -sophia: client.c
+    -jarib: server.c
+    -zheng: net.c
+    -meet on wednesday to put it together and make sure it works
+    -in mean time clone on our own computers and make commits
+Todo: by Wednesday 1/30
+    -complete code as above.
+Comments/Notes:
