@@ -110,7 +110,7 @@ doConnect(void)
   VPRINTF("BEGIN: %s\n", globals.in.data);
 
   if (globals.connected==1) {
-      fprintf(stderr, "Already connected to server.", args);
+      fprintf(stderr, "Already connected to server.");
   } else {
     // be sure you understand what the next two lines are doing
     for (i=0; i<len; i++) if (globals.in.data[i]==':') globals.in.data[i]=' ';
@@ -118,11 +118,11 @@ doConnect(void)
 	   &globals.port);
     
     if (strlen(globals.server)==0 || globals.port==0) {
-        fprintf(stderr, "Server IP and port number must be nonzero." args);
+        fprintf(stderr, "Server IP and port number must be nonzero.");
     } else {
       VPRINTF("connecting to: server=%s port=%d...", 
 	      globals.server, globals.port);
-      if (net_setup_connection(globals.serverFD,globals.server,globals.port)<0) {
+      if (net_setup_connection(&globals.serverFD,globals.server,globals.port)<0) {
 	fprintf(stderr, " failed NOT connected server=%s port=%d\n", 
 		globals.server, globals.port);
       } else {
