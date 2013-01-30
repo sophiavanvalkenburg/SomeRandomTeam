@@ -29,3 +29,15 @@ Decisions:
 Todo: by Wednesday 1/30
     -complete code as above.
 Comments/Notes:
+
+Explanations of client.c (Sophia)
+getInput():
+this method reads input from standard input and stores it the data field of the LineBuffer global struct (in).
+It removes a newline from the input data but sets the newline field of in to 1 (true).
+The purpose of this function is to allow the user to input a text command to the client program.
+sendStr():
+???
+main():
+the line is to indicate whether to show the menu prompt or not 
+(if a command does not allow a menu prompt, it will assign -1 to the variable rc)
+
