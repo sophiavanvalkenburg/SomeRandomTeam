@@ -51,3 +51,15 @@ convert len to the correct byte order of the host(server)
 
 pthread_create(&tid, NULL, &doit, (void *)connfd);
 create a new thread for the new connection
+
+
+Wed Jan 30 20:39:50 EST 2013
+Attendees: Sophia, Zheng
+Questions:
+    -does the final commit of the assignment have to include the original dummy client/server files? (asked on Piazza)
+Decisions:
+    -we decided to add an as1_part2 folder to hold the simple client/server files and kept the dummy files in the main folder.
+Comments/Notes:
+    -as1 is done
+
+
