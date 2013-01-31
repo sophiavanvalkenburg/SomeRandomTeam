@@ -44,3 +44,10 @@ main():
 the line is to indicate whether to show the menu prompt or not 
 (if a command does not allow a menu prompt, it will assign -1 to the variable rc)
 
+Explanations of server.c (Zheng)
+len = ntohl(len);
+convert len to the correct byte order of the host(server)
+(because the byte order of the client might not be the same)
+
+pthread_create(&tid, NULL, &doit, (void *)connfd);
+create a new thread for the new connection
