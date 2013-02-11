@@ -63,3 +63,12 @@ Comments/Notes:
     -as1 is done
 
 
+Mon Feb 11 13:31:37 EST 2013
+Attendees: Sophia, Zheng, Jarib
+Questions:
+    -what does the protocol code do??
+    -how we will break up the work for the protocol methods
+    -how we will break up the work for the tic tac toe game
+Decisions:
+    -Jarib: protocol_session.c, Zheng: protocol_client.c, Sophia: protocol_server.c
+    -we'll meet again on next Tuesday to start implementing the Tic Tac Toe game
