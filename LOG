@@ -29,3 +29,45 @@ Decisions:
 Todo: by Wednesday 1/30
     -complete code as above.
 Comments/Notes:
+
+Explanations of client.c (Sophia)
+getInput():
+this method reads input from standard input and stores it the data field of the LineBuffer global struct (in).
+It removes a newline from the input data but sets the newline field of in to 1 (true).
+The purpose of this function is to allow the user to input a text command to the client program.
+sendStr():
+first sends the string length to the specified destination (for example the server in doSend()), checks whether
+this worked, then sends the string itself and checks if that worked, then reads the response from the server
+and stores it in the buffer. If the the read was successful, it prints the contents of the buffer to standard
+output.
+main():
+the line is to indicate whether to show the menu prompt or not 
+(if a command does not allow a menu prompt, it will assign -1 to the variable rc)
+
+Explanations of server.c (Zheng)
+len = ntohl(len);
+convert len to the correct byte order of the host(server)
+(because the byte order of the client might not be the same)
+
+pthread_create(&tid, NULL, &doit, (void *)connfd);
+create a new thread for the new connection
+
+
+Wed Jan 30 20:39:50 EST 2013
+Attendees: Sophia, Zheng
+Questions:
+    -does the final commit of the assignment have to include the original dummy client/server files? (asked on Piazza)
+Decisions:
+    -we decided to add an as1_part2 folder to hold the simple client/server files and kept the dummy files in the main folder.
+Comments/Notes:
+    -as1 is done
+
+Mon Feb 11 13:31:37 EST 2013
+Attendees: Sophia, Zheng, Jarib
+Questions:
+    -what does the protocol code do??
+    -how we will break up the work for the protocol methods
+    -how we will break up the work for the tic tac toe game
+Decisions:
+    -Jarib: protocol_session.c, Zheng: protocol_client.c, Sophia: protocol_server.c
+    -we'll meet again on next Tuesday to start implementing the Tic Tac Toe game
