@@ -6,16 +6,28 @@ objs = $(wildcard *.o)
 all: $(targets)
 .PHONY:	all
 	
-client.out:	net
+client.out:	net protocol_client protocol_session protocol_utils
 	gcc $(CFLAGS) -c client client/client.c
-	gcc $(CFLAGS) -o client.out client.o net.o
+	gcc $(CFLAGS) -o client.out client.o net.o protocol_client.o protocol_session.o protocol_utils.o
 	
-server.out:	net
+server.out: net protocol_server protocol_session protocol_utils
 	gcc $(CFLAGS) -c server server/server.c
-	gcc $(CFLAGS) -o server.out server.o net.o
+	gcc $(CFLAGS) -o server.out server.o net.o protocol_server.o protocol_session.o protocol_utils.o
 	
 net:	
 	gcc $(CFLAGS) -c lib/net.c
-	
+
+protocol_utils:
+	gcc $(CFLAGS) -c lib/protocol_utils.c
+
+protocol_client: protocol_utils protocol_session
+	gcc $(CFLAGS) -c lib/protocol_client.c
+
+protocol_server: protocol_utils protocol_session
+	gcc $(CFLAGS) -c lib/protocol_server.c
+
+protocol_session: protocol_utils net
+	gcc $(CFLAGS) -c lib/protocol_session.c
+
 clean:
 	rm $(objs) $(targets)

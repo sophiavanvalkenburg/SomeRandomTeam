@@ -291,7 +291,7 @@ proto_session_send_msg(Proto_Session *s, int reset)
   s->shdr.blen = htonl(s->slen);
 
   // write request
-  ADD CODE
+  // ADD CODE
   
     if (proto_debug()) {
       fprintf(stderr, "%p: proto_session_send_msg: SENT:\n", pthread_self());
@@ -311,7 +311,7 @@ proto_session_rcv_msg(Proto_Session *s)
   proto_session_reset_receive(s);
 
   // read reply
-  ADD CODE
+  // ADD CODE
 
     if (proto_debug()) {
       fprintf(stderr, "%p: proto_session_rcv_msg: RCVED:\n", pthread_self());
@@ -325,7 +325,7 @@ proto_session_rpc(Proto_Session *s)
 {
   int rc;
   
-  ADD CODE
+  // ADD CODE
 
     return rc;
 }
