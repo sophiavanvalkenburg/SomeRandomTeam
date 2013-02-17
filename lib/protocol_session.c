@@ -129,7 +129,7 @@ proto_session_hdr_marshall_type(Proto_Session *s, Proto_Msg_Types t)
 {
   // ADD CODE 
   s->shdr.type = htonl(t);
-  // have to make sure if htonl is appropriate here for the enum type.   
+  // have to make sure if htonl is appropriate here for the enum type Proto_Msg_Types.   
 }
 
 static int
@@ -144,7 +144,7 @@ proto_session_hdr_unmarshall_type(Proto_Session *s)
 {
   //  ADD CODE 
   return ntohl(s->rhdr.type);
-  // have to confirm whether ntohl is appropriate here for the enum type. 
+  // have to confirm whether ntohl is appropriate here for the enum type Proto_Msg_Types. 
   
 }
 
