@@ -76,8 +76,8 @@ proto_server_set_req_handler(Proto_Msg_Types mt, Proto_MT_Handler h)
   if (mt>PROTO_MT_REQ_BASE_RESERVED_FIRST &&
       mt<PROTO_MT_REQ_BASE_RESERVED_LAST) {
     i = mt - PROTO_MT_REQ_BASE_RESERVED_FIRST - 1;
-
-    // ADD CODE
+    // (complete) ADD CODE
+    Proto_Server.base_req_handlers[i] = h;
       return 1;
   } else {
     return -1;
@@ -95,15 +95,20 @@ proto_server_record_event_subscriber(int fd, int *num)
   if (Proto_Server.EventLastSubscriber < PROTO_SERVER_MAX_EVENT_SUBSCRIBERS
       && Proto_Server.EventSubscribers[Proto_Server.EventLastSubscriber]
       ==-1) {
-    // ADD CODE
-      rc = 1;
+        Proto_Server.EventSubscribers[Proto_Server.EventLastSubscriber] = fd;
+        *num = Proto_Server.EventLastSubscriber;
+        Proto_Server.EventLastSubscriber++;
+        // (complete)  ADD CODE
+        rc = 1;
   } else {
     int i;
     for (i=0; i< PROTO_SERVER_MAX_EVENT_SUBSCRIBERS; i++) {
       if (Proto_Server.EventSubscribers[i]==-1) {
-	// ADD CODE
-	  *num=i;
-	rc=1;
+	    Proto_Server.EventSubscribers[i] = fd;
+        Proto_Server.EventLastSubscriber = i+1;
+        // (complete)  ADD CODE
+	    *num=i;
+	    rc=1;
       }
     }
   }
@@ -125,14 +130,14 @@ proto_server_event_listen(void *arg)
   }
 
   for (;;) {
-    connfd = 0;// ADD CODE
+    connfd = net_accept(fd); // (complete) ADD CODE
       if (connfd < 0) {
 	fprintf(stderr, "Error: EventListen accept failed (%d)\n", errno);
       } else {
 	int i;
 	fprintf(stderr, "EventListen: connfd=%d -> ", connfd);
 
-	if (0){//(ADD CODE<0) {
+	if (/* (complete ADD CODE (*/ proto_server_record_event_subscriber(connfd, &i) <0) {
 	  fprintf(stderr, "oops no space for any more event subscribers\n");
 	  close(connfd);
 	} else {
@@ -156,12 +161,12 @@ proto_server_post_event(void)
     Proto_Server.EventSession.fd = Proto_Server.EventSubscribers[i];
     if (Proto_Server.EventSession.fd != -1) {
       num--;
-      if (0){//(ADD CODE<0) {
+      if (/*complete ? ADD CODE*/net_accept(Proto_Server.EventSession.fd)<0) {
       // must have lost an event connection
       close(Proto_Server.EventSession.fd);
       Proto_Server.EventSubscribers[i]=-1;
       Proto_Server.EventNumSubscribers--;
-    //  Proto_Server.ADD CODE
+     // Proto_Server.ADD CODE
 	} 
     // FIXME: add ack message here to ensure that game is updated 
     // correctly everywhere... at the risk of making server dependent
@@ -222,7 +227,7 @@ proto_server_rpc_listen(void *arg)
   }
 
   for (;;) {
-    connfd = 0;// ADD CODE
+    connfd = net_accept(fd);// (complete) ADD CODE
       if (connfd < 0) {
 	fprintf(stderr, "Error: proto_server_rpc_listen accept failed (%d)\n", errno);
       } else {
@@ -289,7 +294,8 @@ proto_server_init(void)
 					proto_session_lost_default_handler);
   for (i=PROTO_MT_REQ_BASE_RESERVED_FIRST+1; 
        i<PROTO_MT_REQ_BASE_RESERVED_LAST; i++) {
-    // ADD CODE
+        Proto_Server.base_req_handlers[i] = proto_server_mt_null_handler;
+      // (complete) ADD CODE
       }
 
 
