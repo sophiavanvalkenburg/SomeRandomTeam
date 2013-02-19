@@ -190,7 +190,7 @@ do_generic_dummy_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt) {
     Proto_Client *c = ch;
 
     //s = ADD CODE
-    s=c->rpc_session;
+    s=&(c->rpc_session);
             // marshall
 
             marshall_mtonly(s, mt);
@@ -201,7 +201,9 @@ do_generic_dummy_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt) {
         proto_session_body_unmarshall_int(s, 0, &rc);
     } else {
         //ADD CODE
-        printf("do_generic_dummy_rpc: rc!=1, unsuccesful");
+        //printf("do_generic_dummy_rpc: rc!=1, unsuccesful");
+        c->session_lost_handler(s);
+        close(s->fd);
     }
 
     return rc;
