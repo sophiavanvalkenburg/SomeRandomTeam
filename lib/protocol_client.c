@@ -121,7 +121,8 @@ proto_client_event_dispatcher(void * arg) {
         } else {
             //ADD CODE
             //incomplete
-            printf("proto_client_event_dispatcher: proto_session_rcv_msg(s)!=1");
+            //printf("proto_client_event_dispatcher: proto_session_rcv_msg(s)!=1");
+            c->session_lost_handler(s);
                     goto leave;
         }
     }
