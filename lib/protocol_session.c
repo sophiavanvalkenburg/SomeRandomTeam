@@ -338,6 +338,10 @@ proto_session_rpc(Proto_Session *s)
   
   // ADD CODE
 
+  net_writen(s->fd, &(s->shdr), s->slen);
+
+  rc = net_readn(s->fd, &(s->rhdr), s->rlen);
+
     return rc;
 }
 
