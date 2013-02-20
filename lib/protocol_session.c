@@ -339,13 +339,14 @@ proto_session_rpc(Proto_Session *s)
   // ADD CODE
 
   s->slen = sizeof(s->shdr);
-  net_writen(s->fd, &(s->shdr), s->slen);
-
+  net_writen(s->fd, &(s->shdr), s->slen)
+  
   s->rlen = sizeof(s->rhdr);
-  rc = net_readn(s->fd, &(s->rhdr), s->rlen);
+  if (net_readn(s->fd, &(s->rhdr), s->rlen) >= 0) 
+    rc = 1;
+  else 
+    rc = -1;
 
-  printf("rc is %d and rlen is %d\n", rc, s->rlen);
-
-    return rc;
+  return rc;
 }
 
