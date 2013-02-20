@@ -161,12 +161,12 @@ proto_server_post_event(void)
     Proto_Server.EventSession.fd = Proto_Server.EventSubscribers[i];
     if (Proto_Server.EventSession.fd != -1) {
       num--;
-      if (/*complete ? ADD CODE*/net_accept(Proto_Server.EventSession.fd)<0) {
+      if (/*(complete) ADD CODE*/proto_session_send_msg(&Proto_Server.EventSession,0)<0) {
       // must have lost an event connection
       close(Proto_Server.EventSession.fd);
       Proto_Server.EventSubscribers[i]=-1;
       Proto_Server.EventNumSubscribers--;
-     // Proto_Server.ADD CODE
+      Proto_Server.session_lost_handler(&Proto_Server.EventSession);
 	} 
     // FIXME: add ack message here to ensure that game is updated 
     // correctly everywhere... at the risk of making server dependent
@@ -200,15 +200,21 @@ proto_server_req_dispatcher(void * arg)
 
   for (;;) {
     if (proto_session_rcv_msg(&s)==1) {
-      // ADD CODE
-	    if (hdlr(&s)<0) goto leave;
-    
+      // (complete) ADD CODE
+	     mt = proto_session_hdr_unmarshall_type(&s);
+         if (mt > PROTO_MT_REQ_BASE_RESERVED_FIRST &&
+                    mt < PROTO_MT_REQ_BASE_RESERVED_LAST) {
+            int i = mt - PROTO_MT_REQ_BASE_RESERVED_FIRST - 1;
+            hdlr = Proto_Server.base_req_handlers[i];
+            
+            if (hdlr(&s)<0) goto leave;
+         }
     } else {
         goto leave;
     }
 }
 leave:
-  //Proto_Server.ADD CODE
+  Proto_Server.session_lost_handler(&s);
   close(s.fd);
 return NULL;
 }
@@ -253,7 +259,7 @@ proto_server_start_rpc_loop(void)
 static int 
 proto_session_lost_default_handler(Proto_Session *s)
 {
-  fprintf(stderr, "Session lost...:\n");
+  fprintf(stderr, "Session lost [server side]...:\n");
   proto_session_dump(s);
   return -1;
 }
@@ -294,7 +300,8 @@ proto_server_init(void)
 					proto_session_lost_default_handler);
   for (i=PROTO_MT_REQ_BASE_RESERVED_FIRST+1; 
        i<PROTO_MT_REQ_BASE_RESERVED_LAST; i++) {
-        Proto_Server.base_req_handlers[i] = proto_server_mt_null_handler;
+        int ind = i - PROTO_MT_REQ_BASE_RESERVED_FIRST-1;
+        Proto_Server.base_req_handlers[ind] = proto_server_mt_null_handler;
       // (complete) ADD CODE
       }
 
