@@ -290,6 +290,8 @@ proto_session_send_msg(Proto_Session *s, int reset)
 {
   s->shdr.blen = htonl(s->slen);
 
+  net_writen(s->fd, &(s->shdr), s->shdr.blen);
+
   // write request
   // ADD CODE
   
@@ -312,6 +314,8 @@ proto_session_rcv_msg(Proto_Session *s)
 
   // read reply
   // ADD CODE
+
+  net_readn(s->fd, &(s->rhdr), s->rhdr->rlen); 
 
     if (proto_debug()) {
       fprintf(stderr, "%p: proto_session_rcv_msg: RCVED:\n", pthread_self());
