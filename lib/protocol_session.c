@@ -294,8 +294,6 @@ proto_session_send_msg(Proto_Session *s, int reset)
 
   n = net_writen(s->fd, &(s->shdr), s->slen);
 
-  printf("net_writen returns %d\n", n); 
-  printf("sizeof(shdr): %d\n", sizeof(s->shdr));
   
 
   // write request
