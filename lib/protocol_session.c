@@ -344,6 +344,8 @@ proto_session_rpc(Proto_Session *s)
   s->rlen = sizeof(s->rhdr);
   rc = net_readn(s->fd, &(s->rhdr), s->rlen);
 
+  printf("rc is %d and rlen is %d\n", rc, s->rlen);
+
     return rc;
 }
 
