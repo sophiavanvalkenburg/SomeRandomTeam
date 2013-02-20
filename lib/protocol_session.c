@@ -315,7 +315,7 @@ proto_session_rcv_msg(Proto_Session *s)
   // read reply
   // ADD CODE
 
-  net_readn(s->fd, &(s->rhdr), s->rhdr.rlen); 
+  net_readn(s->fd, &(s->rhdr), s->rlen); 
 
     if (proto_debug()) {
       fprintf(stderr, "%p: proto_session_rcv_msg: RCVED:\n", pthread_self());
