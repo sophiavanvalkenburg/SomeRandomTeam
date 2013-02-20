@@ -289,10 +289,13 @@ extern  int
 proto_session_send_msg(Proto_Session *s, int reset)
 {
   int n;
+  s->slen = sizeof(s->shdr);
   s->shdr.blen = htonl(s->slen);
 
   n = net_writen(s->fd, &(s->shdr), s->slen);
+
   printf("net_writen returns %d\n", n); 
+  printf("sizeof(shdr): %d\n", sizeof(s->shdr));
   
 
   // write request
@@ -317,8 +320,9 @@ proto_session_rcv_msg(Proto_Session *s)
 
   // read reply
   // ADD CODE
-
+  s->rlen = sizeof(s->rhdr);
   net_readn(s->fd, &(s->rhdr), s->rlen); 
+  
 
     if (proto_debug()) {
       fprintf(stderr, "%p: proto_session_rcv_msg: RCVED:\n", pthread_self());
