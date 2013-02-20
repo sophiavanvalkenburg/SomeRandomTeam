@@ -288,9 +288,12 @@ proto_session_body_unmarshall_bytes(Proto_Session *s, int offset, int len,
 extern  int
 proto_session_send_msg(Proto_Session *s, int reset)
 {
+  int n;
   s->shdr.blen = htonl(s->slen);
 
-  net_writen(s->fd, &(s->shdr), s->slen);
+  n = net_writen(s->fd, &(s->shdr), s->slen);
+  printf("net_writen returns %d\n", n); 
+  
 
   // write request
   // ADD CODE
