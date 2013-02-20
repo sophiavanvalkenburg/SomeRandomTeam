@@ -290,7 +290,7 @@ proto_session_send_msg(Proto_Session *s, int reset)
 {
   s->shdr.blen = htonl(s->slen);
 
-  net_writen(s->fd, &(s->shdr), s->shdr.blen);
+  net_writen(s->fd, &(s->shdr), s->slen);
 
   // write request
   // ADD CODE
