@@ -97,6 +97,7 @@ proto_server_record_event_subscriber(int fd, int *num)
       ==-1) {
         Proto_Server.EventSubscribers[Proto_Server.EventLastSubscriber] = fd;
         *num = Proto_Server.EventLastSubscriber;
+        Proto_Server.EventNumSubscribers++;
         Proto_Server.EventLastSubscriber++;
         // (complete)  ADD CODE
         rc = 1;
@@ -105,6 +106,7 @@ proto_server_record_event_subscriber(int fd, int *num)
     for (i=0; i< PROTO_SERVER_MAX_EVENT_SUBSCRIBERS; i++) {
       if (Proto_Server.EventSubscribers[i]==-1) {
 	    Proto_Server.EventSubscribers[i] = fd;
+        Proto_Server.EventNumSubscribers++;
         Proto_Server.EventLastSubscriber = i+1;
         // (complete)  ADD CODE
 	    *num=i;

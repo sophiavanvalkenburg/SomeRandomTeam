@@ -85,16 +85,16 @@ startConnection(Client *C, char *host, PortType port, Proto_MT_Handler h)
 }
 
 
-int
+char *
 prompt(int menu) 
 {
   static char MenuString[] = "\nclient> ";
   int ret;
-  int c=0;
+  char *c = malloc(sizeof(char) * STRLEN);;
 
   if (menu) printf("%s", MenuString);
   fflush(stdout);
-  c = getchar();
+  fgets(c,STRLEN,stdin);
   return c;
 }
 
@@ -115,10 +115,10 @@ game_process_reply(Client *C)
 
 
 int 
-doRPCCmd(Client *C, char c) 
+doRPCCmd(Client *C, char *c) 
 {
   int rc=-1;
-
+/*
   switch (c) {
   case 'h':  
     {
@@ -137,6 +137,7 @@ doRPCCmd(Client *C, char c)
   default:
     printf("%s: unknown command %c\n", __func__, c);
   }
+  */
   // NULL MT OVERRIDE ;-)
   printf("%s: rc=0x%x\n", __func__, rc);
   if (rc == 0xdeadbeef) rc=1;
@@ -147,10 +148,10 @@ int
 doRPC(Client *C)
 {
   int rc;
-  char c;
+  char *c;
 
   printf("enter (h|m<c>|g): ");
-  scanf("%c", &c);
+  fgets(c,STRLEN,stdin);
   rc=doRPCCmd(C,c);
 
   printf("doRPC: rc=0x%x\n", rc);
@@ -160,37 +161,93 @@ doRPC(Client *C)
 
 
 int 
-docmd(Client *C, char cmd)
+docmd(Client *C, char *cmd)
 {
   int rc = 1;
 
-  switch (cmd) {
-  case 'd':
-    proto_debug_on();
-    break;
-  case 'D':
-    proto_debug_off();
-    break;
-  case 'r':
-    rc = doRPC(C);
-    break;
-  case 'q':
-    rc=-1;
-    break;
-  case '\n':
-    rc=1;
-    break;
-  default:
-    printf("Unkown Command\n");
+  printf("Command: %s",cmd);
+  if (streql(cmd,"connect"))
+  {
+    rc = doConnectCmd();
   }
+  else if (streql(cmd,"disconnect"))
+  {
+    rc = doDisconnectCmd();
+  }
+  else if (streql(cmd,"\n"))
+  {
+    rc = doEnterCmd();
+  }
+  else if (streql(cmd,"where"))
+  {
+    rc = doWhereCmd();
+  }
+  else if (streql(cmd,"quit"))
+  {
+    rc = doQuitCmd();
+  }
+  else if (streql(cmd,"1") || streql(cmd,"2") || streql(cmd,"3")
+            || streql(cmd,"4") || streql(cmd,"5") || streql(cmd,"6")
+            || streql(cmd,"7") || streql(cmd,"8") || streql(cmd,"9")
+          )
+  {
+    rc = doMoveCmd(atoi(cmd));
+  }
+  else
+  {
+    rc = doDefaultCmd();
+  }
+
   return rc;
+}
+
+int
+doConnectCmd()
+{
+return -1;
+}
+
+int
+doDisconnectCmd()
+{
+return -1;
+}
+
+int
+doEnterCmd()
+{
+return -1;
+}
+
+int
+doWhereCmd()
+{
+return -1;
+}
+
+int 
+doQuitCmd()
+{
+return -1;
+}
+
+int
+doMoveCmd()
+{
+return -1;
+}
+
+int
+doDefaultCmd()
+{
+return -1;
 }
 
 void *
 shell(void *arg)
 {
   Client *C = arg;
-  char c;
+  char *c;
   int rc;
   int menu=1;
 
@@ -242,12 +299,19 @@ initGlobals(int argc, char **argv)
 
 }
 
+int
+streql(char *c1, char *c2)
+{
+    return strcmp(c1, c2) == 0;
+}
+
+
 int 
 main(int argc, char **argv)
 {
   Client c;
 
-  initGlobals(argc, argv);
+ // initGlobals(argc, argv);
 
   if (clientInit(&c) < 0) {
     fprintf(stderr, "ERROR: clientInit failed\n");
@@ -255,10 +319,10 @@ main(int argc, char **argv)
   }    
 
   // ok startup our connection to the server
-  if (startConnection(&c, globals.host, globals.port, update_event_handler)<0) {
-    fprintf(stderr, "ERROR: startConnection failed\n");
-    return -1;
-  }
+  //if (startConnection(&c, globals.host, globals.port, update_event_handler)<0) {
+  //  fprintf(stderr, "ERROR: startConnection failed\n");
+  //  return -1;
+ // }
 
   shell(&c);
 

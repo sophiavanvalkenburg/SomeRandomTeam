@@ -71,3 +71,15 @@ Questions:
 Decisions:
     -Jarib: protocol_session.c, Zheng: protocol_client.c, Sophia: protocol_server.c
     -we'll meet again on next Tuesday to start implementing the Tic Tac Toe game
+
+Tue Feb 19 14:48:28 EST 2013
+Attendees: Sophia, Zheng, Jarib
+Questions:
+    -do we have to marshall data in the send/rcv methods?
+    -do we send/rcv the whole session struct?
+    -what will be the protocol for tic tac toe
+Decisions:
+    -do not have to marshall data in send/rcv methods (done when packing the data into session)
+    -no time to talk about tic tac toe yet, will meet on Thursday
+Comments:
+    -simple rpc / event is working

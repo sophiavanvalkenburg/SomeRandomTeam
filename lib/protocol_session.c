@@ -336,11 +336,11 @@ proto_session_rpc(Proto_Session *s)
   
   // ADD CODE
 
-  s->slen = sizeof(s->shdr);
-  net_writen(s->fd, &(s->shdr), s->slen);
+  s->shdr.blen = sizeof(s->sbuf);
+  net_writen(s->fd, s, sizeof(s));
   
-  s->rlen = sizeof(s->rhdr);
-  if (net_readn(s->fd, &(s->rhdr), s->rlen) >= 0) 
+  s->shdr.blen = sizeof(s->rbuf);
+  if (net_readn(s->fd, s, sizeof(s)) >= 0) 
     rc = 1;
   else 
     rc = -1;
