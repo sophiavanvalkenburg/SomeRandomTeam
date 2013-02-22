@@ -289,9 +289,10 @@ extern  int
 proto_session_send_msg(Proto_Session *s, int reset)
 {
   int n;
-  s->shdr.blen = htonl(s->slen);
+  s->shdr.blen = sizeof(s->sbuf);
+  s->slen = sizeof(s->shdr);
 
-    net_writen(s->fd, s, sizeof(s));
+    net_writen(s->fd, &(s->shdr), s->slen);
 
   
 
@@ -317,8 +318,9 @@ proto_session_rcv_msg(Proto_Session *s)
 
   // read reply
   // ADD CODE
-  s->rhdr.blen = htonl(s->rlen);
-  net_readn(s->fd, s, sizeof(s)); 
+  s->rhdr.blen = sizeof(s->sbuf);
+  s->rlen = sizeof(s->rhdr);
+  net_readn(s->fd, &(s->rhdr), s->rlen); 
   
 
     if (proto_debug()) {
@@ -336,10 +338,12 @@ proto_session_rpc(Proto_Session *s)
   // ADD CODE
 
   s->shdr.blen = sizeof(s->sbuf);
-  net_writen(s->fd, s, sizeof(s));
+  s->slen = sizeof(s->shdr);
+  net_writen(s->fd, &(s->shdr), s->slen);
   
   s->rhdr.blen = sizeof(s->rbuf);
-  if (net_readn(s->fd, s, sizeof(s)) >= 0) 
+  s->rlen = sizeof(s->rhdr);
+  if (net_readn(s->fd, &(s->rhdr),s->rlen) >= 0) 
     rc = 1;
   else 
     rc = -1;

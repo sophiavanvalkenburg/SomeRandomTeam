@@ -248,10 +248,12 @@ doConnectCmd(Client *C, char *host, char *port)
     }else{
         int rc = proto_client_hello(C->ph);
         if (rc == 1){
-            fprintf(stdout, "Connected to %s:%d : You are %c\n", globals.host, globals.port,C->type);
+            C->type = X;
         }else if (rc == 0){
-            fprintf(stdout, "Connected to %s:%d : You are %c\n", globals.host, globals.port,C->type);
+            C->type = O;
         }
+    
+        fprintf(stdout, "Connected to %s:%d : You are %c\n", globals.host, globals.port,C->type);
     }
     
     return 1;
