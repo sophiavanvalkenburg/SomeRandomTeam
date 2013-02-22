@@ -1,4 +1,4 @@
-int gameResult(int buf[]) {
+extern int gameResult(int buf[]) {
 
   int i;
 
