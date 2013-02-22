@@ -289,10 +289,9 @@ extern  int
 proto_session_send_msg(Proto_Session *s, int reset)
 {
   int n;
-  s->slen = sizeof(s->shdr);
   s->shdr.blen = htonl(s->slen);
 
-  n = net_writen(s->fd, &(s->shdr), s->slen);
+  n = net_writen(s->fd, s, sizeof(s));
 
   
 
@@ -307,7 +306,7 @@ proto_session_send_msg(Proto_Session *s, int reset)
   // communication was successfull 
   if (reset) proto_session_reset_send(s);
 
-  return 1;
+  return n;
 }
 
 extern int
@@ -318,15 +317,15 @@ proto_session_rcv_msg(Proto_Session *s)
 
   // read reply
   // ADD CODE
-  s->rlen = sizeof(s->rhdr);
-  net_readn(s->fd, &(s->rhdr), s->rlen); 
+  s->rhdr.blen = htonl(s->rlen);
+  int n = net_readn(s->fd, s, sizeof(s)); 
   
 
     if (proto_debug()) {
       fprintf(stderr, "%p: proto_session_rcv_msg: RCVED:\n", pthread_self());
       proto_session_dump(s);
     }
-  return 1;
+  return n;
 }
 
 extern int
