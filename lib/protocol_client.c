@@ -121,8 +121,9 @@ proto_client_event_dispatcher(void * arg) {
         } else {
             //ADD CODE
             //incomplete
-            //printf("proto_client_event_dispatcher: proto_session_rcv_msg(s)!=1");
-            c->session_lost_handler(s);
+            printf("proto_client_event_dispatcher: proto_session_rcv_msg(s)!=1");
+            
+            //c->session_lost_handler(s);
                     goto leave;
         }
     }
@@ -169,7 +170,9 @@ proto_client_connect(Proto_Client_Handle ch, char *host, PortType port) {
         return -3;
     }
 
-    return 0;
+    int rc = proto_client_hello(ch);
+
+    return rc;
 }
 
 static void
@@ -190,22 +193,13 @@ do_generic_dummy_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt) {
     Proto_Session *s;
     Proto_Client *c = ch;
 
-    //s = ADD CODE
     s=&(c->rpc_session);
-            // marshall
+    // marshall
 
-            marshall_mtonly(s, mt);
-    //rc = proto_session_ADD CODE
+    marshall_mtonly(s, mt);
     rc = proto_session_rpc(s);
 
-    if (rc == 1) {
-        proto_session_body_unmarshall_int(s, 0, &rc);
-    } else {
-        //ADD CODE
-        //printf("do_generic_dummy_rpc: rc!=1, unsuccesful");
-        c->session_lost_handler(s);
-        close(s->fd);
-    }
+    proto_session_body_unmarshall_int(s, 0, &rc);
 
     return rc;
 }

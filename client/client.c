@@ -28,6 +28,11 @@
 #include "../lib/protocol_utils.h"
 
 #define STRLEN 81
+#define X 'X'
+#define O 'O'
+#define Q '?'
+
+void initGlobals(char *host, char *port);
 
 struct Globals {
   char host[STRLEN];
@@ -37,6 +42,7 @@ struct Globals {
 
 typedef struct ClientState  {
   int data;
+  char type; // X, O, or ?
   Proto_Client_Handle ph;
 } Client;
 
@@ -44,7 +50,7 @@ static int
 clientInit(Client *C)
 {
   bzero(C, sizeof(Client));
-
+  C->type = Q;
   // initialize the client protocol subsystem
   if (proto_client_init(&(C->ph))<0) {
     fprintf(stderr, "client: main: ERROR initializing proto system\n");
@@ -86,9 +92,10 @@ startConnection(Client *C, char *host, PortType port, Proto_MT_Handler h)
 
 
 char *
-prompt(int menu) 
+prompt(Client *C, int menu) 
 {
-  static char MenuString[] = "\nclient> ";
+  char *MenuString = malloc(5*sizeof(char));
+  sprintf(MenuString,"\n%c> ",C->type);
   int ret;
   char *c = malloc(sizeof(char) * STRLEN);;
 
@@ -167,7 +174,6 @@ docmd(Client *C, char *cmd)
   char *token;
   char *commands[5];
   
-  printf("Command: %s",cmd);
   
   token = strtok(cmd, " ");
   commands[i] = (char *) malloc (strlen(token)*sizeof(char));
@@ -192,86 +198,93 @@ docmd(Client *C, char *cmd)
   
   if (i == 1) {
   
-  
-	/*if (streql(cmd,"connect"))
+ 	if (streql(cmd,"disconnect"))
 	{
-		rc = doConnectCmd();
-	}*/
-	if (streql(cmd,"disconnect"))
-	{
-		rc = doDisconnectCmd();
+		rc = doDisconnectCmd(C);
 	}
 	else if (streql(cmd,"\n"))
 	{
-		rc = doEnterCmd();
+		rc = doEnterCmd(C);
 	}
 	else if (streql(cmd,"where"))
 	{
-		rc = doWhereCmd();
+		rc = doWhereCmd(C);
 	}
 	else if (streql(cmd,"quit"))
 	{
-		rc = doQuitCmd();
+		rc = doQuitCmd(C);
 	}
 	else if (streql(cmd,"1") || streql(cmd,"2") || streql(cmd,"3")
 				|| streql(cmd,"4") || streql(cmd,"5") || streql(cmd,"6")
 				|| streql(cmd,"7") || streql(cmd,"8") || streql(cmd,"9")
 			)
 	{
-		rc = doMoveCmd(atoi(cmd));
+		rc = doMoveCmd(C,atoi(cmd));
 	}
 	else
 	{
-		rc = doDefaultCmd();
+		rc = doDefaultCmd(C);
 	}
   }
   
   else {
 	// connect 
-	rc = doConnectCmd(commands[1], commands[2]);
+	rc = doConnectCmd(C,commands[1], commands[2]);
   }
   
   return rc;
 }
 
 int
-doConnectCmd(char *hostname, char *port)
+doConnectCmd(Client *C, char *host, char *port)
+{
+    initGlobals(host, port);
+
+    // ok startup our connection to the server
+   int rc = startConnection(C, globals.host, globals.port, update_event_handler);
+   if (rc == 1){
+        fprintf(stdout, "Connected to %s:%d : You are X\n", globals.host, globals.port);
+     }else if (rc == 0){
+        fprintf(stdout, "Connected to %s:%d : You are O\n", globals.host, globals.port);
+     }else {
+        fprintf(stderr, "ERROR: Not able to connect to %s:%d\n",globals.host, globals.port);
+    }
+
+    return rc;
+}
+
+int
+doDisconnectCmd(Client *C)
 {
 return -1;
 }
 
 int
-doDisconnectCmd()
+doEnterCmd(Client *C)
 {
 return -1;
 }
 
 int
-doEnterCmd()
-{
-return -1;
-}
-
-int
-doWhereCmd()
+doWhereCmd(Client *C)
 {
 return -1;
 }
 
 int 
-doQuitCmd()
+doQuitCmd(Client *C)
 {
 return -1;
 }
 
 int
-doMoveCmd()
+doMoveCmd(Client *C)
 {
 return -1;
 }
 
 int
-doDefaultCmd()
+doDefaultCmd(Client *C)
 {
 return -1;
 }
@@ -285,7 +298,7 @@ shell(void *arg)
   int menu=1;
 
   while (1) {
-    if ((c=prompt(menu))!=0) rc=docmd(C, c);
+    if ((c=prompt(C,menu))!=0) rc=docmd(C, c);
     if (rc<0) break;
     if (rc==1) menu=1; else menu=0;
   }
@@ -311,24 +324,12 @@ usage(char *pgm)
 }
 
 void
-initGlobals(int argc, char **argv)
+initGlobals(char *host, char *port)
 {
   bzero(&globals, sizeof(globals));
 
-  if (argc==1) {
-    usage(argv[0]);
-    exit(-1);
-  }
-
-  if (argc==2) {
-    strncpy(globals.host, "localhost", STRLEN);
-    globals.port = atoi(argv[1]);
-  }
-
-  if (argc>=3) {
-    strncpy(globals.host, argv[1], STRLEN);
-    globals.port = atoi(argv[2]);
-  }
+  strncpy(globals.host, host, STRLEN);
+  globals.port = atoi(port);
 
 }
 
@@ -351,13 +352,7 @@ main(int argc, char **argv)
     return -1;
   }    
 
-  // ok startup our connection to the server
-  //if (startConnection(&c, globals.host, globals.port, update_event_handler)<0) {
-  //  fprintf(stderr, "ERROR: startConnection failed\n");
-  //  return -1;
- // }
-
-  shell(&c);
+shell(&c);
 
   return 0;
 }
