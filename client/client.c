@@ -301,9 +301,6 @@ doMoveCmd(Client *C, int move)
 		fprintf(stderr,"do move command: invalid type %c\n",C->type);
 		return -1;
 	}
-	//proto_session_body_marshall_int(s,tp);
-	//then input move
-	//proto_session_body_marshall_int(s,move);
 	int rc = proto_client_move(C->ph,tp,move);
 	printf("do move command: rc = %d\n",rc);
 	if(rc == 1){
