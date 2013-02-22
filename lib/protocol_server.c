@@ -80,6 +80,10 @@ static void* printCB(){
 	}
 }
 
+static int getWinner(){
+	return -1;
+}
+
 extern int
 proto_server_set_session_lost_handler(Proto_MT_Handler h) {
     Proto_Server.session_lost_handler = h;
@@ -168,6 +172,12 @@ proto_server_post_event(void) {
     int num;
 
     pthread_mutex_lock(&Proto_Server.EventSubscribersLock);
+	//organize data into eventsession
+	long j;
+	for(j=0;j<9;j++){
+		proto_session_body_marshall_int(&Proto_Server.EventSession,Proto_Server.cb[j]);
+	}
+	proto_session_body_marshall_int(&Proto_Server.EventSession,getWinner());
 
     i = 0;
     num = Proto_Server.EventNumSubscribers;
