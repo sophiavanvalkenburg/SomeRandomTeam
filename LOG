@@ -83,3 +83,18 @@ Decisions:
     -no time to talk about tic tac toe yet, will meet on Thursday
 Comments:
     -simple rpc / event is working
+
+Thu Feb 21 23:42:11 EST 2013
+Attendees: Sophia, Zheng, Jarib
+Questions:
+    -difficult bug: calling proto_client_hello right after starting connection causes an infinite request loop in the server
+Decision:
+    -not sure what to do. ask on piazza.
+Comments:
+    -established a protocol for the tic tac toe game.
+connect returns with 1 for X , 0 for O, and -1 for error
+disconnect returns with 1 for X quit, 0 for O quit, and -1 for error
+move (client inputs a character number) returns with -1 for invalid move, -2 for not your turn, and 1 for OK
+On an event update, the buffer will contain 10 characters.
+The first 9 are characters for each block on the board (X,O, or number).
+The last index contains a win code (-1 for no win yet, 0 for O wins, 1 for X wins, and 2 for draw).

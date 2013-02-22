@@ -222,8 +222,8 @@ leave:
     Proto_Server.session_lost_handler(&s);
     close(s.fd);
 
-    //unlock turn here
-    return NULL;
+//unlock turn here
+return NULL;
 }
 
 static
@@ -263,8 +263,8 @@ proto_server_start_rpc_loop(void) {
 
 static int
 proto_session_lost_default_handler(Proto_Session *s) {
-    /*fprintf(stderr, "Session lost [server side]...:\n");
-    proto_session_dump(s);*/
+    fprintf(stderr, "Session lost [server side]...:\n");
+    proto_session_dump(s);
     return -1;
 }
 
@@ -316,8 +316,8 @@ proto_server_mt_hello_handler(Proto_Session *s) {
         //full
         proto_session_body_marshall_int(s, -1);
     }
-    rc = proto_session_send_msg(s, 1);
     pthread_mutex_unlock(&Proto_Server.EventSubscribersLock);
+    rc = proto_session_send_msg(s, 1);
     return rc;
 }
 

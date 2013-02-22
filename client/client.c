@@ -94,12 +94,12 @@ startConnection(Client *C, char *host, PortType port, Proto_MT_Handler h)
 char *
 prompt(Client *C, int menu) 
 {
-  char *MenuString = malloc(5*sizeof(char));
-  sprintf(MenuString,"\n%c> ",C->type);
+  //char *MenuString = malloc(5*sizeof(char));
+  //sprintf(MenuString,"\n%c> ",C->type);
   int ret;
   char *c = malloc(sizeof(char) * STRLEN);;
 
-  if (menu) printf("%s", MenuString);
+  if (menu) printf("\n%c>",C->type);
   fflush(stdout);
   fgets(c,STRLEN,stdin);
   return c;
@@ -198,7 +198,7 @@ docmd(Client *C, char *cmd)
   
   if (i == 1) {
   
- 	if (streql(cmd,"disconnect"))
+ 	if (streql(cmd,"disconnect\n"))
 	{
 		rc = doDisconnectCmd(C);
 	}
@@ -206,17 +206,17 @@ docmd(Client *C, char *cmd)
 	{
 		rc = doEnterCmd(C);
 	}
-	else if (streql(cmd,"where"))
+	else if (streql(cmd,"where\n"))
 	{
 		rc = doWhereCmd(C);
 	}
-	else if (streql(cmd,"quit"))
+	else if (streql(cmd,"quit\n"))
 	{
 		rc = doQuitCmd(C);
 	}
-	else if (streql(cmd,"1") || streql(cmd,"2") || streql(cmd,"3")
-				|| streql(cmd,"4") || streql(cmd,"5") || streql(cmd,"6")
-				|| streql(cmd,"7") || streql(cmd,"8") || streql(cmd,"9")
+	else if (streql(cmd,"1\n") || streql(cmd,"2\n") || streql(cmd,"3\n")
+				|| streql(cmd,"4\n") || streql(cmd,"5\n") || streql(cmd,"6\n")
+				|| streql(cmd,"7\n") || streql(cmd,"8\n") || streql(cmd,"9\n")
 			)
 	{
 		rc = doMoveCmd(C,atoi(cmd));
@@ -246,15 +246,15 @@ doConnectCmd(Client *C, char *host, char *port)
         fprintf(stderr, "ERROR: Not able to connect to %s:%d\n",globals.host, globals.port);
         return -1;
     }else{
-        //int rc = proto_client_hello(C->ph);
-       // if (rc == 1){
-        //    fprintf(stdout, "Connected to %s:%d : You are %c\n", globals.host, globals.port,C->type);
-       // }else if (rc == 0){
-       //     fprintf(stdout, "Connected to %s:%d : You are \n", globals.host, globals.port);
-       // }
+        int rc = proto_client_hello(C->ph);
+        if (rc == 1){
+            fprintf(stdout, "Connected to %s:%d : You are %c\n", globals.host, globals.port,C->type);
+        }else if (rc == 0){
+            fprintf(stdout, "Connected to %s:%d : You are %c\n", globals.host, globals.port,C->type);
+        }
     }
     
-    return 0;
+    return 1;
 }
 
 int
@@ -266,12 +266,14 @@ return -1;
 int
 doEnterCmd(Client *C)
 {
+    
 return -1;
 }
 
 int
 doWhereCmd(Client *C)
 {
+
 return -1;
 }
 

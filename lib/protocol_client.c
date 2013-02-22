@@ -198,11 +198,11 @@ do_generic_dummy_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt) {
     marshall_mtonly(s, mt);
     rc = proto_session_rpc(s);
 
-    proto_session_body_unmarshall_int(s, 0, &rc);
-
-//    if (rc < 0){
-//        close(s->fd);
-//    }
+    if (rc == 1){
+        proto_session_body_unmarshall_int(s, 0, &rc);
+    }else{
+        close(s->fd);
+    }
 
     return rc;
 }
