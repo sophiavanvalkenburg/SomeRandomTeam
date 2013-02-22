@@ -163,46 +163,79 @@ doRPC(Client *C)
 int 
 docmd(Client *C, char *cmd)
 {
-  int rc = 1;
-
+  int rc = 1, i = 0, j = 0;  
+  char *token;
+  char *commands[5];
+  
   printf("Command: %s",cmd);
-  if (streql(cmd,"connect"))
-  {
-    rc = doConnectCmd();
+  
+  token = strtok(cmd, " ");
+  commands[i] = (char *) malloc (strlen(token)*sizeof(char));
+  strcpy(commands[i], token);
+  i++;
+  
+  while (token != NULL) {
+	token = strtok(NULL, ":");
+	if (token) {
+		commands[i] = (char *) malloc (strlen(token)*sizeof(char));
+		strcpy(commands[i], token);
+		i++;
+	}
   }
-  else if (streql(cmd,"disconnect"))
-  {
-    rc = doDisconnectCmd();
+	
+  /*for (j = 0; j < 5; j++) 
+	printf("command[%d] is %s\n", j, commands[j]);
+*/  
+  
+  
+  // if i == 1, then other commands. if i > 1, then connect.
+  
+  if (i == 1) {
+  
+  
+	/*if (streql(cmd,"connect"))
+	{
+		rc = doConnectCmd();
+	}*/
+	if (streql(cmd,"disconnect"))
+	{
+		rc = doDisconnectCmd();
+	}
+	else if (streql(cmd,"\n"))
+	{
+		rc = doEnterCmd();
+	}
+	else if (streql(cmd,"where"))
+	{
+		rc = doWhereCmd();
+	}
+	else if (streql(cmd,"quit"))
+	{
+		rc = doQuitCmd();
+	}
+	else if (streql(cmd,"1") || streql(cmd,"2") || streql(cmd,"3")
+				|| streql(cmd,"4") || streql(cmd,"5") || streql(cmd,"6")
+				|| streql(cmd,"7") || streql(cmd,"8") || streql(cmd,"9")
+			)
+	{
+		rc = doMoveCmd(atoi(cmd));
+	}
+	else
+	{
+		rc = doDefaultCmd();
+	}
   }
-  else if (streql(cmd,"\n"))
-  {
-    rc = doEnterCmd();
+  
+  else {
+	// connect 
+	rc = doConnectCmd(commands[1], commands[2]);
   }
-  else if (streql(cmd,"where"))
-  {
-    rc = doWhereCmd();
-  }
-  else if (streql(cmd,"quit"))
-  {
-    rc = doQuitCmd();
-  }
-  else if (streql(cmd,"1") || streql(cmd,"2") || streql(cmd,"3")
-            || streql(cmd,"4") || streql(cmd,"5") || streql(cmd,"6")
-            || streql(cmd,"7") || streql(cmd,"8") || streql(cmd,"9")
-          )
-  {
-    rc = doMoveCmd(atoi(cmd));
-  }
-  else
-  {
-    rc = doDefaultCmd();
-  }
-
+  
   return rc;
 }
 
 int
-doConnectCmd()
+doConnectCmd(char *hostname, char *port)
 {
 return -1;
 }
