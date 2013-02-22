@@ -285,7 +285,7 @@ int
 doWhereCmd(Client *C)
 {
 if (globals.host != NULL && globals.port != NULL){
-    fprintf(stdout, "Connected to %s:%d",globals.host, globals,port); 
+    fprintf(stdout, "Connected to %s:%d",globals.host, globals.port); 
 }else{
     fprintf(stdout, "Not connected");
 }
@@ -295,9 +295,10 @@ return 1;
 int 
 doQuitCmd(Client *C)
 {
-    if (doDisconnectCmd(C)){
+    if (doDisconnectCmd(C)) {
         return -1;
-    else{
+    }
+    else {
         return 1;
     }
 }
