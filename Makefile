@@ -20,14 +20,17 @@ net:
 protocol_utils:
 	gcc $(CFLAGS) -c lib/protocol_utils.c
 
-protocol_client: protocol_utils protocol_session
+protocol_client: protocol_utils protocol_session gamelogic
 	gcc $(CFLAGS) -c -pthread lib/protocol_client.c
 
-protocol_server: protocol_utils protocol_session
+protocol_server: protocol_utils protocol_session gamelogic
 	gcc $(CFLAGS) -c -pthread lib/protocol_server.c
 
 protocol_session: protocol_utils net
 	gcc $(CFLAGS) -c lib/protocol_session.c
+
+gamelogic:
+	gcc $(CFLAGS) -c lib/gamelogic.c
 
 clean:
 	rm $(objs) $(targets)

@@ -30,6 +30,7 @@
 #include "protocol.h"
 #include "protocol_utils.h"
 #include "protocol_client.h"
+#include "gamelogic.h"
 
 typedef struct {
     Proto_Session rpc_session;
@@ -88,7 +89,27 @@ static int
 proto_client_event_null_handler(Proto_Session *s) {
     fprintf(stderr,
             "proto_client_event_null_handler: invoked for session:\n");
-    proto_session_dump(s);
+    char *data;
+    int winCode;
+    proto_session_hdr_unmarshall(s,&(s->rhdr));
+    proto_session_body_ptr(s,0,&data);
+    int off =  proto_session_body_unmarshall_bytes(s, s->rhdr.blen-1,0,data);
+    proto_session_body_unmarshall_int(s,off,&winCode);
+
+    displayBoard(data);
+    switch (winCode){
+        case 2: //draw
+            fprintf(stdout,"Game Over: Draw\n");
+            break;
+        case 1: //X wins
+            fprintf(stdout,"Game Over: X Wins\n");
+            break;
+        case 0: //O wins
+            fprintf(stdout,"Game Over: O Wins\n");
+            break;
+        default: //game not over yet
+            break;
+    }
 
     return 1;
 }

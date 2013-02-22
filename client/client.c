@@ -284,8 +284,8 @@ return -1;
 int
 doWhereCmd(Client *C)
 {
-if (globals.host != NULL && globals.port != NULL){
-    fprintf(stdout, "Connected to %s:%d",globals.host, globals,port); 
+if (globals.host != NULL && globals.port != 0){
+    fprintf(stdout, "Connected to %s:%d",globals.host, globals.port); 
 }else{
     fprintf(stdout, "Not connected");
 }
@@ -297,7 +297,7 @@ doQuitCmd(Client *C)
 {
     if (doDisconnectCmd(C)){
         return -1;
-    else{
+    }else{
         return 1;
     }
 }
@@ -330,7 +330,8 @@ doMoveCmd(Client *C, int move)
 int
 doDefaultCmd(Client *C)
 {
-return -1;
+    fprintf(stdout, "not a valid command");
+return 1;
 }
 
 void *
