@@ -338,7 +338,7 @@ proto_session_rpc(Proto_Session *s)
   s->shdr.blen = sizeof(s->sbuf);
   net_writen(s->fd, s, sizeof(s));
   
-  s->shdr.blen = sizeof(s->rbuf);
+  s->rhdr.blen = sizeof(s->rbuf);
   if (net_readn(s->fd, s, sizeof(s)) >= 0) 
     rc = 1;
   else 

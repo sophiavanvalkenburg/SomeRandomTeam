@@ -230,6 +230,7 @@ docmd(Client *C, char *cmd)
   else {
 	// connect 
 	rc = doConnectCmd(C,commands[1], commands[2]);
+    
   }
   
   return rc;
@@ -241,16 +242,19 @@ doConnectCmd(Client *C, char *host, char *port)
     initGlobals(host, port);
 
     // ok startup our connection to the server
-   int rc = startConnection(C, globals.host, globals.port, update_event_handler);
-   if (rc == 1){
-        fprintf(stdout, "Connected to %s:%d : You are X\n", globals.host, globals.port);
-     }else if (rc == 0){
-        fprintf(stdout, "Connected to %s:%d : You are O\n", globals.host, globals.port);
-     }else {
+    if ( startConnection(C, globals.host, globals.port, update_event_handler) < 0){
         fprintf(stderr, "ERROR: Not able to connect to %s:%d\n",globals.host, globals.port);
+        return -1;
+    }else{
+        //int rc = proto_client_hello(C->ph);
+       // if (rc == 1){
+        //    fprintf(stdout, "Connected to %s:%d : You are %c\n", globals.host, globals.port,C->type);
+       // }else if (rc == 0){
+       //     fprintf(stdout, "Connected to %s:%d : You are \n", globals.host, globals.port);
+       // }
     }
-
-    return rc;
+    
+    return 0;
 }
 
 int

@@ -169,10 +169,9 @@ proto_client_connect(Proto_Client_Handle ch, char *host, PortType port) {
         perror("proto_client_init:");
         return -3;
     }
+    
 
-    int rc = proto_client_hello(ch);
-
-    return rc;
+    return 0;
 }
 
 static void
@@ -200,6 +199,10 @@ do_generic_dummy_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt) {
     rc = proto_session_rpc(s);
 
     proto_session_body_unmarshall_int(s, 0, &rc);
+
+//    if (rc < 0){
+//        close(s->fd);
+//    }
 
     return rc;
 }

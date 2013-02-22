@@ -263,8 +263,8 @@ proto_server_start_rpc_loop(void) {
 
 static int
 proto_session_lost_default_handler(Proto_Session *s) {
-    fprintf(stderr, "Session lost [server side]...:\n");
-    proto_session_dump(s);
+    /*fprintf(stderr, "Session lost [server side]...:\n");
+    proto_session_dump(s);*/
     return -1;
 }
 
