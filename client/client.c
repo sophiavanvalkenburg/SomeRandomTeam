@@ -229,8 +229,10 @@ docmd(Client *C, char *cmd)
   
   else {
 	// connect 
-	rc = doConnectCmd(C,commands[1], commands[2]);
-    
+    if (streql(commands[0], "connect")) 
+      rc = doConnectCmd(C,commands[1], commands[2]);
+    else
+      rc = doDefaultCmd(C);
   }
   
   return rc;
