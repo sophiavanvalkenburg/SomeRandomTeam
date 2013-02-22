@@ -88,7 +88,7 @@ static int
 proto_client_event_null_handler(Proto_Session *s) {
     fprintf(stderr,
             "proto_client_event_null_handler: invoked for session:\n");
-    proto_session_dump(s);
+    proto_session_
 
     return 1;
 }
@@ -213,8 +213,28 @@ proto_client_hello(Proto_Client_Handle ch) {
 }
 
 extern int
-proto_client_move(Proto_Client_Handle ch, char data) {
-    return do_generic_dummy_rpc(ch, PROTO_MT_REQ_BASE_MOVE);
+proto_client_move(Proto_Client_Handle ch, int tp, char move) {
+    
+    int rc;
+    Proto_Session *s;
+    Proto_Client *c = ch;
+
+    s=&(c->rpc_session);
+    // marshall
+
+    marshall_mtonly(s, PROTO_MT_REQ_BASE_MOVE);
+    
+    proto_session_body_marshall_int(s,tp);
+	proto_session_body_marshall_int(s,move);
+    rc = proto_session_rpc(s);
+
+    if (rc == 1){
+        proto_session_body_unmarshall_int(s, 0, &rc);
+    }else{
+        close(s->fd);
+    }
+
+    return rc;
 }
 
 extern int
