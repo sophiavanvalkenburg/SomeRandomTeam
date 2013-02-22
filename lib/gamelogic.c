@@ -37,3 +37,20 @@ extern int gameResult(int buf[]) {
 return -1; // game still in progress
 
 }
+
+extern void displayBoard(char buf[]) {
+
+  int i;
+
+  for (i = 0; i < 8; i++) {
+    if ((i+1) % 3 == 0) 
+      printf("%c\n-----\n", buf[i]); 
+    else 
+      printf("%c|", buf[i]);
+  }
+  printf("%c\n-----\n", buf[i]);
+      
+}
+ 
+
+}
