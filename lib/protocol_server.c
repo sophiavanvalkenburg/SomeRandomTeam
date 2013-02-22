@@ -26,6 +26,7 @@
 #include <strings.h>
 #include <errno.h>
 #include <pthread.h>
+#include <memory.h>
 
 #include "net.h"
 #include "protocol.h"
@@ -55,6 +56,7 @@ struct {
     Proto_MT_Handler base_req_handlers[PROTO_MT_REQ_BASE_RESERVED_LAST -
             PROTO_MT_REQ_BASE_RESERVED_FIRST - 1];
     int turn; //0 represents O, 1 represents X
+    int cb[9]; //chess board
 } Proto_Server;
 
 extern PortType proto_server_rpcport(void) {
@@ -68,6 +70,14 @@ extern PortType proto_server_eventport(void) {
 extern Proto_Session *
 proto_server_event_session(void) {
     return &Proto_Server.EventSession;
+}
+
+
+static void* printCB(){
+	long k;
+	for(k=0;k<9;k++){
+		printf("cb: %d\n",Proto_Server.cb[k]);
+	}
 }
 
 extern int
@@ -340,6 +350,7 @@ proto_server_mt_move_handler(Proto_Session *s) {
     proto_session_body_unmarshall_int(s, 0, &who);
 	printf("move handler: body unmarshall move\n");
     proto_session_body_unmarshall_int(s, sizeof (int), &move);
+	move=move-1;
 
     // setup dummy reply header : set correct reply message type and 
     // everything else empty
@@ -351,11 +362,20 @@ proto_server_mt_move_handler(Proto_Session *s) {
     h.type = PROTO_MT_REP_BASE_MOVE; 
 	printf("move handler: who is %d, turn is %d\n",who,Proto_Server.turn);
     if (who == Proto_Server.turn) {
-        int valid = 1;
+        int valid;
         //verify
+        if(move<0 || move >8){
+		valid=0;
+	}else if(Proto_Server.cb[move]==-1){
+		valid=1;
+	}else{
+		valid=0;
+	}
         if (valid) {
 		printf("move handler: valid\n");
             //make the move
+            Proto_Server.cb[move]=who;
+		printCB();
             //switch turn
             	printf("move handler: switching turn\n");
             if(Proto_Server.turn==0){
@@ -389,6 +409,8 @@ proto_server_init(void) {
 
     //initialize turn to X (1)
     Proto_Server.turn = X;
+    //initialize chess board to empty (-1)
+    memset (Proto_Server.cb, -1, sizeof(Proto_Server.cb));
 
     proto_session_init(&Proto_Server.EventSession);
 
@@ -447,3 +469,4 @@ proto_server_init(void) {
 
     return 0;
 }
+
