@@ -88,7 +88,7 @@ static int
 proto_client_event_null_handler(Proto_Session *s) {
     fprintf(stderr,
             "proto_client_event_null_handler: invoked for session:\n");
-    proto_session_
+    proto_session_dump(s);
 
     return 1;
 }
