@@ -1,48 +1,34 @@
-void displayBoard(char buf[]) {
+int gameResult(int buf[]) {
 
   int i;
 
-  for (i = 0; i < 8; i++) {
-    if ((i+1) % 3 == 0) 
-      printf("%c\n-----\n", buf[i]); 
-    else 
-      printf("%c|", buf[i]);
-  }
-  printf("%c\n-----\n", buf[i]);
-      
-}
-
-int gameResult(char buf[]) {
-
-  int i, j;
-
   // horizontal wins
   for (i = 0; i < 3; i++) {
-    if (buf[i*3] == 'X' && buf[i*3 + 1] == 'X' && buf[i*3 + 2] == 'X')
-      return 0; // X wins
-    else if (buf[i*3] == 'O' && buf[i*3 + 1] == 'O' && buf[i*3 + 2] == 'O') 
-      return 1; // O wins
+    if (buf[i*3] == 0 && buf[i*3 + 1] == 0 && buf[i*3 + 2] == 0)
+      return 0; // O wins
+    else if (buf[i*3] == 1 && buf[i*3 + 1] == 1 && buf[i*3 + 2] == 1) 
+      return 1; // X wins
   }
 
   // vertical wins
   for (i = 0; i < 3; i++) {
-    if (buf[i] == 'X' && buf[i + 3] == 'X' && buf[i + 6] == 'X')
-      return 0; // X wins
-    else if (buf[i] == 'O' && buf[i + 3] == 'O' && buf[i + 6] == 'O')
-      return 1; // O wins
+    if (buf[i] == 0 && buf[i + 3] == 0 && buf[i + 6] == 0)
+      return 0; // O wins
+    else if (buf[i] == 1 && buf[i + 3] == 1 && buf[i + 6] == 1)
+      return 1; // X wins
   }
 
   
   // diagonal wins
-  if ((buf[0] == 'X' && buf[4] == 'X' && buf[8] == 'X') || (buf[2] == 'X' && buf[4] == 'X' && buf[6] == 'X'))
-    return 0; // X wins
+  if ((buf[0] == 0 && buf[4] == 0 && buf[8] == 0) || (buf[2] == 0 && buf[4] == 0 && buf[6] == 0))
+    return 0; // O wins
   
-  if ((buf[0] == 'O' && buf[4] == 'O' && buf[8] == 'O') || (buf[2] == 'O' && buf[4] == 'O' && buf[6] == 'O'))
-    return 1; // O wins
+  if ((buf[0] == 1 && buf[4] == 1 && buf[8] == 1) || (buf[2] == 1 && buf[4] == 1 && buf[6] == 1))
+    return 1; // X wins
 
   // drawn games
   for (i = 0; i < 9; i++) {
-    if ((buf[i] != 'X') && (buf[i] != 'O'))
+    if (buf[i] == -1)
       break;
     return 2; // Game Drawn
   }
