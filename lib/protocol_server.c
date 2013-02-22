@@ -303,13 +303,13 @@ proto_server_mt_hello_handler(Proto_Session *s) {
     // setup dummy reply header : set correct reply message type and 
     // everything else empty
     bzero(&h, sizeof (s));
-    h.type = proto_session_hdr_unmarshall_type(s);
-    h.type += PROTO_MT_REQ_BASE_HELLO;
+    h.type = PROTO_MT_REP_BASE_HELLO;
     proto_session_hdr_marshall(s, &h);
-    if (Proto_Server.EventNumSubscribers == 0) {
+    printf("proto_server_hello_handler: eventNumSubscribers %d\n",Proto_Server.EventNumSubscribers);
+    if (Proto_Server.EventNumSubscribers == 1) {
         //assign X
         proto_session_body_marshall_int(s, X);
-    } else if (Proto_Server.EventNumSubscribers == 1) {
+    } else if (Proto_Server.EventNumSubscribers == 2) {
         //assign O
         proto_session_body_marshall_int(s, O);
     } else {
@@ -333,32 +333,42 @@ proto_server_mt_move_handler(Proto_Session *s) {
     //2. which move it performs
     int who;
     char* move;
-    proto_session_body_unmarshall_char(s, sizeof (int), move);
     proto_session_body_unmarshall_int(s, 0, &who);
-    if (who == Proto_Server.turn) {
-        int valid = 0;
-        //verify
-        if (valid) {
-            //make the move
-            
-            //send success message back
-        } else {
-            //send error message: not a valid move
-        }
-    } else {
-        //send error message: not your turn
-    }
+    proto_session_body_unmarshall_char(s, sizeof (int), move);
 
     // setup dummy reply header : set correct reply message type and 
     // everything else empty
-    bzero(&h, sizeof (s));
-    h.type = proto_session_hdr_unmarshall_type(s);
-    h.type += PROTO_MT_REP_BASE_RESERVED_FIRST;
+    bzero(&h, sizeof (h));
+    bzero(&(s->sbuf), s->slen);
+    h.type = PROTO_MT_REP_BASE_MOVE; 
+	printf("move handler: who is %d, turn is %d\n",who,Proto_Server.turn);
+    if (who == Proto_Server.turn) {
+        int valid = 1;
+        //verify
+        if (valid) {
+		printf("move handler: valid\n");
+            //make the move
+            //switch turn
+            	printf("move handler: switching turn\n");
+            if(Proto_Server.turn==0){
+		Proto_Server.turn=1;
+		}else{
+			Proto_Server.turn=0;
+		}
+		printf("move handler: start sending message back\n");
+            //send success message back
+            proto_session_body_marshall_int(s,1);
+        } else {
+            //send error message: not a valid move
+            proto_session_body_marshall_int(s,0);
+        }
+    } else {
+        //send error message: not your turn
+        proto_session_body_marshall_int(s,-1);
+    }
+	printf("move handler: marshalling header\n");
     proto_session_hdr_marshall(s, &h);
-
-    // setup a dummy body that just has a return code 
-    proto_session_body_marshall_int(s, 0xdeadbeef);
-
+	printf("move handler: sending message back");
     rc = proto_session_send_msg(s, 1);
 
     return rc;
@@ -384,9 +394,13 @@ proto_server_init(void) {
         Proto_Server.base_req_handlers[ind] = proto_server_mt_null_handler;
         // (complete) ADD CODE
     }
+	//set hello handler
     int ind = PROTO_MT_REQ_BASE_HELLO - PROTO_MT_REQ_BASE_RESERVED_FIRST - 1;
     Proto_Server.base_req_handlers[ind] = proto_server_mt_hello_handler;
 
+	//set move handler
+	ind = PROTO_MT_REQ_BASE_MOVE - PROTO_MT_REQ_BASE_RESERVED_FIRST - 1;
+	Proto_Server.base_req_handlers[ind] = proto_server_mt_move_handler;
 
     for (i = 0; i < PROTO_SERVER_MAX_EVENT_SUBSCRIBERS; i++) {
         Proto_Server.EventSubscribers[i] = -1;
