@@ -265,27 +265,41 @@ doConnectCmd(Client *C, char *host, char *port)
 int
 doDisconnectCmd(Client *C)
 {
-return -1;
+    int rc =  proto_client_goodbye(C->ph);
+    if (rc < 0){
+        fprintf(stdout,"Error: problem disconnecting");
+    }else{
+        fprintf(stdout, "Game Over: You Quit");
+        C->type = Q;
+    }
+    return 1;
 }
 
 int
 doEnterCmd(Client *C)
 {
-    
 return -1;
 }
 
 int
 doWhereCmd(Client *C)
 {
-
-return -1;
+if (globals.host != NULL && globals.port != NULL){
+    fprintf(stdout, "Connected to %s:%d",globals.host, globals,port); 
+}else{
+    fprintf(stdout, "Not connected");
+}
+return 1;
 }
 
 int 
 doQuitCmd(Client *C)
 {
-return -1;
+    if (doDisconnectCmd(C)){
+        return -1;
+    else{
+        return 1;
+    }
 }
 
 int
