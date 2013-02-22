@@ -254,6 +254,9 @@ doConnectCmd(Client *C, char *host, char *port)
         }
     
         fprintf(stdout, "Connected to %s:%d : You are %c\n", globals.host, globals.port,C->type);
+	if(C->type != X && C->type!=O){
+		printf("no more player accepted, you are a spectator.");	
+	}
     }
     
     return 1;
@@ -286,9 +289,31 @@ return -1;
 }
 
 int
-doMoveCmd(Client *C)
+doMoveCmd(Client *C, int move)
 {
-return -1;
+		//first input type
+	int tp;
+	if(C->type == X){
+		tp=1;
+	}else if(C->type == O){
+		tp=0;
+	}else{
+		fprintf(stderr,"do move command: invalid type %c\n",C->type);
+		return -1;
+	}
+	//proto_session_body_marshall_int(s,tp);
+	//then input move
+	//proto_session_body_marshall_int(s,move);
+	int rc = proto_client_move(C->ph,tp,move);
+	printf("do move command: rc = %d\n",rc);
+	if(rc == 1){
+		//valid
+	}else if(rc==0){
+		//invalid: not a valid move	
+	}else{
+		//invalid: not your turn
+	}
+	return 1;
 }
 
 int
