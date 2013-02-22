@@ -293,7 +293,7 @@ proto_session_send_msg(Proto_Session *s, int reset)
   s->slen = sizeof(s->shdr);
 
     net_writen(s->fd, &(s->shdr), s->slen);
-
+	net_writen(s->fd,&(s->sbuf),s->shdr.blen);
   
 
   // write request
@@ -321,7 +321,7 @@ proto_session_rcv_msg(Proto_Session *s)
   s->rhdr.blen = sizeof(s->sbuf);
   s->rlen = sizeof(s->rhdr);
   net_readn(s->fd, &(s->rhdr), s->rlen); 
-  
+  net_readn(s->fd, &(s->rbuf), s->rhdr.blen);
 
     if (proto_debug()) {
       fprintf(stderr, "%p: proto_session_rcv_msg: RCVED:\n", pthread_self());
@@ -336,14 +336,16 @@ proto_session_rpc(Proto_Session *s)
   int rc;
   
   // ADD CODE
+	int n1;
+	int n2;
+	n1 = proto_session_send_msg(s,1);
+	if(n1!=1){
+		printf("prote_session_rpc error: sending messge");
+		return -1;	
+	}
+  	n2 = proto_session_rcv_msg(s);
 
-  s->shdr.blen = sizeof(s->sbuf);
-  s->slen = sizeof(s->shdr);
-  net_writen(s->fd, &(s->shdr), s->slen);
-  
-  s->rhdr.blen = sizeof(s->rbuf);
-  s->rlen = sizeof(s->rhdr);
-  if (net_readn(s->fd, &(s->rhdr),s->rlen) >= 0) 
+  if (n2==1) 
     rc = 1;
   else 
     rc = -1;
