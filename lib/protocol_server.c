@@ -203,6 +203,9 @@ proto_server_req_dispatcher(void * arg) {
             pthread_self(), s.fd);
 
     for (;;) {
+	//flush the buffer
+	bzero(&(s.rbuf),sizeof(int)*2);
+	s.slen=0;
         //read msg to s
         if (proto_session_rcv_msg(&s) == 1) {
             // (complete) ADD CODE
@@ -305,7 +308,7 @@ proto_server_mt_hello_handler(Proto_Session *s) {
     bzero(&h, sizeof (s));
     h.type = PROTO_MT_REP_BASE_HELLO;
     proto_session_hdr_marshall(s, &h);
-    printf("proto_server_hello_handler: eventNumSubscribers %d\n",Proto_Server.EventNumSubscribers);
+	printf("proto_server_hello_handler: eventNumSubscribers %d\n",Proto_Server.EventNumSubscribers);
     if (Proto_Server.EventNumSubscribers == 1) {
         //assign X
         proto_session_body_marshall_int(s, X);
@@ -332,14 +335,19 @@ proto_server_mt_move_handler(Proto_Session *s) {
     //1. who is this
     //2. which move it performs
     int who;
-    char* move;
+    int move;
+	printf("move handler: body unmarshall int\n");
     proto_session_body_unmarshall_int(s, 0, &who);
-    proto_session_body_unmarshall_char(s, sizeof (int), move);
+	printf("move handler: body unmarshall move\n");
+    proto_session_body_unmarshall_int(s, sizeof (int), &move);
 
     // setup dummy reply header : set correct reply message type and 
     // everything else empty
-    bzero(&h, sizeof (h));
-    bzero(&(s->sbuf), s->slen);
+    printf("move handler: bzero header\n");
+    bzero(&h, sizeof (s));
+	printf("move handler: bzero sbuf\n");
+    bzero(&(s->sbuf), sizeof(int)*2);
+	s->slen=0;
     h.type = PROTO_MT_REP_BASE_MOVE; 
 	printf("move handler: who is %d, turn is %d\n",who,Proto_Server.turn);
     if (who == Proto_Server.turn) {
@@ -368,7 +376,7 @@ proto_server_mt_move_handler(Proto_Session *s) {
     }
 	printf("move handler: marshalling header\n");
     proto_session_hdr_marshall(s, &h);
-	printf("move handler: sending message back");
+	printf("move handler: sending message back\n");
     rc = proto_session_send_msg(s, 1);
 
     return rc;

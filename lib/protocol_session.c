@@ -188,7 +188,7 @@ proto_session_body_marshall_ll(Proto_Session *s, long long v)
 extern int 
 proto_session_body_unmarshall_ll(Proto_Session *s, int offset, long long *v)
 {
-  if (s && ((s->rlen - (offset + sizeof(long long))) >=0 )) {
+  if (s && ((s->rlen - (offset + sizeof(long long))) >=1 )) {
     *v = *((long long *)(s->rbuf + offset));
     *v = htonl(*v);
     return offset + sizeof(long long);
@@ -199,6 +199,7 @@ proto_session_body_unmarshall_ll(Proto_Session *s, int offset, long long *v)
 extern int 
 proto_session_body_marshall_int(Proto_Session *s, int v)
 {
+	printf("body marshall int: add int %d to slen %d\n",v,s->slen);
   if (s && ((s->slen + sizeof(int)) < PROTO_SESSION_BUF_SIZE)) {
     *((int *)(s->sbuf + s->slen)) = htonl(v);
     s->slen+=sizeof(int);
