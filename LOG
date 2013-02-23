@@ -71,6 +71,7 @@ Questions:
 Decisions:
     -Jarib: protocol_session.c, Zheng: protocol_client.c, Sophia: protocol_server.c
     -we'll meet again on next Tuesday to start implementing the Tic Tac Toe game
+<<<<<<< HEAD
 
 Tue Feb 19 14:48:28 EST 2013
 Attendees: Sophia, Zheng, Jarib
@@ -103,3 +104,5 @@ Fri Feb 22 23:17:28 EST 2013
 Attendees: Sophia, Zheng, Jarib
 Comments/Notes:
     -a2 done
+=======
+>>>>>>> origin
