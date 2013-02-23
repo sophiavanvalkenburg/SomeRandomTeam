@@ -484,17 +484,16 @@ proto_server_mt_goodbye_handler(Proto_Session *s) {
     int rc = 1;
     Proto_Msg_Hdr h;
 
-    proto_server_remove_event_subscriber(s->fd);
     int clientType;
     proto_session_body_unmarshall_int(s,0,&clientType);
-    // setup dummy reply header : set correct reply message type and 
-    // everything else empty
-    bzero(&h, sizeof (s));
-    h.type = proto_session_hdr_unmarshall_type(s);
-    h.type += PROTO_MT_REP_BASE_GOODBYE;
+    
+    bzero(&h, sizeof (Proto_Msg_Hdr));
+    bzero(&(s->sbuf), sizeof(int)*2);
+    s->slen=0;
+    
+    h.type = PROTO_MT_REP_BASE_GOODBYE;
     proto_session_hdr_marshall(s, &h);
 
-    // setup a dummy body that just has a return code 
     proto_session_body_marshall_int(s, 1);
 
     rc = proto_session_send_msg(s, 1);
@@ -511,7 +510,7 @@ proto_server_post_disconnect_event(int clientType) {
     Proto_Session *event_session = &(Proto_Server.EventSession);
     Proto_Msg_Hdr hdr = event_session->shdr;
     hdr.type = PROTO_MT_EVENT_BASE_DISCONNECT;
-    
+
     proto_session_hdr_marshall(event_session, &hdr);
     proto_session_body_marshall_int(event_session, clientType);
     
