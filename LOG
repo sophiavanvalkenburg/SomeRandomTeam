@@ -98,3 +98,8 @@ move (client inputs a character number) returns with -1 for invalid move, -2 for
 On an event update, the buffer will contain 10 characters.
 The first 9 are characters for each block on the board (X,O, or number).
 The last index contains a win code (-1 for no win yet, 0 for O wins, 1 for X wins, and 2 for draw).
+
+Fri Feb 22 23:17:28 EST 2013
+Attendees: Sophia, Zheng, Jarib
+Comments/Notes:
+    -a2 done
