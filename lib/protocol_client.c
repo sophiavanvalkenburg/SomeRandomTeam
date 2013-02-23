@@ -173,12 +173,13 @@ proto_client_event_disconnect_handler (Proto_Session *s) {
     int disconnectCode;
     proto_session_body_unmarshall_int(s,0,&disconnectCode);
     close(s->fd);
+    //printf("disconnect handler: code %d\n",disconnectCode);
 
     if (disconnectCode == 1){
 
-        fprintf(stdout,"Game Over: X quit");
+        fprintf(stdout,"Game Over: X quit\n");
     }else if (disconnectCode == 0){
-        fprintf(stdout, "Game Over: O quit");
+        fprintf(stdout, "Game Over: O quit\n");
     }
 
     return 1;
@@ -337,11 +338,12 @@ proto_client_goodbye(Proto_Client_Handle ch,int tp) {
     int rc;
     Proto_Session *s;
     Proto_Client *c = ch;
-
+    //printf("client goodbye: tp %d\n",tp);
     s=&(c->rpc_session);
     // marshall
 
     marshall_mtonly(s, PROTO_MT_REQ_BASE_GOODBYE);
+    //s->slen=0;
     proto_session_body_marshall_int(s,tp);
 
     rc = proto_session_rpc(s);
