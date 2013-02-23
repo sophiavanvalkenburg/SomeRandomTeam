@@ -136,7 +136,7 @@ getBoardFromSession(Proto_Session *s){
             fprintf(stdout,"Game Over: O Wins\n");
             return -1;
         default: //game not over yet
-	  fprintf(stdout,"%c");
+	  //	  fprintf(stdout,"%c");
             return 1;
     }
 }
