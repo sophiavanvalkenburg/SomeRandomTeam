@@ -318,13 +318,16 @@ doMoveCmd(Client *C, int move)
 		return -1;
 	}
 	int rc = proto_client_move(C->ph,tp,move);
-	printf("do move command: rc = %d\n",rc);
+	//	printf("do move command: rc = %d\n",rc);
 	if(rc == 1){
 		//valid
+	  
 	}else if(rc==0){
-		//invalid: not a valid move	
+		//invalid: not a valid move
+	  fprintf(stderr,"Not a valid move!\n");
 	}else{
 		//invalid: not your turn
+	  fprintf(stderr,"Not your turn yet!\n");
 	}
 	return 1;
 }
