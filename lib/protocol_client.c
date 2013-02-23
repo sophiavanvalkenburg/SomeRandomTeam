@@ -26,14 +26,15 @@
 #include <strings.h>
 #include <errno.h>
 #include <pthread.h>
+#include <memory.h>
 
 #include "protocol.h"
 #include "protocol_utils.h"
 #include "protocol_client.h"
-#include "gamelogic.h"
 
 typedef struct {
     char board[9];
+    int type;
     Proto_Session rpc_session;
     Proto_Session event_session;
     pthread_t EventHandlerTid;
@@ -86,7 +87,7 @@ proto_client_session_lost_default_hdlr(Proto_Session *s) {
     return -1;
 }
 
-void
+int
 getBoardFromSession(Proto_Session *s){
     int winCode;
     int board[9];
@@ -101,6 +102,7 @@ getBoardFromSession(Proto_Session *s){
     proto_session_body_unmarshall_int(s,9*sizeof(int),&winCode);
     
     char token;
+    printf("\n", token); 
     for (i = 0; i < 8; i++) {
       if(board[i] == 0){
 	token = 'O';
@@ -125,22 +127,31 @@ getBoardFromSession(Proto_Session *s){
     switch (winCode){
         case 2: //draw
             fprintf(stdout,"Game Over: Draw\n");
-            break;
+            return -1;
         case 1: //X wins
             fprintf(stdout,"Game Over: X Wins\n");
-            break;
+            return -1;
 
         case 0: //O wins
             fprintf(stdout,"Game Over: O Wins\n");
-            break;
+            return -1;
         default: //game not over yet
-            break;
+	  fprintf(stdout,"%c");
+            return 1;
     }
 }
+
+int
+getBoardFromSessionHelper(Proto_Client_Handle ch){
+  Proto_Client *c = ch;
+  Proto_Session *s = &(c->event_session);
+  return getBoardFromSession(s);
+}
+
 static int
 proto_client_event_null_handler (Proto_Session *s) {
-    fprintf(stderr,
-            "proto_client_event null_handler: invoked for session:\n");
+  //fprintf(stderr,
+  //       "proto_client_event null_handler: invoked for session:\n");
     getBoardFromSession(s);
 
     return 1;
@@ -174,9 +185,9 @@ proto_client_event_dispatcher(void * arg) {
         } else {
             //ADD CODE
             //incomplete
-            printf("proto_client_event_dispatcher: proto_session_rcv_msg(s)!=1");
+            //printf("proto_client_event_dispatcher: proto_session_rcv_msg(s)!=1");
             
-            //c->session_lost_handler(s);
+            c->session_lost_handler(s);
                     goto leave;
         }
     }
@@ -193,7 +204,7 @@ proto_client_init(Proto_Client_Handle *ch) {
     c = (Proto_Client *) malloc(sizeof (Proto_Client));
     if (c == NULL) return -1;
     bzero(c, sizeof (Proto_Client));
-
+    memset (c->event_session.rbuf, -1, sizeof(int)*10);
     proto_client_set_session_lost_handler(c,
             proto_client_session_lost_default_hdlr);
 
@@ -274,7 +285,7 @@ proto_client_move(Proto_Client_Handle ch, int tp, char move) {
 
     s=&(c->rpc_session);
     // marshall
-
+    
     marshall_mtonly(s, PROTO_MT_REQ_BASE_MOVE);
     
     proto_session_body_marshall_int(s,tp);

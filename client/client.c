@@ -280,7 +280,7 @@ doDisconnectCmd(Client *C)
 int
 doEnterCmd(Client *C)
 {
-return -1;
+  return getBoardFromSessionHelper(C->ph);
 }
 
 int
