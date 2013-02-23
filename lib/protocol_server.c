@@ -409,8 +409,17 @@ proto_server_mt_move_handler(Proto_Session *s) {
 	printf("move handler: sending message back\n");
     rc = proto_session_send_msg(s, 1);
 
+
+    Proto_Session event_session = Proto_Server.EventSession;
+    Proto_Msg_Hdr hdr = event_session.shdr;
+    hdr.type = PROTO_MT_EVENT_BASE_UPDATE;
+    proto_session_hdr_marshall(&event_session, &hdr);
+    proto_server_post_event();  
+ 
     return rc;
 }
+
+
 
 extern int
 proto_server_init(void) {

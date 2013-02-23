@@ -51,6 +51,4 @@ extern void displayBoard(char buf[]) {
   printf("%c\n-----\n", buf[i]);
       
 }
- 
 
-}

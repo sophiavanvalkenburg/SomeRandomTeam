@@ -33,6 +33,7 @@
 #include "gamelogic.h"
 
 typedef struct {
+    char board[9];
     Proto_Session rpc_session;
     Proto_Session event_session;
     pthread_t EventHandlerTid;
@@ -86,17 +87,24 @@ proto_client_session_lost_default_hdlr(Proto_Session *s) {
 }
 
 static int
-proto_client_event_null_handler(Proto_Session *s) {
+proto_client_event_null_handler (Proto_Session *s) {
     fprintf(stderr,
-            "proto_client_event_null_handler: invoked for session:\n");
-    char *data;
-    int winCode;
-    proto_session_hdr_unmarshall(s,&(s->rhdr));
-    proto_session_body_ptr(s,0,&data);
-    int off =  proto_session_body_unmarshall_bytes(s, s->rhdr.blen-1,0,data);
-    proto_session_body_unmarshall_int(s,off,&winCode);
+            "proto_client_event null_handler: invoked for session:\n");
+    getBoardFromSession(s);
 
-    displayBoard(data);
+    return 1;
+}
+
+void
+getBoardFromSession(Proto_Session *s){
+    int winCode;
+    char *board;
+    proto_session_body_ptr(s, 0,&board);
+    int offs = proto_session_body_unmarshall_bytes(s,0,9,board);
+    
+    proto_session_body_unmarshall_int(s,offs,&winCode);
+
+    displayBoard(board);
     switch (winCode){
         case 2: //draw
             fprintf(stdout,"Game Over: Draw\n");
@@ -110,8 +118,6 @@ proto_client_event_null_handler(Proto_Session *s) {
         default: //game not over yet
             break;
     }
-
-    return 1;
 }
 
 static void *
