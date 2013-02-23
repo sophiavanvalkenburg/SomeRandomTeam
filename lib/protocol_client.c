@@ -291,7 +291,24 @@ proto_client_move(Proto_Client_Handle ch, int tp, char move) {
 }
 
 extern int
-proto_client_goodbye(Proto_Client_Handle ch) {
-    return do_generic_dummy_rpc(ch, PROTO_MT_REQ_BASE_GOODBYE);
+proto_client_goodbye(Proto_Client_Handle ch,int tp) {
+    int rc;
+    Proto_Session *s;
+    Proto_Client *c = ch;
+
+    s=&(c->rpc_session);
+    // marshall
+
+    marshall_mtonly(s, PROTO_MT_REQ_BASE_GOODBYE);
+    proto_session_body_marshall_int(s,tp);
+
+    rc = proto_session_rpc(s);
+
+    proto_session_body_unmarshall_int(s, 0, &rc);
+    if (rc){
+        close(s->fd);
+    }
+
+    return rc;
 }
 

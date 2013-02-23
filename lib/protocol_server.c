@@ -139,6 +139,26 @@ proto_server_record_event_subscriber(int fd, int *num) {
     return rc;
 }
 
+static int
+proto_server_remove_event_subscriber(int fd) {
+    int rc = -1;
+
+    pthread_mutex_lock(&Proto_Server.EventSubscribersLock);
+
+       int i;
+        for (i = 0; i < PROTO_SERVER_MAX_EVENT_SUBSCRIBERS; i++) {
+            if (Proto_Server.EventSubscribers[i] == fd) {
+                Proto_Server.EventSubscribers[i] = -1;
+                Proto_Server.EventNumSubscribers--;
+                rc = 1;
+            }
+        }
+    
+
+    pthread_mutex_unlock(&Proto_Server.EventSubscribersLock);
+
+    return rc;
+}
 static
 void *
 proto_server_event_listen(void *arg) {
@@ -420,7 +440,38 @@ proto_server_mt_move_handler(Proto_Session *s) {
     return rc;
 }
 
+static int
+proto_server_mt_goodbye_handler(Proto_Session *s) {
+    int rc = 1;
+    Proto_Msg_Hdr h;
 
+    proto_server_remove_event_subscriber(s->fd);
+    int clientType;
+    proto_session_body_unmarshall_int(s,0,&clientType);
+    // setup dummy reply header : set correct reply message type and 
+    // everything else empty
+    bzero(&h, sizeof (s));
+    h.type = proto_session_hdr_unmarshall_type(s);
+    h.type += PROTO_MT_REP_BASE_GOODBYE;
+    proto_session_hdr_marshall(s, &h);
+
+    // setup a dummy body that just has a return code 
+    proto_session_body_marshall_int(s, clientType);
+
+    rc = proto_session_send_msg(s, 1);
+
+    if (rc){
+        close(s->fd);
+    }
+
+    Proto_Session *event_session = &(Proto_Server.EventSession);
+    Proto_Msg_Hdr hdr = event_session->shdr;
+    hdr.type = PROTO_MT_EVENT_BASE_DISCONNECT;
+    proto_session_hdr_marshall(event_session, &hdr);
+    proto_server_post_disconnect_event();
+
+    return rc;
+}
 
 extern int
 proto_server_init(void) {
@@ -445,12 +496,11 @@ proto_server_init(void) {
         // (complete) ADD CODE
     }
 	//set hello handler
-    int ind = PROTO_MT_REQ_BASE_HELLO - PROTO_MT_REQ_BASE_RESERVED_FIRST - 1;
-    Proto_Server.base_req_handlers[ind] = proto_server_mt_hello_handler;
-
+    proto_server_set_req_handler(PROTO_MT_REQ_BASE_HELLO,proto_server_mt_hello_handler);
 	//set move handler
-	ind = PROTO_MT_REQ_BASE_MOVE - PROTO_MT_REQ_BASE_RESERVED_FIRST - 1;
-	Proto_Server.base_req_handlers[ind] = proto_server_mt_move_handler;
+    proto_server_set_req_handler(PROTO_MT_REQ_BASE_MOVE,proto_server_mt_move_handler);
+    //set goodbye handler
+    proto_server_set_req_handler(PROTO_MT_REQ_BASE_GOODBYE,proto_server_mt_goodbye_handler);
 
     for (i = 0; i < PROTO_SERVER_MAX_EVENT_SUBSCRIBERS; i++) {
         Proto_Server.EventSubscribers[i] = -1;

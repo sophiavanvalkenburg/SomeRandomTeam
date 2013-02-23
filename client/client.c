@@ -267,7 +267,7 @@ doConnectCmd(Client *C, char *host, char *port)
 int
 doDisconnectCmd(Client *C)
 {
-    int rc =  proto_client_goodbye(C->ph);
+    int rc =  proto_client_goodbye(C->ph,C->type);
     if (rc < 0){
         fprintf(stdout,"Error: problem disconnecting");
     }else{
@@ -307,7 +307,12 @@ doQuitCmd(Client *C)
 int
 doMoveCmd(Client *C, int move)
 {
-		//first input type
+    if (globals.host == NULL || globals.port == 0){
+        fprintf(stdout, "Not connected");
+        return 1;
+    }
+
+    //first input type
 	int tp;
 	if(C->type == X){
 		tp=1;
