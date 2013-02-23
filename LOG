@@ -1,0 +1,108 @@
+Meeting on 1/25/13
+Attendees: Sophia, Jarib
+Questions:
+    -how to organize work for PA1
+Decisions:
+    -sophia+jarib both read ch. 3 UDP
+    -sophia reads ch. 4 UDP
+    -jarib reads ch. 5 UDP
+    -meet on Sunday or Monday (after Prof. Appavoo creates the git repo) to set up clone on curzon + work on code
+    -set up weekly meeting time
+Todo: by Sunday 1/27
+    Jarib: ch. 3,5
+    Sophia: ch. 3,4
+    Both: read CTF wiki page, look at skeleton code
+Comments/Notes:
+
+Mon Jan 28 18:16:00 EST 2013
+Attendees: Sophia, Jarib, Zheng
+Questions:
+    -only one person sets up on curzon or all three?
+    -clone on own home dir on csa2?
+    -how to divide the client, server, net files.
+Decisions:
+    -sophia: client.c
+    -jarib: server.c
+    -zheng: net.c
+    -meet on wednesday to put it together and make sure it works
+    -in mean time clone on our own computers and make commits
+Todo: by Wednesday 1/30
+    -complete code as above.
+Comments/Notes:
+
+Explanations of client.c (Sophia)
+getInput():
+this method reads input from standard input and stores it the data field of the LineBuffer global struct (in).
+It removes a newline from the input data but sets the newline field of in to 1 (true).
+The purpose of this function is to allow the user to input a text command to the client program.
+sendStr():
+first sends the string length to the specified destination (for example the server in doSend()), checks whether
+this worked, then sends the string itself and checks if that worked, then reads the response from the server
+and stores it in the buffer. If the the read was successful, it prints the contents of the buffer to standard
+output.
+main():
+the line is to indicate whether to show the menu prompt or not 
+(if a command does not allow a menu prompt, it will assign -1 to the variable rc)
+
+Explanations of server.c (Zheng)
+len = ntohl(len);
+convert len to the correct byte order of the host(server)
+(because the byte order of the client might not be the same)
+
+pthread_create(&tid, NULL, &doit, (void *)connfd);
+create a new thread for the new connection
+
+
+Wed Jan 30 20:39:50 EST 2013
+Attendees: Sophia, Zheng
+Questions:
+    -does the final commit of the assignment have to include the original dummy client/server files? (asked on Piazza)
+Decisions:
+    -we decided to add an as1_part2 folder to hold the simple client/server files and kept the dummy files in the main folder.
+Comments/Notes:
+    -as1 is done
+
+Mon Feb 11 13:31:37 EST 2013
+Attendees: Sophia, Zheng, Jarib
+Questions:
+    -what does the protocol code do??
+    -how we will break up the work for the protocol methods
+    -how we will break up the work for the tic tac toe game
+Decisions:
+    -Jarib: protocol_session.c, Zheng: protocol_client.c, Sophia: protocol_server.c
+    -we'll meet again on next Tuesday to start implementing the Tic Tac Toe game
+<<<<<<< HEAD
+
+Tue Feb 19 14:48:28 EST 2013
+Attendees: Sophia, Zheng, Jarib
+Questions:
+    -do we have to marshall data in the send/rcv methods?
+    -do we send/rcv the whole session struct?
+    -what will be the protocol for tic tac toe
+Decisions:
+    -do not have to marshall data in send/rcv methods (done when packing the data into session)
+    -no time to talk about tic tac toe yet, will meet on Thursday
+Comments:
+    -simple rpc / event is working
+
+Thu Feb 21 23:42:11 EST 2013
+Attendees: Sophia, Zheng, Jarib
+Questions:
+    -difficult bug: calling proto_client_hello right after starting connection causes an infinite request loop in the server
+Decision:
+    -not sure what to do. ask on piazza.
+Comments:
+    -established a protocol for the tic tac toe game.
+connect returns with 1 for X , 0 for O, and -1 for error
+disconnect returns with 1 for X quit, 0 for O quit, and -1 for error
+move (client inputs a character number) returns with -1 for invalid move, -2 for not your turn, and 1 for OK
+On an event update, the buffer will contain 10 characters.
+The first 9 are characters for each block on the board (X,O, or number).
+The last index contains a win code (-1 for no win yet, 0 for O wins, 1 for X wins, and 2 for draw).
+
+Fri Feb 22 23:17:28 EST 2013
+Attendees: Sophia, Zheng, Jarib
+Comments/Notes:
+    -a2 done
+=======
+>>>>>>> origin
