@@ -82,7 +82,38 @@ static void* printCB(){
 
 static int getWinner(){
   //todo: check if there is a winner
-	return -1;
+  int *buf = &(Proto_Server.cb[0]);
+   int i;
+  // horizontal wins
+  for (i = 0; i < 3; i++) {
+    if (buf[i*3] == 0 && buf[i*3 + 1] == 0 && buf[i*3 + 2] == 0)
+      return 0; // O wins
+    else if (buf[i*3] == 1 && buf[i*3 + 1] == 1 && buf[i*3 + 2] == 1) 
+      return 1; // X wins
+  }
+
+  // vertical wins
+  for (i = 0; i < 3; i++) {
+    if (buf[i] == 0 && buf[i + 3] == 0 && buf[i + 6] == 0)
+      return 0; // O wins
+    else if (buf[i] == 1 && buf[i + 3] == 1 && buf[i + 6] == 1)
+      return 1; // X wins
+  }
+
+  
+  // diagonal wins
+  if ((buf[0] == 0 && buf[4] == 0 && buf[8] == 0) || (buf[2] == 0 && buf[4] == 0 && buf[6] == 0))
+    return 0; // O wins
+  
+  if ((buf[0] == 1 && buf[4] == 1 && buf[8] == 1) || (buf[2] == 1 && buf[4] == 1 && buf[6] == 1))
+    return 1; // X wins
+
+  // drawn games
+  for (i = 0; i < 9; i++) {
+    if (buf[i] == -1)
+      return -1; // Game goes on
+  }
+  return 2;//drawn
 }
 
 extern int
@@ -184,7 +215,7 @@ proto_server_event_listen(void *arg) {
                 fprintf(stderr, "subscriber num %d\n", i);
             }
         }
-    }
+    } 
 }
 
 void
