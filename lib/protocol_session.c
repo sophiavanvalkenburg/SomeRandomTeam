@@ -128,6 +128,7 @@ static void
 proto_session_hdr_marshall_type(Proto_Session *s, Proto_Msg_Types t)
 {
   // ADD CODE 
+  printf("hdr marhsall type: %d\n",htonl(t));
   s->shdr.type = htonl(t);
   // have to make sure if htonl is appropriate here for the enum type Proto_Msg_Types.   
 }

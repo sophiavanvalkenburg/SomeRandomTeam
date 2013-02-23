@@ -86,25 +86,42 @@ proto_client_session_lost_default_hdlr(Proto_Session *s) {
     return -1;
 }
 
-static int
-proto_client_event_null_handler (Proto_Session *s) {
-    fprintf(stderr,
-            "proto_client_event null_handler: invoked for session:\n");
-    getBoardFromSession(s);
-
-    return 1;
-}
-
 void
 getBoardFromSession(Proto_Session *s){
     int winCode;
-    char *board;
-    proto_session_body_ptr(s, 0,&board);
-    int offs = proto_session_body_unmarshall_bytes(s,0,9,board);
+    int board[9];
+    //proto_session_body_ptr(s, 0,&board);
+    //int offs = proto_session_body_unmarshall_bytes(s,0,9,board);
     
-    proto_session_body_unmarshall_int(s,offs,&winCode);
-
-    displayBoard(board);
+    //proto_session_body_unmarshall_int(s,offs,&winCode);
+    long i;
+    for(i=0;i<9;i++){
+      proto_session_body_unmarshall_int(s,i*sizeof(int),&(board[i]));
+    }
+    proto_session_body_unmarshall_int(s,9*sizeof(int),&winCode);
+    
+    char token;
+    for (i = 0; i < 8; i++) {
+      if(board[i] == 0){
+	token = 'O';
+      }else if(board[i] == 1){
+	token = 'X';
+      }else{
+	token = (char)(((int)'0')+i+1);
+      }
+      if ((i+1) % 3 == 0) 
+	printf("%c\n-----\n", token); 
+      else 
+	printf("%c|", token);
+  }
+  if(board[8] == 0){
+      token = 'O';
+    }else if(board[i] == 1){
+      token = 'X';
+    }else{
+      token = (char)(((int)'0')+i+1);
+    }
+  printf("%c\n-----\n", token);
     switch (winCode){
         case 2: //draw
             fprintf(stdout,"Game Over: Draw\n");
@@ -112,12 +129,21 @@ getBoardFromSession(Proto_Session *s){
         case 1: //X wins
             fprintf(stdout,"Game Over: X Wins\n");
             break;
+
         case 0: //O wins
             fprintf(stdout,"Game Over: O Wins\n");
             break;
         default: //game not over yet
             break;
     }
+}
+static int
+proto_client_event_null_handler (Proto_Session *s) {
+    fprintf(stderr,
+            "proto_client_event null_handler: invoked for session:\n");
+    getBoardFromSession(s);
+
+    return 1;
 }
 
 static void *

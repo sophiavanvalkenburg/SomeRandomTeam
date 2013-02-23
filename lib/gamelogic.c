@@ -38,17 +38,30 @@ return -1; // game still in progress
 
 }
 
-extern void displayBoard(char buf[]) {
-
+extern void displayBoard(int *buf) {
   int i;
-
+  char token;
   for (i = 0; i < 8; i++) {
+    if(buf[i] == 0){
+      token = 'O';
+    }else if(buf[i] == 1){
+      token = 'X';
+    }else{
+      token = '?';
+    }
     if ((i+1) % 3 == 0) 
-      printf("%c\n-----\n", buf[i]); 
+      printf("%c\n-----\n", token); 
     else 
-      printf("%c|", buf[i]);
+      printf("%c|", token);
   }
-  printf("%c\n-----\n", buf[i]);
+  if(buf[8] == 0){
+      token = 'O';
+    }else if(buf[i] == 1){
+      token = 'X';
+    }else{
+      token = '?';
+    }
+  printf("%c\n-----\n", token);
       
 }
 
