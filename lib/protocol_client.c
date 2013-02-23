@@ -150,9 +150,36 @@ getBoardFromSessionHelper(Proto_Client_Handle ch){
 
 static int
 proto_client_event_null_handler (Proto_Session *s) {
+  fprintf(stderr,
+         "proto_client_event null_handler: invoked for session:\n");
+
+    return 1;
+}
+
+
+static int
+proto_client_event_update_handler (Proto_Session *s) {
   //fprintf(stderr,
   //       "proto_client_event null_handler: invoked for session:\n");
     getBoardFromSession(s);
+
+    return 1;
+}
+
+static int
+proto_client_event_disconnect_handler (Proto_Session *s) {
+  //fprintf(stderr
+  //       "proto_client_event null_handler: invoked for session:\n");
+    int disconnectCode;
+    proto_session_body_unmarshall_int(s,0,&disconnectCode);
+    close(s->fd);
+
+    if (disconnectCode == 1){
+
+        fprintf(stdout,"Game Over: X quit");
+    }else if (disconnectCode == 0){
+        fprintf(stdout, "Game Over: O quit");
+    }
 
     return 1;
 }
@@ -212,6 +239,10 @@ proto_client_init(Proto_Client_Handle *ch) {
             mt < PROTO_MT_EVENT_BASE_RESERVED_LAST; mt++)
         //base event handler init
         proto_client_set_event_handler(c, mt, proto_client_event_null_handler);
+    
+    proto_client_set_event_handler(c,PROTO_MT_EVENT_BASE_UPDATE,proto_client_event_update_handler);
+    proto_client_set_event_handler(c,PROTO_MT_EVENT_BASE_DISCONNECT,proto_client_event_disconnect_handler);
+    
     *ch = c;
     return 1;
 }

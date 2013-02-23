@@ -270,11 +270,8 @@ doDisconnectCmd(Client *C)
     int rc =  proto_client_goodbye(C->ph,C->type);
     if (rc < 0){
         fprintf(stdout,"Error: problem disconnecting");
-    }else{
-        fprintf(stdout, "Game Over: You Quit");
-        C->type = Q;
     }
-    return 1;
+    return rc;
 }
 
 int

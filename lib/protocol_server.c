@@ -225,12 +225,7 @@ proto_server_post_event(void) {
 
     pthread_mutex_lock(&Proto_Server.EventSubscribersLock);
 	//organize data into eventsession
-	long j;
-	for(j=0;j<9;j++){
-		proto_session_body_marshall_int(&Proto_Server.EventSession,Proto_Server.cb[j]);
-	}
-	proto_session_body_marshall_int(&Proto_Server.EventSession,getWinner());
-
+	
     i = 0;
     num = Proto_Server.EventNumSubscribers;
     while (num) {
@@ -461,15 +456,28 @@ proto_server_mt_move_handler(Proto_Session *s) {
 	printf("move handler: sending message back\n");
     rc = proto_session_send_msg(s, 1);
 
+    proto_server_post_move_event();
+
+    return rc;
+}
+
+void
+proto_server_post_move_event() {
 
     Proto_Session *event_session = &(Proto_Server.EventSession);
     Proto_Msg_Hdr hdr = event_session->shdr;
     hdr.type = PROTO_MT_EVENT_BASE_UPDATE;
     proto_session_hdr_marshall(event_session, &hdr);
+    long j;
+	for(j=0;j<9;j++){
+		proto_session_body_marshall_int(&Proto_Server.EventSession,Proto_Server.cb[j]);
+	}
+	proto_session_body_marshall_int(&Proto_Server.EventSession,getWinner());
+
     proto_server_post_event();  
  
-    return rc;
 }
+
 
 static int
 proto_server_mt_goodbye_handler(Proto_Session *s) {
@@ -487,22 +495,30 @@ proto_server_mt_goodbye_handler(Proto_Session *s) {
     proto_session_hdr_marshall(s, &h);
 
     // setup a dummy body that just has a return code 
-    proto_session_body_marshall_int(s, clientType);
+    proto_session_body_marshall_int(s, 1);
 
     rc = proto_session_send_msg(s, 1);
 
     if (rc){
+        proto_server_post_disconnect_event(clientType);
         close(s->fd);
     }
+    return rc;
+}
+void
+proto_server_post_disconnect_event(int clientType) {
 
     Proto_Session *event_session = &(Proto_Server.EventSession);
     Proto_Msg_Hdr hdr = event_session->shdr;
     hdr.type = PROTO_MT_EVENT_BASE_DISCONNECT;
+    
     proto_session_hdr_marshall(event_session, &hdr);
-    proto_server_post_disconnect_event();
-
-    return rc;
+    proto_session_body_marshall_int(event_session, clientType);
+    
+    proto_server_post_event();  
+ 
 }
+
 
 extern int
 proto_server_init(void) {
