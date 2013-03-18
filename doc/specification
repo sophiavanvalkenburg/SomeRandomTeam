@@ -1,0 +1,70 @@
+CS451 - SomeRandomTeam - Specification Document
+
+1. Maze cell types and states
+    A. Types
+        i.  ' ' (empty) floor cell
+        ii. '#' wall cell
+        iii.'h','H' home cell (floor)
+        iv. 'j','J' jail cell (floor)
+    B. States
+        i.  Unoccupied (all cells)
+        ii. Occupied w/player (only floor cells; 
+                                display some player information)
+        iii.Occupied w/flag (floor cells not including jail; display 'f' or 'F')
+        iv. Occupied w/both player and flag (floor cells not including jail)
+
+2. Player states and attributes
+    A. Attribute
+        i.  Team
+        ii. Position (i,j)
+        iii.Name?
+    B. States
+        i.  Free or Jailed
+        ii. Has flag or doesn't have flag
+        iii.Is or is not capturable
+        iv. Can or cannot capture others
+
+3. Player actions
+    A. Move
+        input: w|a|s|d for up, left, down, right direction
+        user indicates the direction they want to move in and if it is
+        valid, their new location is displayed on the map.
+    B. Get Flag
+        user is on a cell containing a flag and indicates that they want
+        to pick it up. once they pick it up, change the player's hasFlag
+        state. server announces flag has been taken.
+    C. Capture Opposing Player
+        (happens during a Move action) if the player can capture and runs
+        into an opposing player who is Capturable, the opposing player is
+        sent to jail. The current player stays in the same spot.
+    D. Free Jailed Player
+        (happens during a Move action) if the player is Free and runs into
+        a teammate who is jailed, the teammate is freed. The current player
+        stays in the same spot.
+    E. Be Freed
+        (happens after a Free player uses the Free Jailed Player action)
+        the jailed player's state is set to Free and transported to their
+        Home Base.
+    F. Get Captured
+        (happens after an opposing player uses Capture Opposing Player action)
+        the captured player's state is set to Jailed and transported to the
+        opposing team's jail.
+    G. Return Flag
+        (happens during a Move action) if the player runs into an opposing
+        player carrying the flag, then the flag is transported to Home Base.
+    H. Lose Flag
+        (happens after an opposing player uses Return Flag action)
+        the player's hasFlag state is set to false.
+
+5. Conditions and Rules associated with winning the game
+    A.  A player on the winning team must capture the opposing team's flag
+        and take it to their Home Base.
+    B.  If all players on both teams are in jail, the game ends in a draw.
+
+6. Extra specification
+    -Flag always starts in the Home Base. When it is returned, it teleports back
+     to the Home Base. It may be picked up by at most one player at a time.
+    -When a player is in their Home Base, they are not Capturable.
+    -When a player is in their Home Territory, they are not Capturable, but if
+     they are holding a flag, it can be stolen
+    
