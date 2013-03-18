@@ -64,7 +64,13 @@ CS451 - SomeRandomTeam - Specification Document
 6. Extra specification
     -Flag always starts in the Home Base. When it is returned, it teleports back
      to the Home Base. It may be picked up by at most one player at a time.
+    -To pick up a flag of an opposing team, the player must be on the flag square
+     and type the command to get a flag.
     -When a player is in their Home Base, they are not Capturable.
     -When a player is in their Home Territory, they are not Capturable, but if
-     they are holding a flag, it can be stolen
+     they are holding a flag, it can be stolen.
+    -To capture an opposing player, the player just has to run into them (be
+     on the same square)
+    -When a free player reaches the opposing team's jail, all of the captured
+     players of the same team are free and teleported to their Home Base.
     
