@@ -1,1 +1,41 @@
 CS451 - SomeRandomTeam - Architecture Document
+
+client
+-timer regulating how often player can make a move
+-client timer starts once the client makes a move request to the server
+
+client loop:
+    makeRequest()
+    timer()
+    acceptPrompt()
+
+makeRequest:
+    -test if player is free
+    -test if new square is not a wall
+    -if both conditions are met, send the request to the server
+
+server
+-timer regulating how often updates are broadcast
+
+server loop:
+    sendUpdate()
+    timer()
+
+server loop:
+    acceptRequest()
+    sendConfirmation()
+    updateState()
+
+acceptRequest:
+    -trusts that square is not a wall (so don't recheck)
+    -still have to check if player is in jail
+    -if jail, send reject to client
+    -otherwise, confirm move
+
+updateState:
+    -update all new player and game states based on the new move
+    -possible updates are those listed in the player actions in specification 
+    -test if game has met a win condition
+
+sendUpdate:
+    sends an array with all player states + attributes and whether the game is won or tie
