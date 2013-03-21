@@ -1,5 +1,10 @@
 CS451 - SomeRandomTeam - Architecture Document
 
+maze
+array of rows of cells
+each cell has position struct (int x, y) and type (char)
+dim_x and dim_y for dimensions of maze
+
 client
 -timer regulating how often player can make a move
 -client timer starts once the client makes a move request to the server

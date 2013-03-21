@@ -33,16 +33,18 @@
 #include "protocol_utils.h"
 #include "protocol_server.h"
 #include "protocol_session.h"
+#include "maze.h"
 
-#define PROTO_SERVER_MAX_EVENT_SUBSCRIBERS 1024
-#define X 1
-#define O 0
+#define PROTO_SERVER_MAX_EVENT_SUBSCRIBERS 400
+
+typedef enum {
+    T1,
+    T2
+}Team_Type
 
 struct {
     FDType RPCListenFD;
     PortType RPCPort;
-
-
     FDType EventListenFD;
     PortType EventPort;
     pthread_t EventListenTid;
@@ -55,8 +57,7 @@ struct {
     Proto_MT_Handler session_lost_handler;
     Proto_MT_Handler base_req_handlers[PROTO_MT_REQ_BASE_RESERVED_LAST -
             PROTO_MT_REQ_BASE_RESERVED_FIRST - 1];
-    int turn; //0 represents O, 1 represents X
-    int cb[9]; //chess board
+    maze_t maze;
 } Proto_Server;
 
 extern PortType proto_server_rpcport(void) {
@@ -73,49 +74,6 @@ proto_server_event_session(void) {
 }
 
 
-static void* printCB(){
-	long k;
-	for(k=0;k<9;k++){
-		printf("cb: %d\n",Proto_Server.cb[k]);
-	}
-}
-
-static int getWinner(){
-  //todo: check if there is a winner
-  int *buf = &(Proto_Server.cb[0]);
-   int i;
-  // horizontal wins
-  for (i = 0; i < 3; i++) {
-    if (buf[i*3] == 0 && buf[i*3 + 1] == 0 && buf[i*3 + 2] == 0)
-      return 0; // O wins
-    else if (buf[i*3] == 1 && buf[i*3 + 1] == 1 && buf[i*3 + 2] == 1) 
-      return 1; // X wins
-  }
-
-  // vertical wins
-  for (i = 0; i < 3; i++) {
-    if (buf[i] == 0 && buf[i + 3] == 0 && buf[i + 6] == 0)
-      return 0; // O wins
-    else if (buf[i] == 1 && buf[i + 3] == 1 && buf[i + 6] == 1)
-      return 1; // X wins
-  }
-
-  
-  // diagonal wins
-  if ((buf[0] == 0 && buf[4] == 0 && buf[8] == 0) || (buf[2] == 0 && buf[4] == 0 && buf[6] == 0))
-    return 0; // O wins
-  
-  if ((buf[0] == 1 && buf[4] == 1 && buf[8] == 1) || (buf[2] == 1 && buf[4] == 1 && buf[6] == 1))
-    return 1; // X wins
-
-  // drawn games
-  for (i = 0; i < 9; i++) {
-    if (buf[i] == -1)
-      return -1; // Game goes on
-  }
-  return 2;//drawn
-}
-
 extern int
 proto_server_set_session_lost_handler(Proto_MT_Handler h) {
     Proto_Server.session_lost_handler = h;
@@ -128,7 +86,6 @@ proto_server_set_req_handler(Proto_Msg_Types mt, Proto_MT_Handler h) {
     if (mt > PROTO_MT_REQ_BASE_RESERVED_FIRST &&
             mt < PROTO_MT_REQ_BASE_RESERVED_LAST) {
         i = mt - PROTO_MT_REQ_BASE_RESERVED_FIRST - 1;
-        // (complete) ADD CODE
         Proto_Server.base_req_handlers[i] = h;
         return 1;
     } else {
@@ -149,7 +106,6 @@ proto_server_record_event_subscriber(int fd, int *num) {
         *num = Proto_Server.EventLastSubscriber;
         Proto_Server.EventNumSubscribers++;
         Proto_Server.EventLastSubscriber++;
-        // (complete)  ADD CODE
         rc = 1;
     } else {
         int i;
@@ -158,7 +114,6 @@ proto_server_record_event_subscriber(int fd, int *num) {
                 Proto_Server.EventSubscribers[i] = fd;
                 Proto_Server.EventNumSubscribers++;
                 Proto_Server.EventLastSubscriber = i + 1;
-                // (complete)  ADD CODE
                 *num = i;
                 rc = 1;
             }
@@ -201,14 +156,14 @@ proto_server_event_listen(void *arg) {
     }
 
     for (;;) {
-        connfd = net_accept(fd); // (complete) ADD CODE
+        connfd = net_accept(fd); 
         if (connfd < 0) {
             fprintf(stderr, "Error: EventListen accept failed (%d)\n", errno);
         } else {
             int i;
             fprintf(stderr, "EventListen: connfd=%d -> ", connfd);
 
-            if (/* (complete ADD CODE (*/ proto_server_record_event_subscriber(connfd, &i) < 0) {
+            if ( proto_server_record_event_subscriber(connfd, &i) < 0) {
                 fprintf(stderr, "oops no space for any more event subscribers\n");
                 close(connfd);
             } else {
@@ -232,7 +187,7 @@ proto_server_post_event(void) {
         Proto_Server.EventSession.fd = Proto_Server.EventSubscribers[i];
         if (Proto_Server.EventSession.fd != -1) {
             num--;
-            if (/*(complete) ADD CODE*/proto_session_send_msg(&Proto_Server.EventSession, 0) < 0) {
+            if (proto_session_send_msg(&Proto_Server.EventSession, 0) < 0) {
                 // must have lost an event connection
                 close(Proto_Server.EventSession.fd);
                 Proto_Server.EventSubscribers[i] = -1;
@@ -275,7 +230,6 @@ proto_server_req_dispatcher(void * arg) {
 	s.slen=0;
         //read msg to s
         if (proto_session_rcv_msg(&s) == 1) {
-            // (complete) ADD CODE
             mt = proto_session_hdr_unmarshall_type(&s);
             if (mt > PROTO_MT_REQ_BASE_RESERVED_FIRST &&
                     mt < PROTO_MT_REQ_BASE_RESERVED_LAST) {
@@ -309,7 +263,7 @@ proto_server_rpc_listen(void *arg) {
     }
 
     for (;;) {
-        connfd = net_accept(fd); // (complete) ADD CODE
+        connfd = net_accept(fd); 
         if (connfd < 0) {
             fprintf(stderr, "Error: proto_server_rpc_listen accept failed (%d)\n", errno);
         } else {
@@ -391,22 +345,7 @@ proto_server_mt_hello_handler(Proto_Session *s) {
     return rc;
 }
 
-void*
-proto_server_post_move_event() {
 
-    Proto_Session *event_session = &(Proto_Server.EventSession);
-    Proto_Msg_Hdr hdr = event_session->shdr;
-    hdr.type = PROTO_MT_EVENT_BASE_UPDATE;
-    proto_session_hdr_marshall(event_session, &hdr);
-    long j;
-	for(j=0;j<9;j++){
-		proto_session_body_marshall_int(&Proto_Server.EventSession,Proto_Server.cb[j]);
-	}
-	proto_session_body_marshall_int(&Proto_Server.EventSession,getWinner());
-
-    proto_server_post_event();  
- 
-}
 
 static int
 proto_server_mt_move_handler(Proto_Session *s) {
@@ -527,9 +466,8 @@ proto_server_init(void) {
     int rc;
 
     //initialize turn to X (1)
-    Proto_Server.turn = X;
+    Proto_Server.turn = T1;
     //initialize chess board to empty (-1)
-    memset (Proto_Server.cb, -1, sizeof(Proto_Server.cb));
 
     proto_session_init(&Proto_Server.EventSession);
 
@@ -587,4 +525,101 @@ proto_server_init(void) {
 
     return 0;
 }
+
+
+/*****
+ * methods to get information about the map
+ *
+ */
+
+extern int
+getNumHomeCells(Team_Type team){
+    if (team == T1)
+        return getNumCellType(HOME_CELL_1);
+    else /* team == T2 */ 
+        return getNumCellType(HOME_CELL_2);
+}
+
+extern int
+getNumJailCells(Team_type team){
+    if (team == T1)
+        return getNumCellType(JAIL_CELL_1);
+    else /* team == T2 */ 
+        return getNumCellType(JAIL_CELL_2);
+}
+
+extern int
+getNumWallCells(){
+    return getNumCellType(WALL_CELL);
+}
+
+extern int
+getNumFloorCells(){
+    return getNumCellType(FLOOR_CELL);
+}
+
+extern int
+getNumCellType(Cell_Type ct){
+    int num_ct = 0;
+    int dim_r = getRowDimension();
+    int dim_c = getColumnDimension();
+    int i,j;
+    for (i=0; i < dim_r; i++){
+        for (j=0; j < dim_c; j++){
+            Cell_Type cell_type = getCellType(getCell(i,j));
+            if (cell_type == ct){
+                num_ct++;
+            }
+        }
+    }
+    return num_ct;
+}
+
+
+extern void*
+dump(){
+    
+}
+
+/** dim commmand **/
+
+extern int
+getRowDimension(){
+    return ProtoServer.maze->dim_r;
+}
+
+extern int
+getColumnDimension(){
+    return ProtoServer.maze->dim_c;
+}
+
+/** cinfo command **/
+
+//FIX ME: how Cell should be referred: Cell& or Cell ?
+extern cell_t*
+getCell(int row, int col){
+    return ProtoServer.maze->cells[row][col];
+}
+
+extern Cell_Type 
+getCellType(&Cell c){
+    return c->type;
+}
+
+extern Team_Type
+getCellTeam(&Cell c){
+    n_cols = getColumnDimension();
+    c_col = c->pos.c;
+    // assuming the first half of the board is T1 and second half is T2
+    if(c_col < n_cols/2)
+        return T1;
+    else
+        return T2;
+}
+
+extern Occupancy_Type
+getCellIsOccupied(&Cell c){
+    return c->occ;
+}
+
 

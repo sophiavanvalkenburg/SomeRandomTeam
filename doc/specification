@@ -26,7 +26,6 @@ CS451 - SomeRandomTeam - Specification Document
 
 3. Player actions
     A. Move
-        input: w|a|s|d for up, left, down, right direction
         user indicates the direction they want to move in and if it is
         valid, their new location is displayed on the map. A jailed player
         cannot move.
@@ -58,7 +57,8 @@ CS451 - SomeRandomTeam - Specification Document
 
 5. Conditions and Rules associated with winning the game
     A.  A player on the winning team must capture the opposing team's flag
-        and take it to their Home Base.
+        and take it to their Home Base, and their own flag must also be in the
+        Home Base. All players on the winning team must be in the Home Base.
     B.  If all players on both teams are in jail, the game ends in a draw.
 
 6. Extra specification
@@ -74,3 +74,5 @@ CS451 - SomeRandomTeam - Specification Document
     -When a free player reaches the opposing team's jail, all of the captured
      players of the same team are free and teleported to their Home Base.
     -When a player is jailed, they cannot move.
+    -When a player tags an opposing player carrying the flag, the opposing player
+     is sent to jail no matter where he is.

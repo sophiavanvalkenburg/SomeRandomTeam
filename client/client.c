@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 /******************************************************************************
  * Copyright (C) 2011 by Jonathan Appavoo, Boston University
  *
@@ -29,9 +28,8 @@
 #include "../lib/protocol_utils.h"
 
 #define STRLEN 81
-#define X 'X'
-#define O 'O'
-#define Q '?'
+#define T1 '1'
+#define T2 '2'
 
 void initGlobals(char *host, char *port);
 
@@ -43,7 +41,6 @@ struct Globals {
 
 typedef struct ClientState  {
   int data;
-  char type; // X, O, or ?
   Proto_Client_Handle ph;
 } Client;
 
@@ -51,7 +48,7 @@ static int
 clientInit(Client *C)
 {
   bzero(C, sizeof(Client));
-  C->type = Q;
+  C->type = T1;
   // initialize the client protocol subsystem
   if (proto_client_init(&(C->ph))<0) {
     fprintf(stderr, "client: main: ERROR initializing proto system\n");
@@ -95,8 +92,6 @@ startConnection(Client *C, char *host, PortType port, Proto_MT_Handler h)
 char *
 prompt(Client *C, int menu) 
 {
-  //char *MenuString = malloc(5*sizeof(char));
-  //sprintf(MenuString,"\n%c> ",C->type);
   int ret;
   char *c = malloc(sizeof(char) * STRLEN);;
 
@@ -123,52 +118,6 @@ game_process_reply(Client *C)
 
 
 int 
-doRPCCmd(Client *C, char *c) 
-{
-  int rc=-1;
-/*
-  switch (c) {
-  case 'h':  
-    {
-      rc = proto_client_hello(C->ph);
-      printf("hello: rc=%x\n", rc);
-      if (rc > 0) game_process_reply(C);
-    }
-    break;
-  case 'm':
-    scanf("%c", &c);
-    rc = proto_client_move(C->ph, c);
-    break;
-  case 'g':
-    rc = proto_client_goodbye(C->ph);
-    break;
-  default:
-    printf("%s: unknown command %c\n", __func__, c);
-  }
-  */
-  // NULL MT OVERRIDE ;-)
-  printf("%s: rc=0x%x\n", __func__, rc);
-  if (rc == 0xdeadbeef) rc=1;
-  return rc;
-}
-
-int
-doRPC(Client *C)
-{
-  int rc;
-  char *c;
-
-  printf("enter (h|m<c>|g): ");
-  fgets(c,STRLEN,stdin);
-  rc=doRPCCmd(C,c);
-
-  printf("doRPC: rc=0x%x\n", rc);
-
-  return rc;
-}
-
-
-int 
 docmd(Client *C, char *cmd)
 {
   int rc = 1, i = 0, j = 0;  
@@ -189,52 +138,28 @@ docmd(Client *C, char *cmd)
 		i++;
 	}
   }
-	
-  /*for (j = 0; j < 5; j++) 
-	printf("command[%d] is %s\n", j, commands[j]);
-*/  
-  
-  
-  // if i == 1, then other commands. if i > 1, then connect.
-  
-  if (i == 1) {
-  
- 	if (streql(cmd,"disconnect\n"))
-	{
-		rc = doDisconnectCmd(C);
-	}
-	else if (streql(cmd,"\n"))
-	{
-		rc = doEnterCmd(C);
-	}
-	else if (streql(cmd,"where\n"))
-	{
-		rc = doWhereCmd(C);
-	}
-	else if (streql(cmd,"quit\n"))
-	{
-		rc = doQuitCmd(C);
-	}
-	else if (streql(cmd,"1\n") || streql(cmd,"2\n") || streql(cmd,"3\n")
-				|| streql(cmd,"4\n") || streql(cmd,"5\n") || streql(cmd,"6\n")
-				|| streql(cmd,"7\n") || streql(cmd,"8\n") || streql(cmd,"9\n")
-			)
-	{
-		rc = doMoveCmd(C,atoi(cmd));
-	}
-	else
-	{
-		rc = doDefaultCmd(C);
-	}
-  }
-  
-  else {
-	// connect 
-    if (streql(commands[0], "connect")) 
+    if (streql(commands[0], "connect")){ 
       rc = doConnectCmd(C,commands[1], commands[2]);
-    else
+/*    }else if (streql(commands[0], "numhome")){
+      rc = doNumHomeCmd(C, commands[1]);
+    }else if (streql(commands[0], "numjail")){
+      rc = doNumJailCmd(C, commands[1]);
+    }else if (streql(commands[0], "numwall")){
+      rc = doNumWallCmd(C);
+    }else if (streql(commands[0], "numfloor")){
+      rc = doNumFloorCmd(C);
+    }else if (streql(commands[0], "dim")){
+      rc = doDimCmd(C);
+    }else if (streql(commands[0], "cinfo")){
+      rc = doCInfoCmd(C, commands[1], commands[2]);
+    }else if (streql(commands[0], "dump")){
+      rc = doDumpCmd(C);
+    }else if (streql(commands[0], "quit")){
+      rc = doQuitCmd(C);
+ */   }else{
       rc = doDefaultCmd(C);
-  }
+  
+    }
   
   return rc;
 }
@@ -251,57 +176,16 @@ doConnectCmd(Client *C, char *host, char *port)
     }else{
         int rc = proto_client_hello(C->ph);
         if (rc == 1){
-            C->type = X;
+            C->type = T1;
         }else if (rc == 0){
-            C->type = O;
+            C->type = T2;
         }
     
         fprintf(stdout, "Connected to %s:%d : You are %c\n", globals.host, globals.port,C->type);
-	if(C->type != X && C->type!=O){
-		printf("no more player accepted, you are a spectator.");	
-	}
-    }
+   }
     
     return 1;
 }
-
-int
-doDisconnectCmd(Client *C)
-{
-    int tp;
-    if (C->type == 'X'){
-        tp = 1;
-    }else{
-        tp = 0;
-    }
-  if(globals.host==NULL || globals.port==0){
-    printf("not connected\n");
-    return 1;
-  }
-    int rc =  proto_client_goodbye(C->ph,tp);
-    if (rc < 0){
-        fprintf(stdout,"Error: problem disconnecting\n");
-    }
-    return rc;
-}
-
-int
-doEnterCmd(Client *C)
-{
-  return getBoardFromSessionHelper(C->ph);
-}
-
-int
-doWhereCmd(Client *C)
-{
-if (globals.host != NULL && globals.port != 0){
-    fprintf(stdout, "Connected to %s:%d\n",globals.host, globals.port); 
-}else{
-    fprintf(stdout, "Not connected\n");
-}
-return 1;
-}
-
 int 
 doQuitCmd(Client *C)
 {
@@ -312,38 +196,6 @@ doQuitCmd(Client *C)
     }
 }
 
-int
-doMoveCmd(Client *C, int move)
-{
-    if (globals.host == NULL || globals.port == 0){
-        fprintf(stdout, "Not connected");
-        return 1;
-    }
-
-    //first input type
-	int tp;
-	if(C->type == X){
-		tp=1;
-	}else if(C->type == O){
-		tp=0;
-	}else{
-		fprintf(stderr,"do move command: invalid type %c\n",C->type);
-		return -1;
-	}
-	int rc = proto_client_move(C->ph,tp,move);
-	//	printf("do move command: rc = %d\n",rc);
-	if(rc == 1){
-		//valid
-	  
-	}else if(rc==0){
-		//invalid: not a valid move
-	  fprintf(stderr,"Not a valid move!\n");
-	}else{
-		//invalid: not your turn
-	  fprintf(stderr,"Not your turn yet!\n");
-	}
-	return 1;
-}
 
 int
 doDefaultCmd(Client *C)
@@ -420,15 +272,3 @@ shell(&c);
   return 0;
 }
 
-=======
-#include <stdio.h>
-#include "../lib/dummy.h"
-    int
-main(int argc, char **argv)
-{
-    printf("client main: HELLO\n");
-    dummy_hello();
-    printf("client main: GOODBYE\n");
-    return 0;
-}
->>>>>>> origin

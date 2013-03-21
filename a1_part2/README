@@ -1,2 +1,0 @@
-Makefile creates two executables: server.out and client.out
-The reason for using .out is to distinguish them from the directories.
