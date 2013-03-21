@@ -103,6 +103,12 @@ The last index contains a win code (-1 for no win yet, 0 for O wins, 1 for X win
 Fri Feb 22 23:17:28 EST 2013
 Attendees: Sophia, Zheng, Jarib
 Comments/Notes:
-    -a2 done
-=======
->>>>>>> origin
+
+Mon Mar 04 20:01:32 EST 2013
+Attendees: Sophia, Zheng
+Comments/Notes:
+-started the specification document
+
+Mon Mar 18 21:34:27 EST 2013
+Attendees: Sophia, Zheng
+-completed the specification + started architecture
