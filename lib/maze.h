@@ -26,12 +26,16 @@ typedef struct {
     Occupacy_Type occ;
 } cell_t;
 
+#define NUM_COLUMN      200
+#define NUM_ROW         200
+
 typedef struct {
     int dim_c;
     int dim_r;
-    cell_t * cells[200][200];
+    cell_t * cells[NUM_ROW][NUM_COLUMN];
 } maze_t;
 
 
 extern int load(char* path, maze_t* maze);
+extern int dump(maze_t* maze);
 
