@@ -129,15 +129,12 @@ int doNumHomeCmd(Client* C, char* team) {
     }
     int rc = proto_client_query(C->ph, NUM_HOME, tp, 0);
     //	printf("do move command: rc = %d\n",rc);
-    if (rc == 1) {
-        //valid
+    if (rc < 0) {
+        //error
+        fprintf(stderr,"There was a problem getting the number of home cells");
 
-    } else if (rc == 0) {
-        //invalid: not a valid move
-        fprintf(stderr, "Not a valid move!\n");
-    } else {
-        //invalid: not your turn
-        fprintf(stderr, "Not your turn yet!\n");
+    }else {
+        printf("Home Cells for Team %c : %d",tp,rc);
     }
 }
 

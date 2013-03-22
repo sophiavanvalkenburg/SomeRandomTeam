@@ -320,7 +320,6 @@ proto_session_rcv_msg(Proto_Session *s)
   proto_session_reset_receive(s);
 
   // read reply
-  // ADD CODE
   s->rhdr.blen = sizeof(s->sbuf);
   s->rlen = sizeof(s->rhdr);
   net_readn(s->fd, &(s->rhdr), s->rlen); 

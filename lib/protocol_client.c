@@ -368,7 +368,7 @@ proto_client_query(Proto_Client_Handle ch, Query_Types qt , int v1,int v2) {
 
     proto_session_body_marshall_int(s, (int)qt);
     proto_session_body_marshall_int(s, v1);
-        proto_session_body_marshall_int(s, v2);
+    proto_session_body_marshall_int(s, v2);
 
     rc = proto_session_rpc(s);
 

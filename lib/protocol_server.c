@@ -364,13 +364,15 @@ proto_server_mt_query_handler(Proto_Session *s) {
     proto_session_body_unmarshall_int(s, sizeof (int), &arg1);
     printf("query handler: body unmarshall arg2\n");
     proto_session_body_unmarshall_int(s, 2*sizeof(int),&arg2);
- 
+   
+    int reply; 
     switch(qtype){
-        case NUM_HOME: 
-            printf("num_home"); 
+        case NUM_HOME:
+            reply = maze_get_num_home_cells(&Proto_Server.maze,arg1);
+            printf("num_home %d : %d\n",arg1, reply); 
             break;
         case NUM_JAIL:
-            printf("num_jail");
+            printf("num_jail %c",arg1);
             break;
         case NUM_WALL:
             printf("num_wall");
@@ -382,7 +384,7 @@ proto_server_mt_query_handler(Proto_Session *s) {
             printf("num_dim");
             break;
         case CINFO:
-            printf("cinfo");
+            printf("cinfo %d %d", arg1, arg2);
             break;
         case DUMP: 
             printf("dump");
@@ -392,8 +394,6 @@ proto_server_mt_query_handler(Proto_Session *s) {
             break;
     }
 
-    // setup dummy reply header : set correct reply message type and 
-    // everything else empty
     printf("query handler: bzero header\n");
     bzero(&h, sizeof (s));
 	printf("query handler: bzero sbuf\n");
@@ -403,7 +403,9 @@ proto_server_mt_query_handler(Proto_Session *s) {
     
 	printf("query handler: marshalling header\n");
     proto_session_hdr_marshall(s, &h);
-	printf("query handler: sending message back\n");
+	printf("query handler: marshalling body\n");
+    proto_session_body_marshall_int(s, reply);
+    printf("query handler: sending message back\n");
     rc = proto_session_send_msg(s, 1);
 
     return rc;
