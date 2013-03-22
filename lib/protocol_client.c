@@ -88,97 +88,96 @@ proto_client_session_lost_default_hdlr(Proto_Session *s) {
 }
 
 int
-getBoardFromSession(Proto_Session *s){
+getBoardFromSession(Proto_Session *s) {
     int winCode;
     int board[9];
     //proto_session_body_ptr(s, 0,&board);
     //int offs = proto_session_body_unmarshall_bytes(s,0,9,board);
-    
+
     //proto_session_body_unmarshall_int(s,offs,&winCode);
     long i;
-    for(i=0;i<9;i++){
-      proto_session_body_unmarshall_int(s,i*sizeof(int),&(board[i]));
+    for (i = 0; i < 9; i++) {
+        proto_session_body_unmarshall_int(s, i * sizeof (int), &(board[i]));
     }
-    proto_session_body_unmarshall_int(s,9*sizeof(int),&winCode);
-    
+    proto_session_body_unmarshall_int(s, 9 * sizeof (int), &winCode);
+
     char token;
-    printf("\n", token); 
+    printf("\n", token);
     for (i = 0; i < 8; i++) {
-      if(board[i] == 0){
-	token = 'O';
-      }else if(board[i] == 1){
-	token = 'X';
-      }else{
-	token = (char)(((int)'0')+i+1);
-      }
-      if ((i+1) % 3 == 0) 
-	printf("%c\n-----\n", token); 
-      else 
-	printf("%c|", token);
-  }
-  if(board[8] == 0){
-      token = 'O';
-    }else if(board[i] == 1){
-      token = 'X';
-    }else{
-      token = (char)(((int)'0')+i+1);
+        if (board[i] == 0) {
+            token = 'O';
+        } else if (board[i] == 1) {
+            token = 'X';
+        } else {
+            token = (char) (((int) '0') + i + 1);
+        }
+        if ((i + 1) % 3 == 0)
+            printf("%c\n-----\n", token);
+        else
+            printf("%c|", token);
     }
-  printf("%c\n-----\n", token);
-    switch (winCode){
+    if (board[8] == 0) {
+        token = 'O';
+    } else if (board[i] == 1) {
+        token = 'X';
+    } else {
+        token = (char) (((int) '0') + i + 1);
+    }
+    printf("%c\n-----\n", token);
+    switch (winCode) {
         case 2: //draw
-            fprintf(stdout,"Game Over: Draw\n");
+            fprintf(stdout, "Game Over: Draw\n");
             return -1;
         case 1: //X wins
-            fprintf(stdout,"Game Over: X Wins\n");
+            fprintf(stdout, "Game Over: X Wins\n");
             return -1;
 
         case 0: //O wins
-            fprintf(stdout,"Game Over: O Wins\n");
+            fprintf(stdout, "Game Over: O Wins\n");
             return -1;
         default: //game not over yet
-	  //	  fprintf(stdout,"%c");
+            //	  fprintf(stdout,"%c");
             return 1;
     }
 }
 
 int
-getBoardFromSessionHelper(Proto_Client_Handle ch){
-  Proto_Client *c = ch;
-  Proto_Session *s = &(c->event_session);
-  return getBoardFromSession(s);
+getBoardFromSessionHelper(Proto_Client_Handle ch) {
+    Proto_Client *c = ch;
+    Proto_Session *s = &(c->event_session);
+    return getBoardFromSession(s);
 }
 
 static int
-proto_client_event_null_handler (Proto_Session *s) {
-  fprintf(stderr,
-         "proto_client_event null_handler: invoked for session:\n");
+proto_client_event_null_handler(Proto_Session *s) {
+    fprintf(stderr,
+            "proto_client_event null_handler: invoked for session:\n");
 
     return 1;
 }
 
-
 static int
-proto_client_event_update_handler (Proto_Session *s) {
-  //fprintf(stderr,
-  //       "proto_client_event null_handler: invoked for session:\n");
+proto_client_event_update_handler(Proto_Session *s) {
+    //fprintf(stderr,
+    //       "proto_client_event null_handler: invoked for session:\n");
     getBoardFromSession(s);
 
     return 1;
 }
 
 static int
-proto_client_event_disconnect_handler (Proto_Session *s) {
-  //fprintf(stderr
-  //       "proto_client_event null_handler: invoked for session:\n");
+proto_client_event_disconnect_handler(Proto_Session *s) {
+    //fprintf(stderr
+    //       "proto_client_event null_handler: invoked for session:\n");
     int disconnectCode;
-    proto_session_body_unmarshall_int(s,0,&disconnectCode);
+    proto_session_body_unmarshall_int(s, 0, &disconnectCode);
     close(s->fd);
     //printf("disconnect handler: code %d\n",disconnectCode);
 
-    if (disconnectCode == 1){
+    if (disconnectCode == 1) {
 
-        fprintf(stdout,"Game Over: X quit\n");
-    }else if (disconnectCode == 0){
+        fprintf(stdout, "Game Over: X quit\n");
+    } else if (disconnectCode == 0) {
         fprintf(stdout, "Game Over: O quit\n");
     }
 
@@ -214,9 +213,9 @@ proto_client_event_dispatcher(void * arg) {
             //ADD CODE
             //incomplete
             //printf("proto_client_event_dispatcher: proto_session_rcv_msg(s)!=1");
-            
+
             c->session_lost_handler(s);
-                    goto leave;
+            goto leave;
         }
     }
 leave:
@@ -232,7 +231,7 @@ proto_client_init(Proto_Client_Handle *ch) {
     c = (Proto_Client *) malloc(sizeof (Proto_Client));
     if (c == NULL) return -1;
     bzero(c, sizeof (Proto_Client));
-    memset (c->event_session.rbuf, -1, sizeof(int)*10);
+    memset(c->event_session.rbuf, -1, sizeof (int) *10);
     proto_client_set_session_lost_handler(c,
             proto_client_session_lost_default_hdlr);
 
@@ -240,10 +239,10 @@ proto_client_init(Proto_Client_Handle *ch) {
             mt < PROTO_MT_EVENT_BASE_RESERVED_LAST; mt++)
         //base event handler init
         proto_client_set_event_handler(c, mt, proto_client_event_null_handler);
-    
-    proto_client_set_event_handler(c,PROTO_MT_EVENT_BASE_UPDATE,proto_client_event_update_handler);
-    proto_client_set_event_handler(c,PROTO_MT_EVENT_BASE_DISCONNECT,proto_client_event_disconnect_handler);
-    
+
+    proto_client_set_event_handler(c, PROTO_MT_EVENT_BASE_UPDATE, proto_client_event_update_handler);
+    proto_client_set_event_handler(c, PROTO_MT_EVENT_BASE_DISCONNECT, proto_client_event_disconnect_handler);
+
     *ch = c;
     return 1;
 }
@@ -265,7 +264,7 @@ proto_client_connect(Proto_Client_Handle ch, char *host, PortType port) {
         perror("proto_client_init:");
         return -3;
     }
-    
+
 
     return 0;
 }
@@ -288,15 +287,15 @@ do_generic_dummy_rpc(Proto_Client_Handle ch, Proto_Msg_Types mt) {
     Proto_Session *s;
     Proto_Client *c = ch;
 
-    s=&(c->rpc_session);
+    s = &(c->rpc_session);
     // marshall
 
     marshall_mtonly(s, mt);
     rc = proto_session_rpc(s);
 
-    if (rc == 1){
+    if (rc == 1) {
         proto_session_body_unmarshall_int(s, 0, &rc);
-    }else{
+    } else {
         close(s->fd);
     }
 
@@ -310,23 +309,23 @@ proto_client_hello(Proto_Client_Handle ch) {
 
 extern int
 proto_client_move(Proto_Client_Handle ch, int tp, char move) {
-    
+
     int rc;
     Proto_Session *s;
     Proto_Client *c = ch;
 
-    s=&(c->rpc_session);
+    s = &(c->rpc_session);
     // marshall
-    
+
     marshall_mtonly(s, PROTO_MT_REQ_BASE_MOVE);
-    
-    proto_session_body_marshall_int(s,tp);
-	proto_session_body_marshall_int(s,move);
+
+    proto_session_body_marshall_int(s, tp);
+    proto_session_body_marshall_int(s, move);
     rc = proto_session_rpc(s);
 
-    if (rc == 1){
+    if (rc == 1) {
         proto_session_body_unmarshall_int(s, 0, &rc);
-    }else{
+    } else {
         close(s->fd);
     }
 
@@ -334,25 +333,50 @@ proto_client_move(Proto_Client_Handle ch, int tp, char move) {
 }
 
 extern int
-proto_client_goodbye(Proto_Client_Handle ch,int tp) {
+proto_client_goodbye(Proto_Client_Handle ch, int tp) {
     int rc;
     Proto_Session *s;
     Proto_Client *c = ch;
     //printf("client goodbye: tp %d\n",tp);
-    s=&(c->rpc_session);
+    s = &(c->rpc_session);
     // marshall
 
     marshall_mtonly(s, PROTO_MT_REQ_BASE_GOODBYE);
     //s->slen=0;
-    proto_session_body_marshall_int(s,tp);
+    proto_session_body_marshall_int(s, tp);
 
     rc = proto_session_rpc(s);
 
     proto_session_body_unmarshall_int(s, 0, &rc);
-    if (rc){
+    if (rc) {
         close(s->fd);
     }
 
     return rc;
 }
 
+proto_client_query(Proto_Client_Handle ch, Query_Types qt , char v1,char v2) {
+
+    int rc;
+    Proto_Session *s;
+    Proto_Client *c = ch;
+
+    s = &(c->rpc_session);
+    // marshall
+
+    marshall_mtonly(s, PROTO_MT_REQ_BASE_QUERY);
+
+    proto_session_body_marshall_int(s, (int)qt);
+    proto_session_body_marshall_int(s, v1);
+        proto_session_body_marshall_int(s, v2);
+
+    rc = proto_session_rpc(s);
+
+    if (rc == 1) {
+        proto_session_body_unmarshall_int(s, 0, &rc);
+    } else {
+        close(s->fd);
+    }
+
+    return rc;
+}
