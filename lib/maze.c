@@ -3,6 +3,36 @@
 #include <unistd.h>
 #include <strings.h>
 #include "maze.h"
+#include <string.h>
+
+extern char
+maze_cell_to_char(Cell_Type ct){
+    char ct_char;
+    switch(ct){
+        case FLOOR_CELL: 
+            ct_char = ' '; 
+            break;
+        case WALL_CELL: 
+            ct_char = '#';
+            break;
+        case HOME_CELL_1:
+            ct_char = 'h';
+            break;
+        case HOME_CELL_2:
+            ct_char = 'H';
+            break;
+        case JAIL_CELL_1:
+            ct_char = 'j';
+            break;
+        case JAIL_CELL_2:
+            ct_char = 'J';
+            break;
+        default:
+            ct_char = '?';
+            break;
+    }
+    return ct_char;
+}
 
 extern int maze_load(char* path, maze_t* maze) {
     //initialize maze struct
@@ -95,29 +125,7 @@ extern int maze_dump(maze_t* maze) {
     for (i = 0; i < maze->dim_r; i++) {
         for (j = 0; j < maze->dim_c; j++) {
             type = maze->cells[i][j]->type;
-            switch (type) {
-                case FLOOR_CELL:
-                    printf(" ");
-                    break;
-                case WALL_CELL:
-                    printf("#");
-                    break;
-                case HOME_CELL_1:
-                    printf("h");
-                    break;
-                case HOME_CELL_2:
-                    printf("H");
-                    break;
-                case JAIL_CELL_1:
-                    printf("j");
-                    break;
-                case JAIL_CELL_2:
-                    printf("J");
-                    break;
-                default:
-                    printf("X");
-                    break;
-            }
+            printf("%c", maze_cell_to_char(type));
         }
         printf("\n");
     }
@@ -219,3 +227,5 @@ maze_get_num_cells(maze_t* maze, Cell_Type ct){
     }
     return num_ct;
 }
+
+

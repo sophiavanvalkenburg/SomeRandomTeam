@@ -355,7 +355,7 @@ proto_client_goodbye(Proto_Client_Handle ch, int tp) {
     return rc;
 }
 
-proto_client_query(Proto_Client_Handle ch, Query_Types qt , char v1,char v2) {
+proto_client_query(Proto_Client_Handle ch, Query_Types qt , int v1,int v2) {
 
     int rc;
     Proto_Session *s;

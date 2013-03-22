@@ -127,7 +127,7 @@ int doNumHomeCmd(Client* C, char* team) {
         fprintf(stderr, "invalid team selection\n");
         return -1;
     }
-    int rc = proto_client_query(C->ph, NUM_HOME, tp, NULL);
+    int rc = proto_client_query(C->ph, NUM_HOME, tp, 0);
     //	printf("do move command: rc = %d\n",rc);
     if (rc == 1) {
         //valid
@@ -158,7 +158,7 @@ int doNumJailCmd(Client* C, char* team) {
         fprintf(stderr, "invalid team selection\n");
         return -1;
     }
-    int rc = proto_client_query(C->ph, NUM_JAIL, tp, NULL);
+    int rc = proto_client_query(C->ph, NUM_JAIL, tp, 0);
     //	printf("do move command: rc = %d\n",rc);
     if (rc == 1) {
         //valid
@@ -180,7 +180,7 @@ int doNumWallCmd(Client* C) {
     }
 
     //first input type    
-    int rc = proto_client_query(C->ph, NUM_WALL, NULL, NULL);
+    int rc = proto_client_query(C->ph, NUM_WALL, 0, 0);
     //	printf("do move command: rc = %d\n",rc);
     if (rc == 1) {
         //valid
@@ -202,7 +202,7 @@ int doNumFloorCmd(Client* C) {
     }
 
     //first input type    
-    int rc = proto_client_query(C->ph, NUM_FLOOR, NULL, NULL);
+    int rc = proto_client_query(C->ph, NUM_FLOOR, 0, 0);
     //	printf("do move command: rc = %d\n",rc);
     if (rc == 1) {
         //valid
@@ -224,7 +224,7 @@ int doDimCmd(Client* C) {
     }
 
     //first input type    
-    int rc = proto_client_query(C->ph, DIM, NULL, NULL);
+    int rc = proto_client_query(C->ph, DIM, 0, 0);
     //	printf("do move command: rc = %d\n",rc);
     if (rc == 1) {
         //valid
@@ -270,7 +270,7 @@ int doDumpCmd(Client* C) {
     }
 
     //first input type    
-    int rc = proto_client_query(C->ph, DUMP, NULL, NULL);
+    int rc = proto_client_query(C->ph, DUMP, 0, 0);
     //	printf("do move command: rc = %d\n",rc);
     if (rc == 1) {
         //valid

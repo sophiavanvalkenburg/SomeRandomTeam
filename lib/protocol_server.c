@@ -343,6 +343,72 @@ proto_server_mt_hello_handler(Proto_Session *s) {
 }
 
 
+static int
+proto_server_mt_query_handler(Proto_Session *s) {
+    int rc = 1;
+    Proto_Msg_Hdr h;
+
+    fprintf(stderr, "proto_server_mt_query_handler: invoked for session:\n");
+    proto_session_dump(s);
+    //read the move informtaion from s
+    //1. query type
+    //2-3 arguments
+   
+    Query_Types qtype;
+    int arg1;
+    int arg2; 
+
+	printf("query handler: body unmarshall qtype\n");
+    proto_session_body_unmarshall_int(s, 0, (int*)&qtype);
+	printf("query handler: body unmarshall arg1\n");
+    proto_session_body_unmarshall_int(s, sizeof (int), &arg1);
+    printf("query handler: body unmarshall arg2\n");
+    proto_session_body_unmarshall_int(s, 2*sizeof(int),&arg2);
+ 
+    switch(qtype){
+        case NUM_HOME: 
+            printf("num_home"); 
+            break;
+        case NUM_JAIL:
+            printf("num_jail");
+            break;
+        case NUM_WALL:
+            printf("num_wall");
+            break;
+        case NUM_FLOOR:
+            printf("num_floor");
+            break;
+        case DIM:
+            printf("num_dim");
+            break;
+        case CINFO:
+            printf("cinfo");
+            break;
+        case DUMP: 
+            printf("dump");
+            break;
+        default:
+            printf("query unknown");
+            break;
+    }
+
+    // setup dummy reply header : set correct reply message type and 
+    // everything else empty
+    printf("query handler: bzero header\n");
+    bzero(&h, sizeof (s));
+	printf("query handler: bzero sbuf\n");
+    bzero(&(s->sbuf), sizeof(int)*2);
+	s->slen=0;
+    h.type = PROTO_MT_REP_BASE_QUERY; 
+    
+	printf("query handler: marshalling header\n");
+    proto_session_hdr_marshall(s, &h);
+	printf("query handler: sending message back\n");
+    rc = proto_session_send_msg(s, 1);
+
+    return rc;
+}
+
 
 static int
 proto_server_mt_move_handler(Proto_Session *s) {
@@ -430,7 +496,7 @@ proto_server_init(void) {
     //load the maze
     proto_server_load_maze();
 
-    printf("rows:%d\tcols:%d\n",maze_get_num_rows(&Proto_Server.maze),maze_get_num_cols(&Proto_Server.maze));
+   /* printf("rows:%d\tcols:%d\n",maze_get_num_rows(&Proto_Server.maze),maze_get_num_cols(&Proto_Server.maze));
     printf("home1:%d\thome2:%d\tjail1:%d\tjail2:%d\twall:%d\tfloor:%d\n",   maze_get_num_home_cells(&Proto_Server.maze,T1),
                                                                             maze_get_num_home_cells(&Proto_Server.maze,T2),
                                                                             maze_get_num_jail_cells(&Proto_Server.maze,T1),
@@ -438,10 +504,11 @@ proto_server_init(void) {
                                                                             maze_get_num_wall_cells(&Proto_Server.maze),
                                                                             maze_get_num_floor_cells(&Proto_Server.maze));
     cell_t* test_cell = maze_get_cell(&Proto_Server.maze,100,100);
-    printf("cell type:%d\tcell team:%d\tcell occupied:%d\n",maze_get_cell_type(test_cell),
+    printf("cell type:%c\t",maze_cell_to_char(maze_get_cell_type(test_cell)));
+    
                                                             maze_get_cell_team(&Proto_Server.maze, test_cell), 
                                                             maze_get_cell_occupied(test_cell));
-
+*/
     proto_session_init(&Proto_Server.EventSession);
 
     proto_server_set_session_lost_handler(
@@ -456,8 +523,8 @@ proto_server_init(void) {
     }
 	//set hello handler
     proto_server_set_req_handler(PROTO_MT_REQ_BASE_HELLO,proto_server_mt_hello_handler);
-	//set move handler
-    proto_server_set_req_handler(PROTO_MT_REQ_BASE_MOVE,proto_server_mt_move_handler);
+	//set query handler
+    proto_server_set_req_handler(PROTO_MT_REQ_BASE_QUERY,proto_server_mt_query_handler);
     //set goodbye handler
     proto_server_set_req_handler(PROTO_MT_REQ_BASE_GOODBYE,proto_server_mt_goodbye_handler);
 
