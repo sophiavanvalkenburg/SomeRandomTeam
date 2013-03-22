@@ -37,11 +37,6 @@
 
 #define PROTO_SERVER_MAX_EVENT_SUBSCRIBERS 400
 
-typedef enum {
-    T1,
-    T2
-}Team_Type;
-
 struct {
     FDType RPCListenFD;
     PortType RPCPort;
@@ -375,46 +370,11 @@ proto_server_mt_move_handler(Proto_Session *s) {
     bzero(&(s->sbuf), sizeof(int)*2);
 	s->slen=0;
     h.type = PROTO_MT_REP_BASE_MOVE; 
-	printf("move handler: who is %d, turn is %d\n",who,Proto_Server.turn);
-    if (who == Proto_Server.turn) {
-        int valid;
-        //verify
-        if(move<0 || move >8){
-		valid=0;
-	}else if(Proto_Server.cb[move]==-1){
-		valid=1;
-	}else{
-		valid=0;
-	}
-        if (valid) {
-		printf("move handler: valid\n");
-            //make the move
-            Proto_Server.cb[move]=who;
-		printCB();
-            //switch turn
-            	printf("move handler: switching turn\n");
-            if(Proto_Server.turn==0){
-		Proto_Server.turn=1;
-		}else{
-			Proto_Server.turn=0;
-		}
-		printf("move handler: start sending message back\n");
-            //send success message back
-            proto_session_body_marshall_int(s,1);
-        } else {
-            //send error message: not a valid move
-            proto_session_body_marshall_int(s,0);
-        }
-    } else {
-        //send error message: not your turn
-        proto_session_body_marshall_int(s,-1);
-    }
+    
 	printf("move handler: marshalling header\n");
     proto_session_hdr_marshall(s, &h);
 	printf("move handler: sending message back\n");
     rc = proto_session_send_msg(s, 1);
-
-    proto_server_post_move_event();
 
     return rc;
 }
@@ -467,9 +427,8 @@ proto_server_init(void) {
     int i;
     int rc;
 
-    //initialize turn to X (1)
-    Proto_Server.turn = T1;
-    //initialize chess board to empty (-1)
+    //load the maze
+    proto_server_load_maze();
 
     proto_session_init(&Proto_Server.EventSession);
 
@@ -528,100 +487,11 @@ proto_server_init(void) {
     return 0;
 }
 
-
-/*****
- * methods to get information about the map
- *
- */
-
 extern int
-getNumHomeCells(Team_Type team){
-    if (team == T1)
-        return getNumCellType(HOME_CELL_1);
-    else /* team == T2 */ 
-        return getNumCellType(HOME_CELL_2);
+proto_server_load_maze(){
+    char* path = malloc(100);
+    memcpy(path, "daGame.map", 10);
+    maze_load(path, &Proto_Server.maze);
+    maze_dump(&Proto_Server.maze);
+    return 1;
 }
-
-extern int
-getNumJailCells(Team_type team){
-    if (team == T1)
-        return getNumCellType(JAIL_CELL_1);
-    else /* team == T2 */ 
-        return getNumCellType(JAIL_CELL_2);
-}
-
-extern int
-getNumWallCells(){
-    return getNumCellType(WALL_CELL);
-}
-
-extern int
-getNumFloorCells(){
-    return getNumCellType(FLOOR_CELL);
-}
-
-extern int
-getNumCellType(Cell_Type ct){
-    int num_ct = 0;
-    int dim_r = getRowDimension();
-    int dim_c = getColumnDimension();
-    int i,j;
-    for (i=0; i < dim_r; i++){
-        for (j=0; j < dim_c; j++){
-            Cell_Type cell_type = getCellType(getCell(i,j));
-            if (cell_type == ct){
-                num_ct++;
-            }
-        }
-    }
-    return num_ct;
-}
-
-
-extern void*
-dump(){
-    
-}
-
-/** dim commmand **/
-
-extern int
-getRowDimension(){
-    return ProtoServer.maze->dim_r;
-}
-
-extern int
-getColumnDimension(){
-    return ProtoServer.maze->dim_c;
-}
-
-/** cinfo command **/
-
-//FIX ME: how Cell should be referred: Cell& or Cell ?
-extern cell_t*
-getCell(int row, int col){
-    return ProtoServer.maze->cells[row][col];
-}
-
-extern Cell_Type 
-getCellType(&Cell c){
-    return c->type;
-}
-
-extern Team_Type
-getCellTeam(&Cell c){
-    n_cols = getColumnDimension();
-    c_col = c->pos.c;
-    // assuming the first half of the board is T1 and second half is T2
-    if(c_col < n_cols/2)
-        return T1;
-    else
-        return T2;
-}
-
-extern Occupancy_Type
-getCellIsOccupied(&Cell c){
-    return c->occ;
-}
-
-

@@ -12,7 +12,13 @@ typedef enum {
 typedef enum{
     OCCUPIED,
     UNOCCUPIED
-}Occupacy_Type;
+}Occupancy_Type;
+
+typedef enum {
+    T1,
+    T2
+}Team_Type;
+
 
 typedef struct {
     int c;
@@ -23,7 +29,7 @@ typedef struct {
 typedef struct {
     position_t pos;
     Cell_Type type;
-    Occupacy_Type occ;
+    Occupancy_Type occ;
 } cell_t;
 
 #define NUM_COLUMN      200
@@ -36,6 +42,6 @@ typedef struct {
 } maze_t;
 
 
-extern int load(char* path, maze_t* maze);
-extern int dump(maze_t* maze);
+extern int maze_load(char* path, maze_t* maze);
+extern int maze_dump(maze_t* maze);
 

@@ -4,7 +4,7 @@
 #include <strings.h>
 #include "maze.h"
 
-extern int load(char* path, maze_t* maze) {
+extern int maze_load(char* path, maze_t* maze) {
     //initialize maze struct
     memset(maze, 0, sizeof (maze_t));
     maze->dim_c = NUM_COLUMN;
@@ -80,7 +80,7 @@ extern int load(char* path, maze_t* maze) {
     return 0;
 }
 
-extern int dump(maze_t* maze) {
+extern int maze_dump(maze_t* maze) {
     /*
         printf("%d\n",maze->dim_r);
      */
@@ -119,11 +119,104 @@ extern int dump(maze_t* maze) {
     return 0;
 }
 
+/*
 int main() {
     char* path = malloc(100);
-    memcpy(path, "daGame.map", 10);
+    memcpy(path, "dagame.map", 10);
     maze_t map;
-    load(path, &map);
-    dump(&map);
+    maze_load(path, &map);
+    maze_dump(&map);
     return 0;
+}
+*/
+
+/*****
+ * methods to get information about the map
+ *
+ */
+
+
+
+/** dim commmand **/
+
+static int
+maze_get_num_rows(maze_t* maze){
+    return maze->dim_r;
+}
+
+static int
+maze_get_num_cols(maze_t* maze){
+    return maze->dim_c;
+}
+
+/** cinfo command **/
+
+static cell_t*
+maze_get_cell(maze_t* maze, int row, int col){
+    return maze->cells[row][col];
+}
+
+static Cell_Type 
+maze_get_cell_type(cell_t* c){
+    return c->type;
+}
+
+static Team_Type
+maze_server_get_cell_team(maze_t* maze,cell_t* c){
+    int n_cols = maze_get_num_cols(maze);
+    int c_col = c->pos.c;
+    // assuming the first half of the board is T1 and second half is T2
+    if(c_col < n_cols/2)
+        return T1;
+    else
+        return T2;
+}
+
+extern Occupancy_Type
+maze_get_cell_occupied(cell_t* c){
+    return c->occ;
+}
+
+
+extern int
+maze_get_num_home_cells(maze_t* maze, Team_Type team){
+    if (team == T1)
+        return maze_get_num_cells(maze, HOME_CELL_1);
+    else /* team == T2 */ 
+        return maze_get_num_cells(maze, HOME_CELL_2);
+}
+
+extern int
+maze_get_num_jail_cells(maze_t* maze, Team_Type team){
+    if (team == T1)
+        return maze_get_num_cells(maze, JAIL_CELL_1);
+    else /* team == T2 */ 
+        return maze_get_num_cells(maze, JAIL_CELL_2);
+}
+
+extern int
+maze_get_num_wall_cells(maze_t* maze){
+    return maze_get_num_cells(maze, WALL_CELL);
+}
+
+extern int
+maze_get_num_floor_cells(maze_t* maze){
+    return maze_get_num_cells(maze, FLOOR_CELL);
+}
+
+extern int
+maze_get_num_cells(maze_t* maze, Cell_Type ct){
+    int num_ct = 0;
+    int dim_r = maze_get_num_rows(maze);
+    int dim_c = maze_get_num_cols(maze);
+    int i,j;
+    for (i=0; i < dim_r; i++){
+        for (j=0; j < dim_c; j++){
+            Cell_Type cell_type = maze_get_cell_type(maze_get_cell(maze,i,j));
+            if (cell_type == ct){
+                num_ct++;
+            }
+        }
+    }
+    return num_ct;
 }
