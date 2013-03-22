@@ -369,16 +369,19 @@ proto_server_mt_query_handler(Proto_Session *s) {
     switch(qtype){
         case NUM_HOME:
             reply = maze_get_num_home_cells(&Proto_Server.maze,arg1);
-            printf("num_home %d : %d\n",arg1, reply); 
+            printf("num_home %c : %d\n",arg1, reply); 
             break;
         case NUM_JAIL:
-            printf("num_jail %c",arg1);
+            reply = maze_get_num_jail_cells(&Proto_Server.maze,arg1);
+            printf("num_jail %c : %d\n",arg1, reply); 
             break;
         case NUM_WALL:
-            printf("num_wall");
+            reply = maze_get_num_wall_cells(&Proto_Server.maze);
+            printf("num_wall : %d\n", reply); 
             break;
         case NUM_FLOOR:
-            printf("num_floor");
+            reply = maze_get_num_floor_cells(&Proto_Server.maze);
+            printf("num_floor : %d\n", reply); 
             break;
         case DIM:
             printf("num_dim");
@@ -387,7 +390,8 @@ proto_server_mt_query_handler(Proto_Session *s) {
             printf("cinfo %d %d", arg1, arg2);
             break;
         case DUMP: 
-            printf("dump");
+            reply = 1;
+            maze_dump(&Proto_Server.maze);
             break;
         default:
             printf("query unknown");

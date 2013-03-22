@@ -113,7 +113,7 @@ game_process_reply(Client *C) {
 int doNumHomeCmd(Client* C, char* team) {
 
     if (globals.host == NULL || globals.port == 0) {
-        fprintf(stdout, "Not connected");
+        fprintf(stdout, "Not connected\n");
         return 1;
     }
 
@@ -131,17 +131,17 @@ int doNumHomeCmd(Client* C, char* team) {
     //	printf("do move command: rc = %d\n",rc);
     if (rc < 0) {
         //error
-        fprintf(stderr,"There was a problem getting the number of home cells");
+        fprintf(stderr,"There was a problem getting the number of home cells\n");
 
     }else {
-        printf("Home Cells for Team %c : %d",tp,rc);
+        printf("Home Cells for Team %c : %d\n",tp,rc);
     }
 }
 
 int doNumJailCmd(Client* C, char* team) {
 
     if (globals.host == NULL || globals.port == 0) {
-        fprintf(stdout, "Not connected");
+        fprintf(stdout, "Not connected\n");
         return 1;
     }
 
@@ -157,60 +157,57 @@ int doNumJailCmd(Client* C, char* team) {
     }
     int rc = proto_client_query(C->ph, NUM_JAIL, tp, 0);
     //	printf("do move command: rc = %d\n",rc);
-    if (rc == 1) {
-        //valid
+    if (rc < 0) {
+        //error
+        fprintf(stderr,"There was a problem getting the number of jail cells\n");
 
-    } else if (rc == 0) {
-        //invalid: not a valid move
-        fprintf(stderr, "Not a valid move!\n");
-    } else {
-        //invalid: not your turn
-        fprintf(stderr, "Not your turn yet!\n");
+    }else {
+        printf("Jail Cells for Team %c : %d\n",tp,rc);
     }
+    
 }
 
 int doNumWallCmd(Client* C) {
 
     if (globals.host == NULL || globals.port == 0) {
-        fprintf(stdout, "Not connected");
+        fprintf(stdout, "Not connected\n");
         return 1;
     }
 
     //first input type    
     int rc = proto_client_query(C->ph, NUM_WALL, 0, 0);
     //	printf("do move command: rc = %d\n",rc);
-    if (rc == 1) {
-        //valid
+    
+    if (rc < 0) {
+        //error
+        fprintf(stderr,"There was a problem getting the number of wall cells\n");
 
-    } else if (rc == 0) {
-        //invalid: not a valid move
-        fprintf(stderr, "Not a valid move!\n");
-    } else {
-        //invalid: not your turn
-        fprintf(stderr, "Not your turn yet!\n");
+    }else {
+        printf("Wall Cells: %d\n",rc);
     }
+    
 }
 
 int doNumFloorCmd(Client* C) {
 
     if (globals.host == NULL || globals.port == 0) {
-        fprintf(stdout, "Not connected");
+        fprintf(stdout, "Not connected\n");
         return 1;
     }
 
     //first input type    
     int rc = proto_client_query(C->ph, NUM_FLOOR, 0, 0);
     //	printf("do move command: rc = %d\n",rc);
-    if (rc == 1) {
-        //valid
+    
+    if (rc < 0) {
+        //error
+        fprintf(stderr,"There was a problem getting the number of floor cells\n");
 
-    } else if (rc == 0) {
-        //invalid: not a valid move
-        fprintf(stderr, "Not a valid move!\n");
-    } else {
-        //invalid: not your turn
-        fprintf(stderr, "Not your turn yet!\n");
+    }else {
+        printf("Floor Cells: %d\n",rc); 
     }
+
+    
 }
 
 int doDimCmd(Client* C) {
@@ -269,15 +266,12 @@ int doDumpCmd(Client* C) {
     //first input type    
     int rc = proto_client_query(C->ph, DUMP, 0, 0);
     //	printf("do move command: rc = %d\n",rc);
-    if (rc == 1) {
-        //valid
+    if (rc < 0) {
+        //error
+        fprintf(stderr,"There was a problem sending dump msg to server\n");
 
-    } else if (rc == 0) {
-        //invalid: not a valid move
-        fprintf(stderr, "Not a valid move!\n");
-    } else {
-        //invalid: not your turn
-        fprintf(stderr, "Not your turn yet!\n");
+    }else {
+        printf("sent dump msg"); 
     }
 }
 
@@ -364,7 +358,7 @@ doQuitCmd(Client *C) {
 
 int
 doDefaultCmd(Client *C) {
-    fprintf(stdout, "not a valid command");
+    fprintf(stdout, "default command");
     return 1;
 }
 

@@ -355,6 +355,7 @@ proto_client_goodbye(Proto_Client_Handle ch, int tp) {
     return rc;
 }
 
+extern int
 proto_client_query(Proto_Client_Handle ch, Query_Types qt , int v1,int v2) {
 
     int rc;
