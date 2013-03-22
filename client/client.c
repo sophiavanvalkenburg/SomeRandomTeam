@@ -337,7 +337,7 @@ doConnectCmd(Client *C, char *host, char *port) {
             C->type = T2;
         }
 
-        fprintf(stdout, "Connected to %s:%d : You are %c\n", globals.host, globals.port, C->type);
+        fprintf(stdout, "Connected to %s:%d\n", globals.host, globals.port);
     }
 
     return 1;
@@ -352,8 +352,11 @@ doQuitCmd(Client *C) {
     int rc = proto_client_goodbye(C->ph, 1);
     if (rc < 0) {
         fprintf(stdout, "Error: problem disconnecting\n");
+        return 1;
+    }else{
+        printf("You Quit\n");
+        return -1;
     }
-    return rc;
 }
 
 int

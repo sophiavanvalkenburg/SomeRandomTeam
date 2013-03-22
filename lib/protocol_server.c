@@ -364,7 +364,17 @@ proto_server_mt_query_handler(Proto_Session *s) {
     proto_session_body_unmarshall_int(s, sizeof (int), &arg1);
     printf("query handler: body unmarshall arg2\n");
     proto_session_body_unmarshall_int(s, 2*sizeof(int),&arg2);
-   
+  
+    printf("query handler: bzero header\n");
+    bzero(&h, sizeof (s));
+	printf("query handler: bzero sbuf\n");
+    bzero(&(s->sbuf), sizeof(int)*2);
+	s->slen=0;
+    h.type = PROTO_MT_REP_BASE_QUERY; 
+    
+	printf("query handler: marshalling header\n");
+    proto_session_hdr_marshall(s, &h);
+
     int reply; 
     switch(qtype){
         case NUM_HOME:
@@ -397,18 +407,9 @@ proto_server_mt_query_handler(Proto_Session *s) {
             printf("query unknown");
             break;
     }
-
-    printf("query handler: bzero header\n");
-    bzero(&h, sizeof (s));
-	printf("query handler: bzero sbuf\n");
-    bzero(&(s->sbuf), sizeof(int)*2);
-	s->slen=0;
-    h.type = PROTO_MT_REP_BASE_QUERY; 
-    
-	printf("query handler: marshalling header\n");
-    proto_session_hdr_marshall(s, &h);
 	printf("query handler: marshalling body\n");
     proto_session_body_marshall_int(s, reply);
+
     printf("query handler: sending message back\n");
     rc = proto_session_send_msg(s, 1);
 
@@ -486,10 +487,8 @@ proto_server_mt_goodbye_handler(Proto_Session *s) {
 
     rc = proto_session_send_msg(s, 1);
 
-    if (rc){
-        proto_server_post_disconnect_event(clientType);
-        close(s->fd);
-    }
+    close(s->fd);
+    
     return rc;
 }
 
