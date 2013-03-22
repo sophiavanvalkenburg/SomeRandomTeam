@@ -1,4 +1,4 @@
-CFLAGS := -g
+CFLAGS := -g -Wall
 targets = client.out server.out
 src  = $(wildcard *.c)
 objs = $(wildcard *.o)

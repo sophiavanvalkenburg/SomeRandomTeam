@@ -430,6 +430,18 @@ proto_server_init(void) {
     //load the maze
     proto_server_load_maze();
 
+    printf("rows:%d\tcols:%d\n",maze_get_num_rows(&Proto_Server.maze),maze_get_num_cols(&Proto_Server.maze));
+    printf("home1:%d\thome2:%d\tjail1:%d\tjail2:%d\twall:%d\tfloor:%d\n",   maze_get_num_home_cells(&Proto_Server.maze,T1),
+                                                                            maze_get_num_home_cells(&Proto_Server.maze,T2),
+                                                                            maze_get_num_jail_cells(&Proto_Server.maze,T1),
+                                                                            maze_get_num_jail_cells(&Proto_Server.maze,T2),
+                                                                            maze_get_num_wall_cells(&Proto_Server.maze),
+                                                                            maze_get_num_floor_cells(&Proto_Server.maze));
+    cell_t* test_cell = maze_get_cell(&Proto_Server.maze,100,100);
+    printf("cell type:%d\tcell team:%d\tcell occupied:%d\n",maze_get_cell_type(test_cell),
+                                                            maze_get_cell_team(&Proto_Server.maze, test_cell), 
+                                                            maze_get_cell_occupied(test_cell));
+
     proto_session_init(&Proto_Server.EventSession);
 
     proto_server_set_session_lost_handler(

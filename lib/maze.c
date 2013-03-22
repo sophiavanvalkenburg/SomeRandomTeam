@@ -38,6 +38,11 @@ extern int maze_load(char* path, maze_t* maze) {
             maze->cells[r][c]->pos.c = c;
             maze->cells[r][c]->pos.r = r;
             maze->cells[r][c]->occ = UNOCCUPIED;
+            if (c < NUM_COLUMN/2){
+                maze->cells[r][c]->team = T1;
+            }else{
+                maze->cells[r][c]->team = T2;
+            }
             /*
                         printf("ptr: %x, r: %d, c:%d\n", maze->cells[r][c], maze->cells[r][c]->pos.r, maze->cells[r][c]->pos.c);
              */
@@ -139,37 +144,31 @@ int main() {
 
 /** dim commmand **/
 
-static int
+extern int
 maze_get_num_rows(maze_t* maze){
     return maze->dim_r;
 }
 
-static int
+extern int
 maze_get_num_cols(maze_t* maze){
     return maze->dim_c;
 }
 
 /** cinfo command **/
 
-static cell_t*
+extern cell_t*
 maze_get_cell(maze_t* maze, int row, int col){
-    return maze->cells[row][col];
+    return  maze->cells[row][col];
 }
 
-static Cell_Type 
+extern Cell_Type 
 maze_get_cell_type(cell_t* c){
     return c->type;
 }
 
-static Team_Type
-maze_server_get_cell_team(maze_t* maze,cell_t* c){
-    int n_cols = maze_get_num_cols(maze);
-    int c_col = c->pos.c;
-    // assuming the first half of the board is T1 and second half is T2
-    if(c_col < n_cols/2)
-        return T1;
-    else
-        return T2;
+extern Team_Type
+maze_get_cell_team(cell_t* c){
+    return c->team;
 }
 
 extern Occupancy_Type
