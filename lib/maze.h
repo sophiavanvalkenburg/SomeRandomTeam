@@ -30,7 +30,7 @@ typedef struct {
     position_t pos;
     Cell_Type type;
     Occupancy_Type occ;
-    Team_type team;
+    Team_Type team;
 } cell_t;
 
 #define NUM_COLUMN      200
