@@ -41,6 +41,7 @@ struct Globals {
 
 typedef struct ClientState  {
   int data;
+  char type;
   Proto_Client_Handle ph;
 } Client;
 
@@ -189,11 +190,15 @@ doConnectCmd(Client *C, char *host, char *port)
 int 
 doQuitCmd(Client *C)
 {
-    if (doDisconnectCmd(C)) {
+    if(globals.host==NULL || globals.port==0){
+        printf("not connected\n");
         return -1;
-    }else{
-        return 1;
     }
+    int rc =  proto_client_goodbye(C->ph,1);
+    if (rc < 0){
+        fprintf(stdout,"Error: problem disconnecting\n");
+    }
+    return rc;
 }
 
 

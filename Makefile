@@ -6,9 +6,9 @@ objs = $(wildcard *.o)
 all: $(targets)
 .PHONY:	all
 	
-client.out:	net protocol_client protocol_session protocol_utils gamelogic
+client.out:	net protocol_client protocol_session protocol_utils
 	gcc $(CFLAGS) -c -pthread client client/client.c
-	gcc $(CFLAGS) -o client.out client.o net.o protocol_client.o protocol_session.o protocol_utils.o gamelogic.o -pthread
+	gcc $(CFLAGS) -o client.out client.o net.o protocol_client.o protocol_session.o protocol_utils.o -pthread
 	
 server.out: net protocol_server protocol_session protocol_utils
 	gcc $(CFLAGS) -c -pthread server server/server.c
@@ -20,17 +20,14 @@ net:
 protocol_utils:
 	gcc $(CFLAGS) -c lib/protocol_utils.c
 
-protocol_client: protocol_utils protocol_session gamelogic
+protocol_client: protocol_utils protocol_session
 	gcc $(CFLAGS) -c -pthread lib/protocol_client.c
 
-protocol_server: protocol_utils protocol_session gamelogic
+protocol_server: protocol_utils protocol_session
 	gcc $(CFLAGS) -c -pthread lib/protocol_server.c
 
 protocol_session: protocol_utils net
 	gcc $(CFLAGS) -c lib/protocol_session.c
-
-gamelogic:
-	gcc $(CFLAGS) -c lib/gamelogic.c
 
 clean:
 	rm $(objs) $(targets)

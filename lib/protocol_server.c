@@ -40,7 +40,7 @@
 typedef enum {
     T1,
     T2
-}Team_Type
+}Team_Type;
 
 struct {
     FDType RPCListenFD;
@@ -322,7 +322,7 @@ proto_server_mt_hello_handler(Proto_Session *s) {
 
     fprintf(stderr, "proto_server_mt_hello_handler: invoked for session:\n");
     proto_session_dump(s);
-    //assign either X or O to this
+    
     pthread_mutex_lock(&Proto_Server.EventSubscribersLock);
     // setup dummy reply header : set correct reply message type and 
     // everything else empty
@@ -330,6 +330,7 @@ proto_server_mt_hello_handler(Proto_Session *s) {
     h.type = PROTO_MT_REP_BASE_HELLO;
     proto_session_hdr_marshall(s, &h);
 	printf("proto_server_hello_handler: eventNumSubscribers %d\n",Proto_Server.EventNumSubscribers);
+   /* 
     if (Proto_Server.EventNumSubscribers == 1) {
         //assign X
         proto_session_body_marshall_int(s, X);
@@ -339,7 +340,8 @@ proto_server_mt_hello_handler(Proto_Session *s) {
     } else {
         //full
         proto_session_body_marshall_int(s, -1);
-    }
+    }*/
+    proto_session_body_marshall_int(s,T1);
     pthread_mutex_unlock(&Proto_Server.EventSubscribersLock);
     rc = proto_session_send_msg(s, 1);
     return rc;
