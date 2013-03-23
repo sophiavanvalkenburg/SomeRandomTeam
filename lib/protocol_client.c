@@ -27,6 +27,9 @@
 #include <errno.h>
 #include <pthread.h>
 #include <memory.h>
+#include <unistd.h>
+#include <string.h>
+
 
 #include "protocol.h"
 #include "protocol_utils.h"
@@ -60,6 +63,7 @@ extern int
 proto_client_set_session_lost_handler(Proto_Client_Handle ch, Proto_MT_Handler h) {
     Proto_Client *c = ch;
     c->session_lost_handler = h;
+    return 0;
 }
 
 extern int
@@ -87,6 +91,7 @@ proto_client_session_lost_default_hdlr(Proto_Session *s) {
     return -1;
 }
 
+/*
 int
 getBoardFromSession(Proto_Session *s) {
     int winCode;
@@ -147,6 +152,7 @@ getBoardFromSessionHelper(Proto_Client_Handle ch) {
     Proto_Session *s = &(c->event_session);
     return getBoardFromSession(s);
 }
+ */
 
 static int
 proto_client_event_null_handler(Proto_Session *s) {
@@ -160,7 +166,9 @@ static int
 proto_client_event_update_handler(Proto_Session *s) {
     //fprintf(stderr,
     //       "proto_client_event null_handler: invoked for session:\n");
-    getBoardFromSession(s);
+    /*
+        getBoardFromSession(s);
+     */
 
     return 1;
 }
@@ -170,6 +178,20 @@ proto_client_event_disconnect_handler(Proto_Session *s) {
     int disconnectCode;
     proto_session_body_unmarshall_int(s, 0, &disconnectCode);
     close(s->fd);
+<<<<<<< HEAD
+=======
+    //printf("disconnect handler: code %d\n",disconnectCode);
+
+    /*
+        if (disconnectCode == 1) {
+
+            fprintf(stdout, "Game Over: X quit\n");
+        } else if (disconnectCode == 0) {
+            fprintf(stdout, "Game Over: O quit\n");
+        }
+     */
+
+>>>>>>> finalized the assignment
     return 1;
 }
 */
@@ -179,7 +201,7 @@ proto_client_event_dispatcher(void * arg) {
     Proto_Session *s;
     Proto_Msg_Types mt;
     Proto_MT_Handler hdlr;
-    int i;
+    //int i;
 
     pthread_detach(pthread_self());
 
@@ -230,7 +252,13 @@ proto_client_init(Proto_Client_Handle *ch) {
         proto_client_set_event_handler(c, mt, proto_client_event_null_handler);
 
     proto_client_set_event_handler(c, PROTO_MT_EVENT_BASE_UPDATE, proto_client_event_update_handler);
+<<<<<<< HEAD
     //proto_client_set_event_handler(c, PROTO_MT_EVENT_BASE_DISCONNECT, proto_client_event_disconnect_handler);
+=======
+    /*
+        proto_client_set_event_handler(c, PROTO_MT_EVENT_BASE_DISCONNECT, proto_client_event_disconnect_handler);
+     */
+>>>>>>> finalized the assignment
 
     *ch = c;
     return 1;
@@ -344,9 +372,10 @@ proto_client_goodbye(Proto_Client_Handle ch, int tp) {
     return rc;
 }
 
-extern int
-proto_client_query(Proto_Client_Handle ch, Query_Types qt , int v1,int v2) {
-
+extern int proto_client_query(Proto_Client_Handle ch, Query_Types qt, int v1, int v2, int* buf) {
+    /*
+        memset(buf, 0, sizeof (int) *3);
+     */
     int rc;
     Proto_Session *s;
     Proto_Client *c = ch;
@@ -356,19 +385,25 @@ proto_client_query(Proto_Client_Handle ch, Query_Types qt , int v1,int v2) {
 
     marshall_mtonly(s, PROTO_MT_REQ_BASE_QUERY);
 
-    proto_session_body_marshall_int(s, (int)qt);
+    proto_session_body_marshall_int(s, (int) qt);
     proto_session_body_marshall_int(s, v1);
     proto_session_body_marshall_int(s, v2);
 
     rc = proto_session_rpc(s);
 
     if (rc == 1) {
+<<<<<<< HEAD
         int reply1 = 0;
         int reply2 = 0;
         int reply3 = 0;
         proto_session_body_unmarshall_int(s, 0, &reply1);
         proto_session_body_unmarshall_int(s, 0, &reply2);
         proto_session_body_unmarshall_int(s, 0, &reply3);
+=======
+        proto_session_body_unmarshall_int(s, 0, buf);
+        proto_session_body_unmarshall_int(s, sizeof (int), (int*) (buf + 1));
+        proto_session_body_unmarshall_int(s, sizeof (int) *2, (int*) (buf + 2));
+>>>>>>> finalized the assignment
     } else {
         close(s->fd);
     }

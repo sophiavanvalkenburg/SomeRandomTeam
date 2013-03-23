@@ -42,10 +42,11 @@ extern int proto_client_set_event_handler(Proto_Client_Handle ch,
 					  Proto_MT_Handler h);
 
 // client side protocol rpc's
-/*extern int proto_client_hello(Proto_Client_Handle ch);
+extern int proto_client_hello(Proto_Client_Handle ch);
+/*
 extern int proto_client_move(Proto_Client_Handle ch, int tp, int move);
-extern int proto_client_goodbye(Proto_Client_Handle ch);
 */
-extern int proto_client_query(Proto_Client_Handle ch, Query_Types qt, int v1, int v2);
+extern int proto_client_goodbye(Proto_Client_Handle ch,int tp);
+extern int proto_client_query(Proto_Client_Handle ch, Query_Types qt, int v1, int v2,int* buf);
 
 #endif

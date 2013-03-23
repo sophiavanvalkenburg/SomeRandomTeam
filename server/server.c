@@ -75,7 +75,7 @@ docmd(char cmd)
 int
 prompt(int menu) 
 {
-  int ret;
+  //int ret;
   int c=0;
 
   if (menu) printf("%s:", MenuString);

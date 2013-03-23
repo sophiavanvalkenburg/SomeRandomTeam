@@ -1,4 +1,4 @@
-CFLAGS := -g
+CFLAGS := -g -Wall
 targets = client.out server.out
 src  = $(wildcard *.c)
 objs = $(wildcard *.o)
@@ -6,9 +6,9 @@ objs = $(wildcard *.o)
 all: $(targets)
 .PHONY:	all
 	
-client.out:	net protocol_client protocol_session protocol_utils
+client.out:	net protocol_client protocol_session protocol_utils maze
 	gcc $(CFLAGS) -c -pthread client client/client.c
-	gcc $(CFLAGS) -o client.out client.o net.o protocol_client.o protocol_session.o protocol_utils.o -pthread
+	gcc $(CFLAGS) -o client.out client.o net.o protocol_client.o protocol_session.o protocol_utils.o maze.o -pthread
 	
 server.out: net protocol_server protocol_session protocol_utils maze
 	gcc $(CFLAGS) -c -pthread server server/server.c

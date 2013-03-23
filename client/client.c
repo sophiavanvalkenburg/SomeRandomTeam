@@ -26,6 +26,7 @@
 #include "../lib/types.h"
 #include "../lib/protocol_client.h"
 #include "../lib/protocol_utils.h"
+#include "../lib/maze.h"
 
 #define STRLEN 81
 #define T1 '1'
@@ -58,7 +59,7 @@ clientInit(Client *C) {
 
 static int
 update_event_handler(Proto_Session *s) {
-    Client *C = proto_session_get_data(s);
+    //Client *C = proto_session_get_data(s);
 
     fprintf(stderr, "%s: called", __func__);
     return 1;
@@ -85,7 +86,7 @@ startConnection(Client *C, char *host, PortType port, Proto_MT_Handler h) {
 
 char *
 prompt(Client *C, int menu) {
-    int ret;
+    //int ret;
     char *c = malloc(sizeof (char) * STRLEN);
     ;
 
@@ -127,15 +128,17 @@ int doNumHomeCmd(Client* C, char* team) {
         fprintf(stderr, "invalid team selection\n");
         return -1;
     }
-    int rc = proto_client_query(C->ph, NUM_HOME, tp, 0);
-    //	printf("do move command: rc = %d\n",rc);
+    int* buf = malloc(sizeof (int) *3);
+    int rc = proto_client_query(C->ph, NUM_HOME, tp, 0, buf);
+    // printf("do move command: rc = %d\n",rc);
     if (rc < 0) {
         //error
-        fprintf(stderr,"There was a problem getting the number of home cells\n");
+        fprintf(stderr, "There was a problem getting the number of home cells\n");
 
-    }else {
-        printf("Home Cells for Team %c : %d\n",tp,rc);
+    } else {
+        printf("Home Cells for Team %c : %d\n", tp, *buf);
     }
+    return 1;
 }
 
 int doNumJailCmd(Client* C, char* team) {
@@ -155,16 +158,17 @@ int doNumJailCmd(Client* C, char* team) {
         fprintf(stderr, "invalid team selection\n");
         return -1;
     }
-    int rc = proto_client_query(C->ph, NUM_JAIL, tp, 0);
-    //	printf("do move command: rc = %d\n",rc);
+    int* buf = malloc(sizeof (int) *3);
+    int rc = proto_client_query(C->ph, NUM_JAIL, tp, 0, buf);
+    // printf("do move command: rc = %d\n",rc);
     if (rc < 0) {
         //error
-        fprintf(stderr,"There was a problem getting the number of jail cells\n");
+        fprintf(stderr, "There was a problem getting the number of jail cells\n");
 
-    }else {
-        printf("Jail Cells for Team %c : %d\n",tp,rc);
+    } else {
+        printf("Jail Cells for Team %c : %d\n", tp, *buf);
     }
-    
+    return 1;
 }
 
 int doNumWallCmd(Client* C) {
@@ -174,18 +178,21 @@ int doNumWallCmd(Client* C) {
         return 1;
     }
 
-    //first input type    
-    int rc = proto_client_query(C->ph, NUM_WALL, 0, 0);
-    //	printf("do move command: rc = %d\n",rc);
-    
+    //first input type
+    int* buf = malloc(sizeof (int) *3);
+    int rc = proto_client_query(C->ph, NUM_WALL, 0, 0, buf);
+    // printf("do move command: rc = %d\n",rc);
+
     if (rc < 0) {
         //error
-        fprintf(stderr,"There was a problem getting the number of wall cells\n");
+        fprintf(stderr, "There was a problem getting the number of wall cells\n");
 
-    }else {
-        printf("Wall Cells: %d\n",rc);
+    } else {
+        printf("Wall Cells: %d\n", *buf);
     }
-    
+
+    return 1;
+
 }
 
 int doNumFloorCmd(Client* C) {
@@ -195,41 +202,39 @@ int doNumFloorCmd(Client* C) {
         return 1;
     }
 
-    //first input type    
-    int rc = proto_client_query(C->ph, NUM_FLOOR, 0, 0);
-    //	printf("do move command: rc = %d\n",rc);
-    
+    //first input type
+    int* buf = malloc(sizeof (int) *3);
+    int rc = proto_client_query(C->ph, NUM_FLOOR, 0, 0, buf);
+    // printf("do move command: rc = %d\n",rc);
+
     if (rc < 0) {
         //error
-        fprintf(stderr,"There was a problem getting the number of floor cells\n");
+        fprintf(stderr, "There was a problem getting the number of floor cells\n");
 
-    }else {
-        printf("Floor Cells: %d\n",rc); 
+    } else {
+        printf("Floor Cells: %d\n", *buf);
     }
-
-    
+    return 1;
 }
 
 int doDimCmd(Client* C) {
-
     if (globals.host == NULL || globals.port == 0) {
         fprintf(stdout, "Not connected");
         return 1;
     }
 
-    //first input type    
-    int rc = proto_client_query(C->ph, DIM, 0, 0);
-    //	printf("do move command: rc = %d\n",rc);
-    if (rc == 1) {
-        //valid
+    //first input type
+    int* buf = malloc(sizeof (int) *3);
+    int rc = proto_client_query(C->ph, DIM, 0, 0, buf);
+    // printf("do move command: rc = %d\n",rc);
+    if (rc < 0) {
+        //error
+        fprintf(stderr, "There was a problem getting the number of floor cells\n");
 
-    } else if (rc == 0) {
-        //invalid: not a valid move
-        fprintf(stderr, "Not a valid move!\n");
     } else {
-        //invalid: not your turn
-        fprintf(stderr, "Not your turn yet!\n");
+        printf("number of columns: %d\nnumber of rows: %d\n", *buf, *(int*) ((int*) buf + 1));
     }
+    return 1;
 }
 
 int doCInfoCmd(Client* C, char *x, char* y) {
@@ -239,21 +244,47 @@ int doCInfoCmd(Client* C, char *x, char* y) {
         return 1;
     }
 
-    //first input type    
+    //first input type
     int xaxis = atoi(x);
     int yaxis = atoi(y);
-    int rc = proto_client_query(C->ph, NUM_WALL, xaxis, yaxis);
-    //	printf("do move command: rc = %d\n",rc);
-    if (rc == 1) {
-        //valid
+    int* buf = malloc(sizeof (int) *3);
+    int rc = proto_client_query(C->ph, CINFO, xaxis, yaxis, buf);
+    // printf("do move command: rc = %d\n",rc);
+    if (rc < 0) {
+        //error
+        fprintf(stderr, "There was a problem getting the number of floor cells\n");
 
-    } else if (rc == 0) {
-        //invalid: not a valid move
-        fprintf(stderr, "Not a valid move!\n");
     } else {
-        //invalid: not your turn
-        fprintf(stderr, "Not your turn yet!\n");
+        char *tp = malloc(100);
+        switch (*buf) {
+            case FLOOR_CELL:
+                memcpy(tp, "FLOOR_CELL", 10);
+                break;
+            case WALL_CELL:
+                memcpy(tp, "WALL_CELL", 9);
+                break;
+            case HOME_CELL_1:
+            case HOME_CELL_2:
+                memcpy(tp, "HOME_CELL", 9);
+                break;
+            case JAIL_CELL_1:
+            case JAIL_CELL_2:
+                memcpy(tp, "JAIL_CELL", 9);
+                break;
+            case FLAG_CELL_1:
+            case FLAG_CELL_2:
+                memcpy(tp, "FLAG_CELL", 9);
+                break;
+        }
+
+        printf("Type: %s\nTeam: %d\nOccupancy: ", tp, *(int*) ((int*) buf + 1));
+        if (*(int*) ((int*) buf + 2)) {
+            printf("Occupied\n");
+        } else {
+            printf("Unoccupied\n");
+        }
     }
+    return 1;
 }
 
 int doDumpCmd(Client* C) {
@@ -263,62 +294,23 @@ int doDumpCmd(Client* C) {
         return 1;
     }
 
-    //first input type    
-    int rc = proto_client_query(C->ph, DUMP, 0, 0);
-    //	printf("do move command: rc = %d\n",rc);
+    //first input type
+    int* buf = malloc(sizeof (int) *3);
+    int rc = proto_client_query(C->ph, DUMP, 0, 0, buf);
+    // printf("do move command: rc = %d\n",rc);
     if (rc < 0) {
         //error
-        fprintf(stderr,"There was a problem sending dump msg to server\n");
+        fprintf(stderr, "There was a problem sending dump msg to server\n");
 
-    }else {
-        printf("sent dump msg"); 
+    } else {
+        printf("sent dump msg");
     }
+    return 1;
 }
 
 int
-docmd(Client *C, char *cmd) {
-    int rc = 1, i = 0, j = 0;
-    char *token;
-    char *commands[5];
-
-
-    token = strtok(cmd, " ");
-    commands[i] = (char *) malloc(strlen(token) * sizeof (char));
-    strcpy(commands[i], token);
-    i++;
-
-    while (token != NULL) {
-        token = strtok(NULL, ":");
-        if (token) {
-            commands[i] = (char *) malloc(strlen(token) * sizeof (char));
-            strcpy(commands[i], token);
-            i++;
-        }
-    }
-    if (streql(commands[0], "connect")) {
-        rc = doConnectCmd(C, commands[1], commands[2]);
-    } else if (streql(commands[0], "numhome")) {
-        rc = doNumHomeCmd(C, commands[1]);
-    } else if (streql(commands[0], "numjail")) {
-        rc = doNumJailCmd(C, commands[1]);
-    } else if (streql(commands[0], "numwall")) {
-        rc = doNumWallCmd(C);
-    } else if (streql(commands[0], "numfloor")) {
-        rc = doNumFloorCmd(C);
-    } else if (streql(commands[0], "dim")) {
-        rc = doDimCmd(C);
-    } else if (streql(commands[0], "cinfo")) {
-        rc = doCInfoCmd(C, commands[1], commands[2]);
-    } else if (streql(commands[0], "dump")) {
-        rc = doDumpCmd(C);
-    } else if (streql(commands[0], "quit")) {
-        rc = doQuitCmd(C);
-    } else {
-        rc = doDefaultCmd(C);
-
-    }
-
-    return rc;
+streql(char *c1, char *c2) {
+    return strcmp(c1, c2) == 0;
 }
 
 int
@@ -353,16 +345,91 @@ doQuitCmd(Client *C) {
     if (rc < 0) {
         fprintf(stdout, "Error: problem disconnecting\n");
         return 1;
+<<<<<<< HEAD
     }else{
+=======
+    } else {
+>>>>>>> finalized the assignment
         printf("You Quit\n");
         return -1;
     }
 }
 
 int
-doDefaultCmd(Client *C) {
-    fprintf(stdout, "default command");
+doDefaultCmd(Client * C) {
+    fprintf(stdout, "not a valid command");
     return 1;
+}
+
+int
+docmd(Client *C, char *cmd) {
+    int rc = 1, i = 0, j = 0;
+    char* arg0 = malloc(100);
+    char* arg1 = malloc(100);
+    char* arg2 = malloc(100);
+
+    while (*(char*) (cmd + i) != ' ' && *(char*) (cmd + i) != '\n') {
+        i++;
+    }
+    memcpy(arg0, (char*) (cmd), i);
+    i++;
+    j = i;
+
+    if (streql(arg0, "connect")) {
+        while (*(char*) (cmd + j) != ' ' && *(char*) (cmd + j) != ':' && j < 100) {
+            j++;
+        }
+        memcpy(arg1, (char*) (cmd + i), j - i);
+        j++;
+        memcpy(arg2, (char*) (cmd + j), strlen(cmd) - j - 1);
+        rc = doConnectCmd(C, arg1, arg2);
+    } else if (streql(arg0, "numhome")) {
+        while (*(char*) (cmd + j) != ' ' && *(char*) (cmd + j) != ':' && *(char*) (cmd + i) != '\n') {
+            j++;
+        }
+        memcpy(arg1, (char*) (cmd + i), 1);
+        j++;
+        //        printf("arg1 : %s\n", arg1);
+        rc = doNumHomeCmd(C, arg1);
+    } else if (streql(arg0, "numjail")) {
+        while (*(char*) (cmd + j) != ' ' && *(char*) (cmd + j) != ':' && *(char*) (cmd + i) != '\n') {
+            j++;
+        }
+        memcpy(arg1, (char*) (cmd + i), 1);
+        j++;
+        rc = doNumJailCmd(C, arg1);
+    } else if (streql(arg0, "numwall")) {
+        rc = doNumWallCmd(C);
+    } else if (streql(arg0, "numfloor")) {
+        rc = doNumFloorCmd(C);
+    } else if (streql(arg0, "dim")) {
+        rc = doDimCmd(C);
+    } else if (streql(arg0, "cinfo")) {
+        while (*(char*) (cmd + j) != ' ' && *(char*) (cmd + j) != ':' && j < 100) {
+            j++;
+        }
+        memcpy(arg1, (char*) (cmd + i), j - i);
+        j++;
+        memcpy(arg2, (char*) (cmd + j), strlen(cmd) - j - 1);
+        /*
+                printf("command: %s,%s\n", arg1, arg2);
+         */
+        rc = doCInfoCmd(C, arg1, arg2);
+    } else if (streql(arg0, "dump")) {
+        rc = doDumpCmd(C);
+    } else if (streql(arg0, "quit")) {
+        rc = doQuitCmd(C);
+    } else {
+        rc = doDefaultCmd(C);
+
+    }
+
+    /*
+        printf("aaa%saaa%saaa%saaa\n", arg0, arg1, arg2);
+     */
+
+
+    return rc;
 }
 
 void *
@@ -394,7 +461,7 @@ usage(char *pgm) {
             "examples:\n"
             " %s 12345 : starts client connecting to localhost:12345\n"
             " %s localhost 12345 : starts client connecting to locaalhost:12345\n",
-            pgm, pgm, pgm, pgm);
+            pgm, pgm, pgm);
 
 }
 
@@ -405,11 +472,6 @@ initGlobals(char *host, char *port) {
     strncpy(globals.host, host, STRLEN);
     globals.port = atoi(port);
 
-}
-
-int
-streql(char *c1, char *c2) {
-    return strcmp(c1, c2) == 0;
 }
 
 int

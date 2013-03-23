@@ -9,21 +9,20 @@ typedef enum {
     FLAG_CELL_2
 } Cell_Type;
 
-typedef enum{
-    OCCUPIED,
-    UNOCCUPIED
-}Occupancy_Type;
+typedef enum {
+    OCCUPIED=1,
+    UNOCCUPIED=0
+} Occupancy_Type;
 
 typedef enum {
-    T1,
-    T2
-}Team_Type;
-
+    T1=1,
+    T2=2
+} Team_Type;
 
 typedef struct {
     int c;
     int r;
-    
+
 } position_t;
 
 typedef struct {
@@ -45,4 +44,35 @@ typedef struct {
 
 extern int maze_load(char* path, maze_t* maze);
 extern int maze_dump(maze_t* maze);
+extern int
+maze_get_num_home_cells(maze_t* maze, Team_Type team);
+extern int
+maze_get_num_jail_cells(maze_t* maze, Team_Type team);
+extern int
+maze_get_num_wall_cells(maze_t* maze);
+extern int
+maze_get_num_floor_cells(maze_t* maze);
+
+extern int
+maze_get_num_rows(maze_t* maze);
+
+extern int
+maze_get_num_cols(maze_t* maze);
+
+extern cell_t*
+maze_get_cell(maze_t* maze, int row, int col);
+
+extern Cell_Type
+maze_get_cell_type(cell_t* c);
+
+extern Team_Type
+maze_get_cell_team(cell_t* c);
+
+extern Occupancy_Type
+maze_get_cell_occupied(cell_t* c);
+
+extern char
+maze_cell_to_char(Cell_Type ct);
+
+
 

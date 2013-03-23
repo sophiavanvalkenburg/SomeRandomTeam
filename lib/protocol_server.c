@@ -27,6 +27,7 @@
 #include <errno.h>
 #include <pthread.h>
 #include <memory.h>
+#include <unistd.h>
 
 #include "net.h"
 #include "protocol.h"
@@ -68,10 +69,10 @@ proto_server_event_session(void) {
     return &Proto_Server.EventSession;
 }
 
-
 extern int
 proto_server_set_session_lost_handler(Proto_MT_Handler h) {
     Proto_Server.session_lost_handler = h;
+    return 1;
 }
 
 extern int
@@ -126,20 +127,21 @@ proto_server_remove_event_subscriber(int fd) {
 
     pthread_mutex_lock(&Proto_Server.EventSubscribersLock);
 
-       int i;
-        for (i = 0; i < PROTO_SERVER_MAX_EVENT_SUBSCRIBERS; i++) {
-            if (Proto_Server.EventSubscribers[i] == fd) {
-                Proto_Server.EventSubscribers[i] = -1;
-                Proto_Server.EventNumSubscribers--;
-                rc = 1;
-            }
+    int i;
+    for (i = 0; i < PROTO_SERVER_MAX_EVENT_SUBSCRIBERS; i++) {
+        if (Proto_Server.EventSubscribers[i] == fd) {
+            Proto_Server.EventSubscribers[i] = -1;
+            Proto_Server.EventNumSubscribers--;
+            rc = 1;
         }
-    
+    }
+
 
     pthread_mutex_unlock(&Proto_Server.EventSubscribersLock);
 
     return rc;
 }
+
 static
 void *
 proto_server_event_listen(void *arg) {
@@ -151,21 +153,21 @@ proto_server_event_listen(void *arg) {
     }
 
     for (;;) {
-        connfd = net_accept(fd); 
+        connfd = net_accept(fd);
         if (connfd < 0) {
             fprintf(stderr, "Error: EventListen accept failed (%d)\n", errno);
         } else {
             int i;
             fprintf(stderr, "EventListen: connfd=%d -> ", connfd);
 
-            if ( proto_server_record_event_subscriber(connfd, &i) < 0) {
+            if (proto_server_record_event_subscriber(connfd, &i) < 0) {
                 fprintf(stderr, "oops no space for any more event subscribers\n");
                 close(connfd);
             } else {
                 fprintf(stderr, "subscriber num %d\n", i);
             }
         }
-    } 
+    }
 }
 
 void
@@ -174,8 +176,8 @@ proto_server_post_event(void) {
     int num;
 
     pthread_mutex_lock(&Proto_Server.EventSubscribersLock);
-	//organize data into eventsession
-	
+    //organize data into eventsession
+
     i = 0;
     num = Proto_Server.EventNumSubscribers;
     while (num) {
@@ -205,7 +207,7 @@ proto_server_req_dispatcher(void * arg) {
     Proto_Session s;
     Proto_Msg_Types mt;
     Proto_MT_Handler hdlr;
-    int i;
+    //int i;
     unsigned long arg_value = (unsigned long) arg;
 
     pthread_detach(pthread_self());
@@ -220,9 +222,9 @@ proto_server_req_dispatcher(void * arg) {
             pthread_self(), s.fd);
 
     for (;;) {
-	//flush the buffer
-	bzero(&(s.rbuf),sizeof(int)*2);
-	s.slen=0;
+        //flush the buffer
+        bzero(&(s.rbuf), sizeof (int) *2);
+        s.slen = 0;
         //read msg to s
         if (proto_session_rcv_msg(&s) == 1) {
             mt = proto_session_hdr_unmarshall_type(&s);
@@ -241,8 +243,8 @@ leave:
     Proto_Server.session_lost_handler(&s);
     close(s.fd);
 
-//unlock turn here
-return NULL;
+    //unlock turn here
+    return NULL;
 }
 
 static
@@ -258,7 +260,7 @@ proto_server_rpc_listen(void *arg) {
     }
 
     for (;;) {
-        connfd = net_accept(fd); 
+        connfd = net_accept(fd);
         if (connfd < 0) {
             fprintf(stderr, "Error: proto_server_rpc_listen accept failed (%d)\n", errno);
         } else {
@@ -317,31 +319,30 @@ proto_server_mt_hello_handler(Proto_Session *s) {
 
     fprintf(stderr, "proto_server_mt_hello_handler: invoked for session:\n");
     proto_session_dump(s);
-    
+
     pthread_mutex_lock(&Proto_Server.EventSubscribersLock);
     // setup dummy reply header : set correct reply message type and 
     // everything else empty
     bzero(&h, sizeof (s));
     h.type = PROTO_MT_REP_BASE_HELLO;
     proto_session_hdr_marshall(s, &h);
-	printf("proto_server_hello_handler: eventNumSubscribers %d\n",Proto_Server.EventNumSubscribers);
-   /* 
-    if (Proto_Server.EventNumSubscribers == 1) {
-        //assign X
-        proto_session_body_marshall_int(s, X);
-    } else if (Proto_Server.EventNumSubscribers == 2) {
-        //assign O
-        proto_session_body_marshall_int(s, O);
-    } else {
-        //full
-        proto_session_body_marshall_int(s, -1);
-    }*/
-    proto_session_body_marshall_int(s,T1);
+    printf("proto_server_hello_handler: eventNumSubscribers %d\n", Proto_Server.EventNumSubscribers);
+    /* 
+     if (Proto_Server.EventNumSubscribers == 1) {
+         //assign X
+         proto_session_body_marshall_int(s, X);
+     } else if (Proto_Server.EventNumSubscribers == 2) {
+         //assign O
+         proto_session_body_marshall_int(s, O);
+     } else {
+         //full
+         proto_session_body_marshall_int(s, -1);
+     }*/
+    proto_session_body_marshall_int(s, T1);
     pthread_mutex_unlock(&Proto_Server.EventSubscribersLock);
     rc = proto_session_send_msg(s, 1);
     return rc;
 }
-
 
 static int
 proto_server_mt_query_handler(Proto_Session *s) {
@@ -353,16 +354,17 @@ proto_server_mt_query_handler(Proto_Session *s) {
     //read the move informtaion from s
     //1. query type
     //2-3 arguments
-   
+
     Query_Types qtype;
     int arg1;
-    int arg2; 
+    int arg2;
 
-	printf("query handler: body unmarshall qtype\n");
-    proto_session_body_unmarshall_int(s, 0, (int*)&qtype);
-	printf("query handler: body unmarshall arg1\n");
+    printf("query handler: body unmarshall qtype\n");
+    proto_session_body_unmarshall_int(s, 0, (int*) &qtype);
+    printf("query handler: body unmarshall arg1\n");
     proto_session_body_unmarshall_int(s, sizeof (int), &arg1);
     printf("query handler: body unmarshall arg2\n");
+<<<<<<< HEAD
     proto_session_body_unmarshall_int(s, 2*sizeof(int),&arg2);
   
 
@@ -399,6 +401,45 @@ proto_server_mt_query_handler(Proto_Session *s) {
             printf("cinfo %d %d :\n\ttype:%c\n\tteam:%c\n\toccupied:%c", arg1, arg2,reply1,reply2,reply3);
             break;
         case DUMP: 
+=======
+    proto_session_body_unmarshall_int(s, 2 * sizeof (int), &arg2);
+
+
+    int reply1 = 0;
+    int reply2 = 0;
+    int reply3 = 0;
+    cell_t* cell;
+    switch (qtype) {
+        case NUM_HOME:
+            reply1 = maze_get_num_home_cells(&Proto_Server.maze, arg1);
+            printf("num_home %c : %d\n", arg1, reply1);
+            break;
+        case NUM_JAIL:
+            reply1 = maze_get_num_jail_cells(&Proto_Server.maze, arg1);
+            printf("num_jail %c : %d\n", arg1, reply1);
+            break;
+        case NUM_WALL:
+            reply1 = maze_get_num_wall_cells(&Proto_Server.maze);
+            printf("num_wall : %d\n", reply1);
+            break;
+        case NUM_FLOOR:
+            reply1 = maze_get_num_floor_cells(&Proto_Server.maze);
+            printf("num_floor : %d\n", reply1);
+            break;
+        case DIM:
+            reply1 = maze_get_num_cols(&Proto_Server.maze);
+            reply2 = maze_get_num_rows(&Proto_Server.maze);
+            printf("dim_c : %d\tdim_r : %d\n", reply1, reply2);
+            break;
+        case CINFO:
+            cell = maze_get_cell(&Proto_Server.maze, arg2 /*row*/, arg1 /*column*/);
+            reply1 = maze_get_cell_type(cell);
+            reply2 = maze_get_cell_team(cell);
+            reply3 = maze_get_cell_occupied(cell);
+            printf("cinfo %d %d :\n\ttype:%d\n\tteam:%d\n\toccupied:%d\n", arg1, arg2, reply1, reply2, reply3);
+            break;
+        case DUMP:
+>>>>>>> finalized the assignment
             reply1 = 1;
             maze_dump(&Proto_Server.maze);
             break;
@@ -407,16 +448,21 @@ proto_server_mt_query_handler(Proto_Session *s) {
             printf("query unknown");
             break;
     }
+<<<<<<< HEAD
 	
     
+=======
+
+
+>>>>>>> finalized the assignment
     printf("query handler: bzero header\n");
     bzero(&h, sizeof (s));
-	printf("query handler: bzero sbuf\n");
-    bzero(&(s->sbuf), sizeof(int)*2);
-	s->slen=0;
-    h.type = PROTO_MT_REP_BASE_QUERY; 
-    
-	printf("query handler: marshalling header\n");
+    printf("query handler: bzero sbuf\n");
+    bzero(&(s->sbuf), sizeof (int) *2);
+    s->slen = 0;
+    h.type = PROTO_MT_REP_BASE_QUERY;
+
+    printf("query handler: marshalling header\n");
     proto_session_hdr_marshall(s, &h);
 
     printf("query handler: marshalling body\n");
@@ -430,9 +476,8 @@ proto_server_mt_query_handler(Proto_Session *s) {
     return rc;
 }
 
-
 static int
-proto_server_mt_move_handler(Proto_Session *s) {
+proto_server_mt_move_handler(Proto_Session * s) {
     int rc = 1;
     Proto_Msg_Hdr h;
 
@@ -443,29 +488,28 @@ proto_server_mt_move_handler(Proto_Session *s) {
     //2. which move it performs
     int who;
     int move;
-	printf("move handler: body unmarshall int\n");
+    printf("move handler: body unmarshall int\n");
     proto_session_body_unmarshall_int(s, 0, &who);
-	printf("move handler: body unmarshall move\n");
+    printf("move handler: body unmarshall move\n");
     proto_session_body_unmarshall_int(s, sizeof (int), &move);
-	move=move-1;
+    move = move - 1;
 
     // setup dummy reply header : set correct reply message type and 
     // everything else empty
     printf("move handler: bzero header\n");
     bzero(&h, sizeof (s));
-	printf("move handler: bzero sbuf\n");
-    bzero(&(s->sbuf), sizeof(int)*2);
-	s->slen=0;
-    h.type = PROTO_MT_REP_BASE_MOVE; 
-    
-	printf("move handler: marshalling header\n");
+    printf("move handler: bzero sbuf\n");
+    bzero(&(s->sbuf), sizeof (int) *2);
+    s->slen = 0;
+    h.type = PROTO_MT_REP_BASE_MOVE;
+
+    printf("move handler: marshalling header\n");
     proto_session_hdr_marshall(s, &h);
-	printf("move handler: sending message back\n");
+    printf("move handler: sending message back\n");
     rc = proto_session_send_msg(s, 1);
 
     return rc;
 }
-
 
 void*
 proto_server_post_disconnect_event(int clientType) {
@@ -476,24 +520,23 @@ proto_server_post_disconnect_event(int clientType) {
 
     proto_session_hdr_marshall(event_session, &hdr);
     proto_session_body_marshall_int(event_session, clientType);
-    
-    proto_server_post_event();  
- 
+
+    proto_server_post_event();
+    return 0;
 }
 
-
 static int
-proto_server_mt_goodbye_handler(Proto_Session *s) {
+proto_server_mt_goodbye_handler(Proto_Session * s) {
     int rc = 1;
     Proto_Msg_Hdr h;
 
     int clientType;
-    proto_session_body_unmarshall_int(s,0,&clientType);
-    printf("goodbye handler: clienttype %d\n",clientType);
+    proto_session_body_unmarshall_int(s, 0, &clientType);
+    printf("goodbye handler: clienttype %d\n", clientType);
     bzero(&h, sizeof (Proto_Msg_Hdr));
-    bzero(&(s->sbuf), sizeof(int)*2);
-    s->slen=0;
-    
+    bzero(&(s->sbuf), sizeof (int) *2);
+    s->slen = 0;
+
     h.type = PROTO_MT_REP_BASE_GOODBYE;
     proto_session_hdr_marshall(s, &h);
 
@@ -501,11 +544,26 @@ proto_server_mt_goodbye_handler(Proto_Session *s) {
 
     rc = proto_session_send_msg(s, 1);
 
+<<<<<<< HEAD
     close(s->fd);
     
+=======
+    if (rc) {
+        proto_server_post_disconnect_event(clientType);
+        close(s->fd);
+    }
+>>>>>>> finalized the assignment
     return rc;
 }
 
+extern int
+proto_server_load_maze() {
+    char* path = malloc(100);
+    memcpy(path, "daGame.map", 10);
+    maze_load(path, &Proto_Server.maze);
+    maze_dump(&Proto_Server.maze);
+    return 1;
+}
 
 extern int
 proto_server_init(void) {
@@ -515,19 +573,19 @@ proto_server_init(void) {
     //load the maze
     proto_server_load_maze();
 
-   /* printf("rows:%d\tcols:%d\n",maze_get_num_rows(&Proto_Server.maze),maze_get_num_cols(&Proto_Server.maze));
-    printf("home1:%d\thome2:%d\tjail1:%d\tjail2:%d\twall:%d\tfloor:%d\n",   maze_get_num_home_cells(&Proto_Server.maze,T1),
-                                                                            maze_get_num_home_cells(&Proto_Server.maze,T2),
-                                                                            maze_get_num_jail_cells(&Proto_Server.maze,T1),
-                                                                            maze_get_num_jail_cells(&Proto_Server.maze,T2),
-                                                                            maze_get_num_wall_cells(&Proto_Server.maze),
-                                                                            maze_get_num_floor_cells(&Proto_Server.maze));
-    cell_t* test_cell = maze_get_cell(&Proto_Server.maze,100,100);
-    printf("cell type:%c\t",maze_cell_to_char(maze_get_cell_type(test_cell)));
+    /* printf("rows:%d\tcols:%d\n",maze_get_num_rows(&Proto_Server.maze),maze_get_num_cols(&Proto_Server.maze));
+     printf("home1:%d\thome2:%d\tjail1:%d\tjail2:%d\twall:%d\tfloor:%d\n",   maze_get_num_home_cells(&Proto_Server.maze,T1),
+                                                                             maze_get_num_home_cells(&Proto_Server.maze,T2),
+                                                                             maze_get_num_jail_cells(&Proto_Server.maze,T1),
+                                                                             maze_get_num_jail_cells(&Proto_Server.maze,T2),
+                                                                             maze_get_num_wall_cells(&Proto_Server.maze),
+                                                                             maze_get_num_floor_cells(&Proto_Server.maze));
+     cell_t* test_cell = maze_get_cell(&Proto_Server.maze,100,100);
+     printf("cell type:%c\t",maze_cell_to_char(maze_get_cell_type(test_cell)));
     
-                                                            maze_get_cell_team(&Proto_Server.maze, test_cell), 
-                                                            maze_get_cell_occupied(test_cell));
-*/
+                                                             maze_get_cell_team(&Proto_Server.maze, test_cell), 
+                                                             maze_get_cell_occupied(test_cell));
+     */
     proto_session_init(&Proto_Server.EventSession);
 
     proto_server_set_session_lost_handler(
@@ -540,12 +598,12 @@ proto_server_init(void) {
         Proto_Server.base_req_handlers[ind] = proto_server_mt_null_handler;
         // (complete) ADD CODE
     }
-	//set hello handler
-    proto_server_set_req_handler(PROTO_MT_REQ_BASE_HELLO,proto_server_mt_hello_handler);
-	//set query handler
-    proto_server_set_req_handler(PROTO_MT_REQ_BASE_QUERY,proto_server_mt_query_handler);
+    //set hello handler
+    proto_server_set_req_handler(PROTO_MT_REQ_BASE_HELLO, proto_server_mt_hello_handler);
+    //set query handler
+    proto_server_set_req_handler(PROTO_MT_REQ_BASE_QUERY, proto_server_mt_query_handler);
     //set goodbye handler
-    proto_server_set_req_handler(PROTO_MT_REQ_BASE_GOODBYE,proto_server_mt_goodbye_handler);
+    proto_server_set_req_handler(PROTO_MT_REQ_BASE_GOODBYE, proto_server_mt_goodbye_handler);
 
     for (i = 0; i < PROTO_SERVER_MAX_EVENT_SUBSCRIBERS; i++) {
         Proto_Server.EventSubscribers[i] = -1;
@@ -585,11 +643,3 @@ proto_server_init(void) {
     return 0;
 }
 
-extern int
-proto_server_load_maze(){
-    char* path = malloc(100);
-    memcpy(path, "daGame.map", 10);
-    maze_load(path, &Proto_Server.maze);
-    maze_dump(&Proto_Server.maze);
-    return 1;
-}
