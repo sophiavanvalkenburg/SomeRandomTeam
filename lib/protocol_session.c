@@ -291,7 +291,7 @@ proto_session_body_unmarshall_bytes(Proto_Session *s, int offset, int len,
 extern  int
 proto_session_send_msg(Proto_Session *s, int reset)
 {
-  int n;
+  //int n;
   s->shdr.blen = sizeof(s->sbuf);
   s->slen = sizeof(s->shdr);
 
@@ -320,6 +320,7 @@ proto_session_rcv_msg(Proto_Session *s)
   proto_session_reset_receive(s);
 
   // read reply
+  // ADD CODE
   s->rhdr.blen = sizeof(s->sbuf);
   s->rlen = sizeof(s->rhdr);
   net_readn(s->fd, &(s->rhdr), s->rlen); 

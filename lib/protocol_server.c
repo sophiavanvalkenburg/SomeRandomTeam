@@ -364,44 +364,6 @@ proto_server_mt_query_handler(Proto_Session *s) {
     printf("query handler: body unmarshall arg1\n");
     proto_session_body_unmarshall_int(s, sizeof (int), &arg1);
     printf("query handler: body unmarshall arg2\n");
-<<<<<<< HEAD
-    proto_session_body_unmarshall_int(s, 2*sizeof(int),&arg2);
-  
-
-    int reply1 = 0;
-    int reply2 = 0;
-    int reply3 = 0; 
-    switch(qtype){
-        case NUM_HOME:
-            reply1 = maze_get_num_home_cells(&Proto_Server.maze,arg1);
-            printf("num_home %c : %d\n",arg1, reply1); 
-            break;
-        case NUM_JAIL:
-            reply1 = maze_get_num_jail_cells(&Proto_Server.maze,arg1);
-            printf("num_jail %c : %d\n",arg1, reply1); 
-            break;
-        case NUM_WALL:
-            reply1 = maze_get_num_wall_cells(&Proto_Server.maze);
-            printf("num_wall : %d\n", reply1); 
-            break;
-        case NUM_FLOOR:
-            reply1 = maze_get_num_floor_cells(&Proto_Server.maze);
-            printf("num_floor : %d\n", reply1); 
-            break;
-        case DIM:
-            int reply1 = maze_get_num_cols(&Proto_Server.maze);
-            int reply2 = maze_get_num_rows(&Proto_Server.maze);
-            printf("dim_c : %d\tdim_r : %d\n",reply1,reply2);
-            break;
-        case CINFO:
-            cell_t* cell = maze_get_cell(&Proto_Server.maze, arg2 /*row*/, arg1 /*column*/);
-            int reply1 = maze_get_cell_type(cell);
-            int reply2 = maze_get_cell_team(cell);
-            int reply3 = maze_get_cell_occupied(cell);
-            printf("cinfo %d %d :\n\ttype:%c\n\tteam:%c\n\toccupied:%c", arg1, arg2,reply1,reply2,reply3);
-            break;
-        case DUMP: 
-=======
     proto_session_body_unmarshall_int(s, 2 * sizeof (int), &arg2);
 
 
@@ -439,7 +401,6 @@ proto_server_mt_query_handler(Proto_Session *s) {
             printf("cinfo %d %d :\n\ttype:%d\n\tteam:%d\n\toccupied:%d\n", arg1, arg2, reply1, reply2, reply3);
             break;
         case DUMP:
->>>>>>> finalized the assignment
             reply1 = 1;
             maze_dump(&Proto_Server.maze);
             break;
@@ -448,13 +409,8 @@ proto_server_mt_query_handler(Proto_Session *s) {
             printf("query unknown");
             break;
     }
-<<<<<<< HEAD
-	
-    
-=======
 
 
->>>>>>> finalized the assignment
     printf("query handler: bzero header\n");
     bzero(&h, sizeof (s));
     printf("query handler: bzero sbuf\n");
@@ -544,15 +500,10 @@ proto_server_mt_goodbye_handler(Proto_Session * s) {
 
     rc = proto_session_send_msg(s, 1);
 
-<<<<<<< HEAD
-    close(s->fd);
-    
-=======
     if (rc) {
         proto_server_post_disconnect_event(clientType);
         close(s->fd);
     }
->>>>>>> finalized the assignment
     return rc;
 }
 

@@ -345,11 +345,7 @@ doQuitCmd(Client *C) {
     if (rc < 0) {
         fprintf(stdout, "Error: problem disconnecting\n");
         return 1;
-<<<<<<< HEAD
-    }else{
-=======
     } else {
->>>>>>> finalized the assignment
         printf("You Quit\n");
         return -1;
     }
