@@ -363,7 +363,12 @@ proto_client_query(Proto_Client_Handle ch, Query_Types qt , int v1,int v2) {
     rc = proto_session_rpc(s);
 
     if (rc == 1) {
-        proto_session_body_unmarshall_int(s, 0, &rc);
+        int reply1 = 0;
+        int reply2 = 0;
+        int reply3 = 0;
+        proto_session_body_unmarshall_int(s, 0, &reply1);
+        proto_session_body_unmarshall_int(s, 0, &reply2);
+        proto_session_body_unmarshall_int(s, 0, &reply3);
     } else {
         close(s->fd);
     }
