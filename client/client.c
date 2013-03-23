@@ -380,7 +380,7 @@ docmd(Client *C, char *cmd) {
         memcpy(arg2, (char*) (cmd + j), strlen(cmd) - j - 1);
         rc = doConnectCmd(C, arg1, arg2);
     } else if (streql(arg0, "numhome")) {
-        while (*(char*) (cmd + j) != ' ' && *(char*) (cmd + j) != ':' && *(char*) (cmd + i) != '\n') {
+        while (*(char*) (cmd + j) != ' ' && *(char*) (cmd + j) != ':' && *(char*) (cmd + j) != '\n') {
             j++;
         }
         memcpy(arg1, (char*) (cmd + i), 1);
@@ -388,7 +388,7 @@ docmd(Client *C, char *cmd) {
         //        printf("arg1 : %s\n", arg1);
         rc = doNumHomeCmd(C, arg1);
     } else if (streql(arg0, "numjail")) {
-        while (*(char*) (cmd + j) != ' ' && *(char*) (cmd + j) != ':' && *(char*) (cmd + i) != '\n') {
+        while (*(char*) (cmd + j) != ' ' && *(char*) (cmd + j) != ':' && *(char*) (cmd + j) != '\n') {
             j++;
         }
         memcpy(arg1, (char*) (cmd + i), 1);
