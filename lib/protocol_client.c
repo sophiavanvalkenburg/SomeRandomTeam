@@ -175,6 +175,8 @@ proto_client_event_update_handler(Proto_Session *s) {
 
 static int
 proto_client_event_disconnect_handler(Proto_Session *s) {
+    //fprintf(stderr
+    //       "proto_client_event null_handler: invoked for session:\n");
     int disconnectCode;
     proto_session_body_unmarshall_int(s, 0, &disconnectCode);
     close(s->fd);
@@ -385,7 +387,7 @@ extern int proto_client_query(Proto_Client_Handle ch, Query_Types qt, int v1, in
     rc = proto_session_rpc(s);
 
     if (rc == 1) {
-         proto_session_body_unmarshall_int(s, 0, buf);
+        proto_session_body_unmarshall_int(s, 0, buf);
         proto_session_body_unmarshall_int(s, sizeof (int), (int*) (buf + 1));
         proto_session_body_unmarshall_int(s, sizeof (int) *2, (int*) (buf + 2));
     } else {
