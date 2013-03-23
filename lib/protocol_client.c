@@ -172,14 +172,12 @@ proto_client_event_update_handler(Proto_Session *s) {
 
     return 1;
 }
-/*
+
 static int
 proto_client_event_disconnect_handler(Proto_Session *s) {
     int disconnectCode;
     proto_session_body_unmarshall_int(s, 0, &disconnectCode);
     close(s->fd);
-<<<<<<< HEAD
-=======
     //printf("disconnect handler: code %d\n",disconnectCode);
 
     /*
@@ -191,10 +189,9 @@ proto_client_event_disconnect_handler(Proto_Session *s) {
         }
      */
 
->>>>>>> finalized the assignment
     return 1;
 }
-*/
+
 static void *
 proto_client_event_dispatcher(void * arg) {
     Proto_Client *c;
@@ -252,13 +249,9 @@ proto_client_init(Proto_Client_Handle *ch) {
         proto_client_set_event_handler(c, mt, proto_client_event_null_handler);
 
     proto_client_set_event_handler(c, PROTO_MT_EVENT_BASE_UPDATE, proto_client_event_update_handler);
-<<<<<<< HEAD
-    //proto_client_set_event_handler(c, PROTO_MT_EVENT_BASE_DISCONNECT, proto_client_event_disconnect_handler);
-=======
     /*
         proto_client_set_event_handler(c, PROTO_MT_EVENT_BASE_DISCONNECT, proto_client_event_disconnect_handler);
      */
->>>>>>> finalized the assignment
 
     *ch = c;
     return 1;
@@ -392,18 +385,9 @@ extern int proto_client_query(Proto_Client_Handle ch, Query_Types qt, int v1, in
     rc = proto_session_rpc(s);
 
     if (rc == 1) {
-<<<<<<< HEAD
-        int reply1 = 0;
-        int reply2 = 0;
-        int reply3 = 0;
-        proto_session_body_unmarshall_int(s, 0, &reply1);
-        proto_session_body_unmarshall_int(s, 0, &reply2);
-        proto_session_body_unmarshall_int(s, 0, &reply3);
-=======
-        proto_session_body_unmarshall_int(s, 0, buf);
+         proto_session_body_unmarshall_int(s, 0, buf);
         proto_session_body_unmarshall_int(s, sizeof (int), (int*) (buf + 1));
         proto_session_body_unmarshall_int(s, sizeof (int) *2, (int*) (buf + 2));
->>>>>>> finalized the assignment
     } else {
         close(s->fd);
     }
