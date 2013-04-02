@@ -76,3 +76,7 @@ CS451 - SomeRandomTeam - Specification Document
     -When a player is jailed, they cannot move.
     -When a player tags an opposing player carrying the flag, the opposing player
      is sent to jail no matter where he is.
+
+7. Fog of war
+    The UI on client will only display cells visible to the player's team.
+    A cell is visible to a player if it is in the range of vision of him/herself or at least one teammate in his/her team.
