@@ -55,6 +55,10 @@ CS451 - SomeRandomTeam - Specification Document
         (happens after an opposing player uses Return Flag action)
         the player's hasFlag state is set to false.
 
+4. Fog of war
+    The UI on client will only display cells visible to the player's team.
+    A cell is visible to a player if it is in the range of vision of him/herself or at least one teammate in his/her team.
+
 5. Conditions and Rules associated with winning the game
     A.  A player on the winning team must capture the opposing team's flag
         and take it to their Home Base, and their own flag must also be in the
@@ -76,7 +80,3 @@ CS451 - SomeRandomTeam - Specification Document
     -When a player is jailed, they cannot move.
     -When a player tags an opposing player carrying the flag, the opposing player
      is sent to jail no matter where he is.
-
-7. Fog of war
-    The UI on client will only display cells visible to the player's team.
-    A cell is visible to a player if it is in the range of vision of him/herself or at least one teammate in his/her team.
