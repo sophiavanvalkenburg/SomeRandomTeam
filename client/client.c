@@ -27,10 +27,20 @@
 #include "../lib/protocol_client.h"
 #include "../lib/protocol_utils.h"
 #include "../lib/maze.h"
+#include "../uistandalone/types.h"
+#include "../uistandalone/tty.h"
+#include "../uistandalone/uistandalone.h"
 
 #define STRLEN 81
 #define T1 '1'
 #define T2 '2'
+
+#define MOVE_LEFT 'a'
+#define MOVE_RIGHT 'd'
+#define MOVE_UP 'w'
+#define MOVE_DOWN 's'
+
+UI *ui;
 
 void initGlobals(char *host, char *port);
 
@@ -44,6 +54,9 @@ typedef struct ClientState {
     char type;
     Proto_Client_Handle ph;
 } Client;
+
+Client client;
+
 
 static int
 clientInit(Client *C) {
@@ -94,6 +107,7 @@ prompt(Client *C, int menu) {
     fflush(stdout);
     fgets(c, STRLEN, stdin);
     return c;
+
 }
 
 
@@ -371,15 +385,7 @@ docmd(Client *C, char *cmd) {
     i++;
     j = i;
 
-    if (streql(arg0, "connect")) {
-        while (*(char*) (cmd + j) != ' ' && *(char*) (cmd + j) != ':' && j < 100) {
-            j++;
-        }
-        memcpy(arg1, (char*) (cmd + i), j - i);
-        j++;
-        memcpy(arg2, (char*) (cmd + j), strlen(cmd) - j - 1);
-        rc = doConnectCmd(C, arg1, arg2);
-    } else if (streql(arg0, "numhome")) {
+    if (streql(arg0, "numhome")) {
         while (*(char*) (cmd + j) != ' ' && *(char*) (cmd + j) != ':' && *(char*) (cmd + j) != '\n') {
             j++;
         }
@@ -408,25 +414,37 @@ docmd(Client *C, char *cmd) {
         j++;
         memcpy(arg2, (char*) (cmd + j), strlen(cmd) - j - 1);
         /*
-                printf("command: %s,%s\n", arg1, arg2);
-         */
+           printf("command: %s,%s\n", arg1, arg2);
+           */
         rc = doCInfoCmd(C, arg1, arg2);
     } else if (streql(arg0, "dump")) {
         rc = doDumpCmd(C);
     } else if (streql(arg0, "quit")) {
         rc = doQuitCmd(C);
-    } else {
+    } else if (streql(arg0, "a")){
+        printf("a ->do rpc: up\n");
+        ui_dummy_up(ui);
+        rc=2;
+    } else if (streql(arg0, "z")){
+        printf("z ->do rpc: down\n");
+        ui_dummy_down(ui);
+        rc=2;
+    } else if (streql(arg0, ",")){
+        printf(", ->do rpc: left\n");
+        ui_dummy_left(ui);
+        rc=2;
+    } else if (streql(arg0, ".")){
+        printf(". ->do rpc: right\n");
+        ui_dummy_right(ui);
+        rc=2;
+    }else {
         rc = doDefaultCmd(C);
 
     }
-
-    /*
-        printf("aaa%saaa%saaa%saaa\n", arg0, arg1, arg2);
-     */
-
-
+    if (rc==2) ui_update(ui);
     return rc;
 }
+
 
 void *
 shell(void *arg) {
@@ -434,6 +452,9 @@ shell(void *arg) {
     char *c;
     int rc;
     int menu = 1;
+
+    //pthread_detach(pthread_self());
+
 
     while (1) {
         if ((c = prompt(C, menu)) != 0) rc = docmd(C, c);
@@ -444,22 +465,11 @@ shell(void *arg) {
 
     fprintf(stderr, "terminating\n");
     fflush(stdout);
+    ui_quit(ui);
     return NULL;
 }
 
-void
-usage(char *pgm) {
-    fprintf(stderr, "USAGE: %s <port|<<host port> [shell] [gui]>>\n"
-            "  port     : rpc port of a game server if this is only argument\n"
-            "             specified then host will default to localhost and\n"
-            "             only the graphical user interface will be started\n"
-            "  host port: if both host and port are specifed then the game\n"
-            "examples:\n"
-            " %s 12345 : starts client connecting to localhost:12345\n"
-            " %s localhost 12345 : starts client connecting to locaalhost:12345\n",
-            pgm, pgm, pgm);
 
-}
 
 void
 initGlobals(char *host, char *port) {
@@ -467,22 +477,118 @@ initGlobals(char *host, char *port) {
 
     strncpy(globals.host, host, STRLEN);
     globals.port = atoi(port);
+    printf("%s %d",globals.host, globals.port);
+}
+    extern sval
+ui_keypress(UI *ui, SDL_KeyboardEvent *e)
+{
+    SDLKey sym = e->keysym.sym;
+    SDLMod mod = e->keysym.mod;
 
+    if (e->type == SDL_KEYDOWN) {
+        if (sym == SDLK_LEFT && mod == KMOD_NONE) {
+            int rc = proto_client_move(client.ph, client.type, MOVE_LEFT);
+            if (rc){
+                fprintf(stderr, "%s: move left\n", __func__);
+                return ui_dummy_left(ui);
+            }else{
+                return 1;
+            }
+        }
+        if (sym == SDLK_RIGHT && mod == KMOD_NONE) {
+            int rc = proto_client_move(client.ph, client.type, MOVE_RIGHT);
+            if (rc){
+                fprintf(stderr, "%s: move right\n", __func__);
+                return ui_dummy_right(ui);
+            }else{
+                return 1;
+            }
+        }
+        if (sym == SDLK_UP && mod == KMOD_NONE)  {  
+            int rc = proto_client_move(client.ph, client.type, MOVE_UP);
+            if (rc){
+                fprintf(stderr, "%s: move up\n", __func__);
+                return ui_dummy_up(ui);
+            }else{
+                return 1;
+            }
+        }
+        if (sym == SDLK_DOWN && mod == KMOD_NONE)  {
+            int rc = proto_client_move(client.ph, client.type, MOVE_DOWN);
+            if (rc){
+                fprintf(stderr, "%s: move down\n", __func__);
+                return ui_dummy_down(ui);
+            }else{
+                return 1;
+            }
+        }
+        if (sym == SDLK_r && mod == KMOD_NONE)  {  
+            fprintf(stderr, "%s: dummy pickup red flag\n", __func__);
+            return ui_dummy_pickup_red(ui);
+        }
+        if (sym == SDLK_g && mod == KMOD_NONE)  {   
+            fprintf(stderr, "%s: dummy pickup green flag\n", __func__);
+            return ui_dummy_pickup_green(ui);
+        }
+        if (sym == SDLK_j && mod == KMOD_NONE)  {   
+            fprintf(stderr, "%s: dummy jail\n", __func__);
+            return ui_dummy_jail(ui);
+        }
+        if (sym == SDLK_n && mod == KMOD_NONE)  {   
+            fprintf(stderr, "%s: dummy normal state\n", __func__);
+            return ui_dummy_normal(ui);
+        }
+        if (sym == SDLK_t && mod == KMOD_NONE)  {   
+            fprintf(stderr, "%s: dummy toggle team\n", __func__);
+            return ui_dummy_toggle_team(ui);
+        }
+        if (sym == SDLK_i && mod == KMOD_NONE)  {   
+            fprintf(stderr, "%s: dummy inc player id \n", __func__);
+            return ui_dummy_inc_id(ui);
+        }
+        if (sym == SDLK_q) return -1;
+        if (sym == SDLK_z && mod == KMOD_NONE) return ui_zoom(ui, 1);
+        if (sym == SDLK_z && mod & KMOD_SHIFT ) return ui_zoom(ui,-1);
+        if (sym == SDLK_LEFT && mod & KMOD_SHIFT) return ui_pan(ui,-1,0);
+        if (sym == SDLK_RIGHT && mod & KMOD_SHIFT) return ui_pan(ui,1,0);
+        if (sym == SDLK_UP && mod & KMOD_SHIFT) return ui_pan(ui, 0,-1);
+        if (sym == SDLK_DOWN && mod & KMOD_SHIFT) return ui_pan(ui, 0,1);
+        else {
+            fprintf(stderr, "%s: key pressed: %d\n", __func__, sym); 
+        }
+    } else {
+        fprintf(stderr, "%s: key released: %d\n", __func__, sym);
+    }
+    return 1;
 }
 
 int
 main(int argc, char **argv) {
-    Client c;
+    //  Client* c = (Client*)malloc(sizeof(Client));
+    Client* c = &client;
 
-    // initGlobals(argc, argv);
 
-    if (clientInit(&c) < 0) {
+    if (clientInit(c) < 0) {
         fprintf(stderr, "ERROR: clientInit failed\n");
         return -1;
     }
 
-    shell(&c);
+    pthread_t tid;
 
+    tty_init(/*STDIN_FILENO*/0);
+
+    ui_init(&(ui));
+
+    pthread_create(&tid, NULL, shell, c);
+
+    doConnectCmd(c,argv[1],argv[2]);
+    // WITH OSX ITS IS EASIEST TO KEEP UI ON MAIN THREAD
+    // SO JUMP THROW HOOPS :-(
+    ui_main_loop(ui, 320, 320);
+
+    //    free(c);
     return 0;
 }
+
+
 
