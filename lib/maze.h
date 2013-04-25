@@ -4,15 +4,19 @@ typedef enum {
     HOME_CELL_1,
     HOME_CELL_2,
     JAIL_CELL_1,
-    JAIL_CELL_2,
-    FLAG_CELL_1,
-    FLAG_CELL_2
+    JAIL_CELL_2
 } Cell_Type;
 
 typedef enum {
-    OCCUPIED=1,
-    UNOCCUPIED=0
-} Occupancy_Type;
+    NO_FLAG,
+    FLAG_1,
+    FLAG_2
+} Flag_Type;
+
+typedef enum {
+    NO_JACK,
+    JACK
+} Jackhammer_Type;
 
 typedef enum {
     T1=1,
@@ -26,10 +30,21 @@ typedef struct {
 } position_t;
 
 typedef struct {
+    int id;
+    Team_Type team;
+    position_t pos;
+    Flag_Type flag;
+    Jackhammer_Type jack;
+} player_t;
+
+
+typedef struct {
     position_t pos;
     Cell_Type type;
-    Occupancy_Type occ;
+    player_t* player;
     Team_Type team;
+    Flag_Type flag;
+    Jackhammer_Type jack;
 } cell_t;
 
 #define NUM_COLUMN      200
@@ -68,8 +83,14 @@ maze_get_cell_type(cell_t* c);
 extern Team_Type
 maze_get_cell_team(cell_t* c);
 
-extern Occupancy_Type
-maze_get_cell_occupied(cell_t* c);
+extern player_t*
+maze_get_cell_player(cell_t* c);
+
+extern Flag_Type
+maze_get_cell_flag(cell_t* c);
+
+extern Jackhammer_Type
+maze_get_cell_jackhammer(cell_t* c);
 
 extern char
 maze_cell_to_char(Cell_Type ct);

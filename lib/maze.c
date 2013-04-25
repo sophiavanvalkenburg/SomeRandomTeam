@@ -67,7 +67,9 @@ extern int maze_load(char* path, maze_t* maze) {
             maze->cells[r][c] = malloc(sizeof (cell_t));
             maze->cells[r][c]->pos.c = c;
             maze->cells[r][c]->pos.r = r;
-            maze->cells[r][c]->occ = UNOCCUPIED;
+            maze->cells[r][c]->player = NULL;
+            maze->cells[r][c]->flag = NO_FLAG;
+            maze->cells[r][c]->jack = NO_JACK;
             if (c < NUM_COLUMN / 2) {
                 maze->cells[r][c]->team = T1;
             } else {
@@ -173,13 +175,23 @@ maze_get_cell_type(cell_t* c) {
 }
 
 extern Team_Type
-maze_get_cell_team(cell_t* c) {
+maze_get_cell_team(cell_t* c){
     return c->team;
 }
 
-extern Occupancy_Type
-maze_get_cell_occupied(cell_t* c) {
-    return c->occ;
+extern player_t*
+maze_get_cell_player(cell_t* c) {
+    return c->player;
+}
+
+extern Flag_Type
+maze_get_cell_flag(cell_t* c){
+    return c->flag;
+}
+
+extern Jackhammer_Type
+maze_get_cell_jackhammer(cell_t* c){
+    return c->jack;
 }
 
 extern int
