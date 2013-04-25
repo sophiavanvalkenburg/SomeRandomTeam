@@ -397,7 +397,7 @@ proto_server_mt_query_handler(Proto_Session *s) {
             cell = maze_get_cell(&Proto_Server.maze, arg2 /*row*/, arg1 /*column*/);
             reply1 = maze_get_cell_type(cell);
             reply2 = maze_get_cell_team(cell);
-            reply3 = maze_get_cell_player(cell) == NULL ? 0 : 1;
+            reply3 = maze_get_cell_occupied(cell);
             printf("cinfo %d %d :\n\ttype:%d\n\tteam:%d\n\toccupied:%d\n", arg1, arg2, reply1, reply2, reply3);
             break;
         case DUMP:

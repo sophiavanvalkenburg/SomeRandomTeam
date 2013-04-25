@@ -41,7 +41,7 @@ typedef struct {
 typedef struct {
     position_t pos;
     Cell_Type type;
-    player_t* player;
+    int player_id;
     Team_Type team;
     Flag_Type flag;
     Jackhammer_Type jack;
@@ -83,8 +83,11 @@ maze_get_cell_type(cell_t* c);
 extern Team_Type
 maze_get_cell_team(cell_t* c);
 
-extern player_t*
-maze_get_cell_player(cell_t* c);
+extern int
+maze_get_cell_player_id(cell_t* c);
+
+extern int
+maze_get_cell_occupied(cell_t* c);
 
 extern Flag_Type
 maze_get_cell_flag(cell_t* c);

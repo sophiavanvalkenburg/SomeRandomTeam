@@ -67,7 +67,7 @@ extern int maze_load(char* path, maze_t* maze) {
             maze->cells[r][c] = malloc(sizeof (cell_t));
             maze->cells[r][c]->pos.c = c;
             maze->cells[r][c]->pos.r = r;
-            maze->cells[r][c]->player = NULL;
+            maze->cells[r][c]->player_id = -1;
             maze->cells[r][c]->flag = NO_FLAG;
             maze->cells[r][c]->jack = NO_JACK;
             if (c < NUM_COLUMN / 2) {
@@ -179,9 +179,14 @@ maze_get_cell_team(cell_t* c){
     return c->team;
 }
 
-extern player_t*
-maze_get_cell_player(cell_t* c) {
-    return c->player;
+extern int
+maze_get_cell_player_id(cell_t* c) {
+    return c->player_id;
+}
+
+extern int
+maze_get_cell_occupied(cell_t* c){
+    return maze_get_cell_player_id(c) < 0 ? 0 : 1;
 }
 
 extern Flag_Type
