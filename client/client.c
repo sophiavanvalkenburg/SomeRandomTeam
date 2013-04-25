@@ -285,10 +285,6 @@ int doCInfoCmd(Client* C, char *x, char* y) {
             case JAIL_CELL_2:
                 memcpy(tp, "JAIL_CELL", 9);
                 break;
-            case FLAG_CELL_1:
-            case FLAG_CELL_2:
-                memcpy(tp, "FLAG_CELL", 9);
-                break;
         }
 
         printf("Type: %s\nTeam: %d\nOccupancy: ", tp, *(int*) ((int*) buf + 1));
