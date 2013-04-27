@@ -598,51 +598,70 @@ proto_server_init(void) {
 extern int
 proto_server_testcases(void){
 
+    maze_t* m = &Proto_Server.maze;
+
     fprintf(stdout, "\n/***** GAME STATE TEST CASES *****/\n");
 
     fprintf(stdout, "\nadd 4 players\n\n");
 
-    player_t* t1p1 = maze_add_new_player(&Proto_Server.maze);
-    player_t* t2p1 = maze_add_new_player(&Proto_Server.maze);
-    player_t* t1p2 = maze_add_new_player(&Proto_Server.maze);
-    player_t* t2p2 = maze_add_new_player(&Proto_Server.maze);
+    player_t* t1p1 = maze_add_new_player(m);
+    player_t* t2p1 = maze_add_new_player(m);
+    player_t* t1p2 = maze_add_new_player(m);
+    player_t* t2p2 = maze_add_new_player(m);
 
-    cell_t* t1p1_cell = maze_get_cell(&Proto_Server.maze, t1p1->pos.r, t1p1->pos.c);
-    cell_t* t2p1_cell = maze_get_cell(&Proto_Server.maze, t2p1->pos.r, t2p1->pos.c);
-    cell_t* t1p2_cell = maze_get_cell(&Proto_Server.maze, t1p2->pos.r, t1p2->pos.c);
-    cell_t* t2p2_cell = maze_get_cell(&Proto_Server.maze, t2p2->pos.r, t2p2->pos.c);
+    cell_t* t1p1_cell = maze_get_cell(m, t1p1->pos.r, t1p1->pos.c);
+    cell_t* t2p1_cell = maze_get_cell(m, t2p1->pos.r, t2p1->pos.c);
+    cell_t* t1p2_cell = maze_get_cell(m, t1p2->pos.r, t1p2->pos.c);
+    cell_t* t2p2_cell = maze_get_cell(m, t2p2->pos.r, t2p2->pos.c);
 
-    maze_print_player(t1p1);
-    maze_print_player(t2p1);
-    maze_print_player(t1p2);
-    maze_print_player(t2p2);
+    maze_print_player(m,t1p1);
+    maze_print_player(m,t2p1);
+    maze_print_player(m,t1p2);
+    maze_print_player(m,t2p2);
 
-    maze_print_cell(t1p1_cell);
-    maze_print_cell(t2p1_cell);
-    maze_print_cell(t1p2_cell);
-    maze_print_cell(t2p2_cell); 
+    maze_print_cell(m,t1p1_cell);
+    maze_print_cell(m,t2p1_cell);
+    maze_print_cell(m,t1p2_cell);
+    maze_print_cell(m,t2p2_cell); 
 
     fprintf(stdout, "\nremove 2 players; attempt to remove nonexistant player\n\n");
 
     
     int t1p1_id = t1p1->id;
     int t2p2_id = t2p2->id;
-    maze_remove_player(&Proto_Server.maze, t1p1_id);
-    maze_remove_player(&Proto_Server.maze, t2p2_id);
-    if (maze_remove_player(&Proto_Server.maze, 5) < 0){
+    maze_remove_player(m, t1p1_id);
+    maze_remove_player(m, t2p2_id);
+    if (maze_remove_player(m, 5) <= 0){
         fprintf(stdout, "player 5 does not exist\n"); 
     }
 
-    maze_print_player(maze_get_player(&Proto_Server.maze,t1p1_id));
-    maze_print_player(maze_get_player(&Proto_Server.maze,t2p2_id));
-    maze_print_player(t1p2);
-    maze_print_player(t2p2);
+    maze_print_player(m,maze_get_player(m,t1p1_id));
+    maze_print_player(m,t2p1);
+    maze_print_player(m,t1p2);
+    maze_print_player(m,maze_get_player(m,t2p2_id));
 
-    maze_print_cell(t1p1_cell);
-    maze_print_cell(t2p1_cell);
-    maze_print_cell(t1p2_cell);
-    maze_print_cell(t2p2_cell); 
+    maze_print_cell(m,t1p1_cell);
+    maze_print_cell(m,t2p1_cell);
+    maze_print_cell(m,t1p2_cell);
+    maze_print_cell(m,t2p2_cell); 
 
+    fprintf(stdout, "\nadd flag and jackhammers to players\n\n");
 
+    cell_t* flag_cell = maze_get_cell(m, m->t1_flag->pos.r, m->t1_flag->pos.c);
+    cell_t* jack_cell = maze_get_cell(m, m->t1_jack->pos.r, m->t1_jack->pos.c);
+
+    maze_pick_up_flag(m, flag_cell, t2p1);
+    maze_pick_up_jackhammer(m, jack_cell, t1p2);
+
+    maze_print_item(maze_get_player_flag(m,t2p1->id));
+    maze_print_item(maze_get_player_jackhammer(m,t1p2->id));
+
+    fprintf(stdout, "\ntake away flags and jackhammers from players\n\n");
+
+    maze_drop_flag(m, t2p1->id);
+    maze_drop_jackhammer(m, t1p2->id);
+
+    maze_print_item(m->t1_flag);
+    maze_print_item(m->t1_jack);
     return 1;
 }
