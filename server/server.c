@@ -41,6 +41,12 @@ doUpdateClients(void)
   return 1;
 }
 
+int
+performTestCases(void)
+{
+    return proto_server_testcases();
+}
+
 char MenuString[] =
   "d/D-debug on/off u-update clients q-quit";
 
@@ -58,6 +64,9 @@ docmd(char cmd)
     break;
   case 'u':
     rc = doUpdateClients();
+    break;
+  case 't':
+    rc = performTestCases();
     break;
   case 'q':
     rc=-1;

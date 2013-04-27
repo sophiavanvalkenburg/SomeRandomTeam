@@ -594,3 +594,55 @@ proto_server_init(void) {
     return 0;
 }
 
+
+extern int
+proto_server_testcases(void){
+
+    fprintf(stdout, "\n/***** GAME STATE TEST CASES *****/\n");
+
+    fprintf(stdout, "\nadd 4 players\n\n");
+
+    player_t* t1p1 = maze_add_new_player(&Proto_Server.maze);
+    player_t* t2p1 = maze_add_new_player(&Proto_Server.maze);
+    player_t* t1p2 = maze_add_new_player(&Proto_Server.maze);
+    player_t* t2p2 = maze_add_new_player(&Proto_Server.maze);
+
+    cell_t* t1p1_cell = maze_get_cell(&Proto_Server.maze, t1p1->pos.r, t1p1->pos.c);
+    cell_t* t2p1_cell = maze_get_cell(&Proto_Server.maze, t2p1->pos.r, t2p1->pos.c);
+    cell_t* t1p2_cell = maze_get_cell(&Proto_Server.maze, t1p2->pos.r, t1p2->pos.c);
+    cell_t* t2p2_cell = maze_get_cell(&Proto_Server.maze, t2p2->pos.r, t2p2->pos.c);
+
+    maze_print_player(t1p1);
+    maze_print_player(t2p1);
+    maze_print_player(t1p2);
+    maze_print_player(t2p2);
+
+    maze_print_cell(t1p1_cell);
+    maze_print_cell(t2p1_cell);
+    maze_print_cell(t1p2_cell);
+    maze_print_cell(t2p2_cell); 
+
+    fprintf(stdout, "\nremove 2 players; attempt to remove nonexistant player\n\n");
+
+    
+    int t1p1_id = t1p1->id;
+    int t2p2_id = t2p2->id;
+    maze_remove_player(&Proto_Server.maze, t1p1_id);
+    maze_remove_player(&Proto_Server.maze, t2p2_id);
+    if (maze_remove_player(&Proto_Server.maze, 5) < 0){
+        fprintf(stdout, "player 5 does not exist\n"); 
+    }
+
+    maze_print_player(maze_get_player(&Proto_Server.maze,t1p1_id));
+    maze_print_player(maze_get_player(&Proto_Server.maze,t2p2_id));
+    maze_print_player(t1p2);
+    maze_print_player(t2p2);
+
+    maze_print_cell(t1p1_cell);
+    maze_print_cell(t2p1_cell);
+    maze_print_cell(t1p2_cell);
+    maze_print_cell(t2p2_cell); 
+
+
+    return 1;
+}
