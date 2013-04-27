@@ -200,9 +200,13 @@ maze_cell_has_jackhammer(maze_t* maze, cell_t* c){
 extern item_t*
 maze_get_cell_flag(maze_t* maze, cell_t* cell){
     
-    if (maze->t1_flag && maze->t1_flag->pos.c == cell->pos.c && maze->t1_flag->pos.r == cell->pos.r){
+    if (maze->t1_flag 
+            && maze->t1_flag->pos.c == cell->pos.c 
+            && maze->t1_flag->pos.r == cell->pos.r){
         return maze->t1_flag;
-    }else if (maze->t2_flag && maze->t2_flag->pos.c == cell->pos.c && maze->t2_flag->pos.r == cell->pos.r){
+    }else if (maze->t2_flag 
+            && maze->t2_flag->pos.c == cell->pos.c 
+            && maze->t2_flag->pos.r == cell->pos.r){
         return maze->t2_flag;
     }else{
         return NULL;
@@ -211,9 +215,13 @@ maze_get_cell_flag(maze_t* maze, cell_t* cell){
 
 extern item_t*
 maze_get_cell_jackhammer(maze_t* maze, cell_t* cell){
-    if (maze->t1_jack && maze->t1_jack->pos.c == cell->pos.c && maze->t1_jack->pos.r == cell->pos.r){
+    if (maze->t1_jack 
+            && maze->t1_jack->pos.c == cell->pos.c 
+            && maze->t1_jack->pos.r == cell->pos.r){
         return maze->t1_jack;
-    }else if (maze->t2_jack && maze->t2_jack->pos.c == cell->pos.c && maze->t2_jack->pos.r == cell->pos.r){
+    }else if (maze->t2_jack 
+            && maze->t2_jack->pos.c == cell->pos.c 
+            && maze->t2_jack->pos.r == cell->pos.r){
         return maze->t2_jack;
     }else{
         return NULL;
@@ -226,9 +234,15 @@ maze_get_player_flag(maze_t* maze, int player_id){
     player_t* p = maze_get_player(maze, player_id);
     if (p == NULL) return NULL;
 
-    if (maze->t1_flag && maze->t1_flag->pos.c == p->pos.c && maze->t1_flag->pos.r == p->pos.r){
+    if (maze->t1_flag 
+            && maze->t1_flag->holder_id == player_id 
+            && maze->t1_flag->pos.c == p->pos.c 
+            && maze->t1_flag->pos.r == p->pos.r){
         return maze->t1_flag;
-    }else if (maze->t2_flag && maze->t2_flag->pos.c == p->pos.c && maze->t2_flag->pos.r == p->pos.r){
+    }else if (maze->t2_flag 
+            && maze->t2_flag->holder_id == player_id
+            && maze->t2_flag->pos.c == p->pos.c 
+            && maze->t2_flag->pos.r == p->pos.r){
         return maze->t2_flag;
     }else{
         return NULL;
@@ -241,13 +255,28 @@ maze_get_player_jackhammer(maze_t* maze, int player_id){
     player_t* p = maze_get_player(maze, player_id);
     if (p == NULL) return NULL;
 
-    if (maze->t1_jack->pos.c == p->pos.c && maze->t1_jack->pos.r == p->pos.r){
+    if (maze->t1_jack 
+            &&maze->t1_jack->holder_id == player_id
+            &&maze->t1_jack->pos.c == p->pos.c 
+            && maze->t1_jack->pos.r == p->pos.r){
         return maze->t1_jack;
-    }else if (maze->t2_jack->pos.c == p->pos.c && maze->t2_jack->pos.r == p->pos.r){
+    }else if (maze->t2_jack
+                && maze->t2_jack->holder_id == player_id
+                && maze->t2_jack->pos.c == p->pos.c 
+                && maze->t2_jack->pos.r == p->pos.r){
         return maze->t2_jack;
     }else{
         return NULL;
     }
+}
+
+extern cell_t* 
+maze_get_player_cell(maze_t* maze, int player_id){
+    
+    player_t* p = maze_get_player(maze, player_id);
+    if (p == NULL) return NULL;
+
+    return maze_get_cell(maze, p->pos.r, p->pos.c);
 }
 
 extern item_t*
@@ -526,8 +555,7 @@ maze_remove_player(maze_t* maze, int player_id){
 
     Team_Type team = player->team;
     //FIXME: should drop flag and jackhammer
-    position_t pos = player->pos;
-    cell_t* cell = maze_get_cell(maze, pos.r, pos.c);
+    cell_t* cell = maze_get_cell(maze, player->pos.r, player->pos.c);
     if (cell != NULL) cell->player_id = -1;
     switch(team){
         case T1: maze->num_t1_players--; break;
@@ -588,9 +616,21 @@ maze_drop_flag(maze_t* maze, int player_id){
 }
 extern int 
 maze_move_player(maze_t* maze, int player_id, Move_Type move){
-    //are you jailed?
-     //yes - reject
-     //does the cell exist?
+    player_t* p = maze_get_player(maze, player_id);
+    if (p == NULL) return 0;
+    if (p->status == JAILED) return 0;
+   /* 
+    cell_t* old_cell = maze_get_cell(maze, p->pos.r, p->pos.c);
+    cell_t* new_cell;
+    switch(move){
+        case MOVE_UP: 
+            new_cell = maze_get_cell(maze, old_cell->pos.r+1, old_cell->pos.c);
+            break;
+        case MOVE_DOWN:
+            new_cell = maze_get_cell(maze, old_cell->pos.
+    }
+    */
+    //does the cell exist?
       //no - reject
       //is it a wall cell?
        //yes - you have jackhammer?

@@ -655,6 +655,24 @@ proto_server_testcases(void){
 
     maze_print_item(maze_get_player_flag(m,t2p1->id));
     maze_print_item(maze_get_player_jackhammer(m,t1p2->id));
+    maze_print_player(m,t2p1);
+    maze_print_player(m,t1p2);
+    maze_print_cell(m,t2p1_cell);
+    maze_print_cell(m,t1p2_cell);
+
+    fprintf(stdout, "\nmove the players\n\n");
+
+    maze_move_player(m, t2p1->id, MOVE_DOWN);
+    maze_move_player(m, t1p2->id, MOVE_RIGHT);
+    t2p1_cell = maze_get_cell(m, t2p1->pos.r, t2p1->pos.c);
+    t1p2_cell = maze_get_cell(m, t1p2->pos.r, t1p2->pos.c);
+ 
+    maze_print_item(maze_get_player_flag(m,t2p1->id));
+    maze_print_item(maze_get_player_jackhammer(m,t1p2->id));
+    maze_print_player(m,t2p1);
+    maze_print_player(m,t1p2);
+    maze_print_cell(m,t2p1_cell);
+    maze_print_cell(m,t1p2_cell);
 
     fprintf(stdout, "\ntake away flags and jackhammers from players\n\n");
 
@@ -663,5 +681,11 @@ proto_server_testcases(void){
 
     maze_print_item(m->t1_flag);
     maze_print_item(m->t1_jack);
+    maze_print_player(m,t2p1);
+    maze_print_player(m,t1p2);
+    maze_print_cell(m,t2p1_cell);
+    maze_print_cell(m,t1p2_cell);
+
+
     return 1;
 }
