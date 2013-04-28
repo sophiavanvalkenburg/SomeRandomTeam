@@ -270,6 +270,15 @@ maze_get_player_jackhammer(maze_t* maze, int player_id){
     }
 }
 
+extern int 
+maze_player_has_flag(maze_t* maze, int player_id){
+    return maze_get_player_flag(maze, player_id) == NULL ? 0 : 1;
+}
+extern int
+maze_player_has_jackhammer(maze_t* maze, int player_id){
+    return maze_get_player_jackhammer(maze, player_id) == NULL ? 0 : 1;
+}
+
 extern cell_t* 
 maze_get_player_cell(maze_t* maze, int player_id){
     
@@ -367,6 +376,8 @@ maze_get_empty_home_cell(maze_t* maze, Team_Type team){
             return maze_get_empty_cell(maze, HOME_CELL_1);
         case T2:
             return maze_get_empty_cell(maze, HOME_CELL_2);
+        case NO_TEAM:
+            return NULL;
     }
 }
 
@@ -374,9 +385,13 @@ extern cell_t*
 maze_get_random_cell(maze_t* maze,Cell_Type ct){
     int dim_r = maze_get_num_rows(maze);
     int dim_c = maze_get_num_cols(maze);
-   
-    //loop until you find a suitable cell
-    while(1){ 
+  
+    cell_t* c = maze_get_empty_cell(maze, ct);
+    if (c == NULL) return NULL;
+
+    int count = 10;
+    //loop until you find a suitable cell, or counter runs out
+    while(count > 0){ 
         int rand_r = rand() % dim_r;
         int rand_c = rand() % dim_c;
         cell_t* cell = maze_get_cell(maze, rand_r, rand_c);
@@ -387,7 +402,10 @@ maze_get_random_cell(maze_t* maze,Cell_Type ct){
         if (cell_type == ct && !occupied &&  !has_flag && !has_jack) {
             return cell;
         }
+        count--;
     }
+
+    return c;
    
 }
 
@@ -401,7 +419,7 @@ extern int maze_get_next_free_player_index(maze_t* maze){
 
 extern player_t*
 maze_get_player(maze_t* maze, int player_id){
-    if (player_id >= MAX_PLAYERS){
+    if (player_id >= MAX_PLAYERS || player_id == -1){
         return NULL;
     }else{
         return maze->players[player_id];
@@ -472,7 +490,7 @@ maze_print_cell(maze_t* maze, cell_t* cell){
         jack_type = jack->team;
     }
 
-   fprintf(stdout, "cell { team:%d, pos:(%d,%d), type:%c, player_id:%d, flag:%d, jack:%d, }\n", 
+   fprintf(stdout, "cell { team:%d, pos:(%d,%d), type:%c, player_id:%d, flag:%d, jack:%d }\n", 
             cell->team, cell->pos.r, cell->pos.c,  type, cell->player_id, flag_type, jack_type);
 }
 
@@ -530,6 +548,8 @@ maze_add_new_player(maze_t* maze)
             case T2:
                 maze->num_t2_players++;
                 break;
+            case NO_TEAM:
+                return NULL;
         } 
         cell_t* empty_cell  = maze_get_empty_home_cell(maze, team);
         if (empty_cell == NULL) return NULL; //shouldn't happen but just in case
@@ -554,7 +574,8 @@ maze_remove_player(maze_t* maze, int player_id){
     if (player == NULL) return 0;
 
     Team_Type team = player->team;
-    //FIXME: should drop flag and jackhammer
+    maze_drop_jackhammer(maze, player_id);
+    maze_drop_flag(maze, player_id);
     cell_t* cell = maze_get_cell(maze, player->pos.r, player->pos.c);
     if (cell != NULL) cell->player_id = -1;
     switch(team){
@@ -618,51 +639,221 @@ extern int
 maze_move_player(maze_t* maze, int player_id, Move_Type move){
     player_t* p = maze_get_player(maze, player_id);
     if (p == NULL) return 0;
+    
+    //is the player jailed?
     if (p->status == JAILED) return 0;
-   /* 
+    
     cell_t* old_cell = maze_get_cell(maze, p->pos.r, p->pos.c);
     cell_t* new_cell;
     switch(move){
         case MOVE_UP: 
-            new_cell = maze_get_cell(maze, old_cell->pos.r+1, old_cell->pos.c);
+            new_cell = maze_get_cell(maze, old_cell->pos.r-1, old_cell->pos.c);
             break;
         case MOVE_DOWN:
-            new_cell = maze_get_cell(maze, old_cell->pos.
+            new_cell = maze_get_cell(maze, old_cell->pos.r+1, old_cell->pos.c);
+            break;
+        case MOVE_RIGHT:
+            new_cell = maze_get_cell(maze, old_cell->pos.r, old_cell->pos.c+1);
+            break;
+        case MOVE_LEFT:
+            new_cell = maze_get_cell(maze, old_cell->pos.r, old_cell->pos.c-1);
+            break;
     }
-    */
-    //does the cell exist?
-      //no - reject
-      //is it a wall cell?
-       //yes - you have jackhammer?
-        //no - reject
-        //yes - destroy wall and move
-       //no - is it a jail cell?
-        //yes - is there a player on the cell?
-         //yes - is the player jailed?
-          //yes - reject
-          //goto A
-         //no - A:is it in your jail?
-          //no - free everyone in jail, goto B
-          //yes - goto B
-        //no - is there a player on the cell?
-         //no - B: is there a flag on the cell?
-          //no - is there a jackhammer on the cell?
-           //no - move
-           //yes - are you on your home cell?
-            //no - reject
-            //yes - pick it up and move
-          //yes - are you currently holding a flag?
-           //yes - reject
-           //no - pick it up and move
-         //yes - is the player on your team?
-          //yes - reject
-          //no - are you on your side of the board?
-           //yes - capture player and send him to jail
-           //no - you get captured and sent to jail
 
+    //does the cell exist? (is not out of bounds)
+    if (new_cell == NULL) return 0;
+    
+    //is it a wall cell?
+    if (new_cell->type == WALL_CELL){
+        //p has jackhammer?
+        if (maze_player_has_jackhammer(maze, player_id)){
+            maze_destroy_wall(maze, new_cell);
+            maze_drop_jackhammer(maze, p->id);
+            maze_move_player_to_cell(maze, old_cell, new_cell, p);
+            return 1;
+        }else{
+            return 0;
+        }
+    }
+    
+    //is there a player on the cell?
+    player_t* new_cell_p = maze_get_player(maze, maze_get_cell_player_id(new_cell));
+    if (new_cell_p != NULL){
+        
+        //cannot do anything to players on your team
+        if (new_cell_p->team == p->team) return 0;
+        //cannot do anything to jailed players
+        if (new_cell_p->status == JAILED) return 0;
+        //if your side, capture player; otherwise, get captured
+        if (new_cell->team == p->team){
+            maze_capture(maze, p, new_cell_p);
+            //don't return yet so we can check if there is a flag (in case opponent has just dropped it)
+        }else{
+            maze_capture(maze, new_cell_p, p);
+            return 1;
+        }
+    
+    }
+    //is it a jail cell?
+    if (new_cell->type == JAIL_CELL_1 || new_cell->type == JAIL_CELL_2){
+        
+        //if it's not on your side, then your teammates are trapped. free them.
+        if (new_cell->team != p->team){
+            maze_free_players(maze, p->team);
+        }
+    }
+
+    //cell has flag?
+    if (maze_cell_has_flag(maze, new_cell)){
+        
+        //if you are already holding a flag, can't take one.
+        if (maze_player_has_flag(maze, player_id)){
+            return 0;
+        }else{
+            maze_pick_up_flag(maze, new_cell, p);
+            maze_move_player_to_cell(maze, old_cell, new_cell, p);
+            return 1;
+        }
+    }
+
+    if (maze_cell_has_jackhammer(maze, new_cell)){
+        
+        //can only take your own team's jackhammer
+        if (new_cell->team != p->team){
+            return 0;
+        }else{
+            maze_pick_up_jackhammer(maze,  new_cell, p);
+            maze_move_player_to_cell(maze, old_cell, new_cell, p);
+            return 1;
+        }
+    }
+
+    maze_move_player_to_cell(maze, old_cell, new_cell, p);
+    return 1;
+}
+
+extern int
+maze_move_player_to_cell(maze_t* maze, cell_t* old_cell, cell_t* new_cell, player_t* player){
+
+    item_t* jack = maze_get_player_jackhammer(maze, player->id);
+    if (jack != NULL){
+        jack->pos = new_cell->pos;
+    }
+    item_t* flag = maze_get_player_flag(maze, player->id);
+    if (flag != NULL){
+        flag->pos = new_cell->pos;
+    }
+
+    old_cell->player_id = -1;
+    player->pos = new_cell->pos;
+    new_cell->player_id = player->id;
+    return 1;
+}
+
+extern int
+maze_free_players(maze_t* maze, Team_Type team){
+    int i;
+    for (i=0; i<MAX_PLAYERS; i++){
+        player_t* player = maze_get_player(maze,i);
+        if (player && player->team == team && player->status == JAILED){
+            player->status = FREE;
+        }
+    }
+    return 1;
+}
+
+extern int 
+maze_send_to_jail(maze_t* maze, player_t* player){
+     
+    player->status = JAILED;
+    cell_t* old_cell = maze_get_cell(maze, player->pos.r, player->pos.c);
+    Cell_Type ct;
+    switch(player->team){
+        case T1: ct = JAIL_CELL_2; break;
+        case T2: ct = JAIL_CELL_1; break;
+    }
+    cell_t* jail_cell = maze_get_random_cell(maze, ct);
+
+    //should always return a cell but just in case
+    if (jail_cell != NULL){
+        maze_move_player_to_cell(maze, old_cell, jail_cell, player);
+    }
+    return 1;
+}
+
+extern int
+maze_capture(maze_t* maze, player_t* captor, player_t* hostage){
+
+    maze_drop_flag(maze, hostage->id);
+    maze_drop_jackhammer(maze, hostage->id);
+
+    maze_send_to_jail(maze, hostage);
+
+    return 1;
+}
+
+extern int
+maze_destroy_wall(maze_t* maze, cell_t* wall){
+    wall->type = FLOOR_CELL;
+    return 1;
+}
+
+extern Team_Type
+maze_test_win(maze_t* maze){
+   
+    //win if all players are in base and contain both flags - return winning team
+   
+    if (maze_test_team_win(maze, T1)){
+        return T1;
+    }else if (maze_test_team_win(maze, T2)){
+        return T2;
+    }else{
+        return NO_TEAM;
+    }
+    
+}
+
+extern int
+maze_test_team_win(maze_t* maze, Team_Type team){
+    
+    int num_team_players;
+    Cell_Type home_cell;
+    switch(team){
+        case T1: 
+            home_cell = HOME_CELL_1; 
+            num_team_players = maze->num_t1_players;
+            break;
+        case T2:
+            home_cell = HOME_CELL_2;
+            num_team_players = maze->num_t2_players;
+            break;
+        case NO_TEAM: return 0;
+    }
+    
+    int players = 0;
+    int flags = 0;
+    int i, j;
+    for (i=0; i<maze->dim_r; i++){
+        for (j=0; j<maze->dim_c; j++){
+            cell_t* cell = maze_get_cell(maze, i, j);
+            if (cell->type != home_cell) continue;
+            player_t* p = maze_get_player(maze, maze_get_cell_player_id(cell));
+            if (p && p->team == team){
+                players++;
+                if (maze_player_has_flag(maze, p->id)){
+                    flags++;
+                }
+            }
+            if (maze_cell_has_flag(maze, cell)){
+                flags++;
+            }   
+            if (flags == 2 && players == num_team_players){
+                return 1;
+            }
+        }
+    }
     return 0;
-};
-
+}
 
 extern void
 maze_free_player_mem(maze_t* maze, int player_id){

@@ -20,6 +20,7 @@ typedef enum {
 } Cell_Type;
 
 typedef enum {
+    NO_TEAM=0,
     T1=1,
     T2=2
 } Team_Type;
@@ -97,12 +98,13 @@ extern int maze_get_cell_player_id(cell_t* c);
 extern int maze_get_cell_occupied(cell_t* c);
 extern int maze_cell_has_flag(maze_t* maze, cell_t* c);
 extern int maze_cell_has_jackhammer(maze_t* maze, cell_t* c);
+extern item_t* maze_get_cell_flag(maze_t* maze, cell_t* cell);
+extern item_t* maze_get_cell_jackhammer(maze_t* maze, cell_t* cell);
+
 extern cell_t* maze_get_empty_cell(maze_t* maze, Cell_Type ct);
 extern cell_t* maze_get_empty_home_cell(maze_t* maze, Team_Type team);
 extern cell_t* maze_get_empty_jail_cell(maze_t* maze, Team_Type team);
 extern cell_t* maze_get_random_cell(maze_t* maze, Cell_Type ct);
-extern item_t* maze_get_cell_flag(maze_t* maze, cell_t* cell);
-extern item_t* maze_get_cell_jackhammer(maze_t* maze, cell_t* cell);
 
 extern item_t* maze_get_flag(maze_t* maze, Team_Type team);
 extern item_t* maze_get_jackhammer(maze_t* maze, Team_Type team);
@@ -113,6 +115,8 @@ extern cell_t* maze_get_player_cell(maze_t*, int player_id);
 extern int maze_get_next_free_player_index(maze_t* maze);
 extern item_t* maze_get_player_flag(maze_t* maze, int player_id);
 extern item_t* maze_get_player_jackhammer(maze_t* maze, int player_id);
+extern int maze_player_has_flag(maze_t* maze, int player_id);
+extern int maze_player_has_jackhammer(maze_t* maze, int player_id);
 
 extern void maze_print_item(item_t* item);
 extern void maze_print_cell(maze_t* maze, cell_t* cell);
@@ -125,13 +129,15 @@ extern int maze_move_player(maze_t* maze, int player_id, Move_Type move);
 extern int maze_drop_jackhammer(maze_t* maze, int player_id);
 extern int maze_drop_flag(maze_t* maze, int player_id);
 
-extern int maze_destroy_wall(maze_t* maze, cell_t* wall, player_t* player);
+extern int maze_move_player_to_cell(maze_t* maze, cell_t* old_cell, cell_t* new_cell, player_t* player);
+extern int maze_destroy_wall(maze_t* maze, cell_t* wall);
 extern int maze_pick_up_flag(maze_t* maze, cell_t* cell, player_t* player);
 extern int maze_pick_up_jackhammer(maze_t* maze, cell_t* cell, player_t* player);
-extern int maze_free_jail(maze_t* maze, Team_Type team);
+extern int maze_free_players(maze_t* maze, Team_Type team);
 extern int maze_send_to_jail(maze_t* maze, player_t* player);
 extern int maze_capture(maze_t* maze, player_t* captor, player_t* hostage);
 
-extern int maze_test_win(maze_t* maze);
+extern Team_Type maze_test_win(maze_t* maze);
+extern int maze_test_team_win(maze_t* maze, Team_Type team);
 
 extern void maze_free_player_mem(maze_t* maze, int player_id);
