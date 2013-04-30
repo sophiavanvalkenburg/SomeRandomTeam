@@ -36,20 +36,20 @@ extern int proto_client_init(Proto_Client_Handle *ch);
 extern int proto_client_connect(Proto_Client_Handle ch, char *host, PortType p);
 
 extern int proto_client_set_session_lost_handler(Proto_Client_Handle ch,
-						 Proto_MT_Handler h);
+        Proto_MT_Handler h);
 
 extern int proto_client_set_event_handler(Proto_Client_Handle ch,
-					  Proto_Msg_Types mt,
-					  Proto_MT_Handler h);
+        Proto_Msg_Types mt,
+        Proto_MT_Handler h);
 
 // client side protocol rpc's
 extern int proto_client_hello(Proto_Client_Handle ch);
 /*
 extern int proto_client_move(Proto_Client_Handle ch, int tp, int move);
-*/
-extern int proto_client_goodbye(Proto_Client_Handle ch,int tp);
-extern int proto_client_query(Proto_Client_Handle ch, Query_Types qt, int v1, int v2,int* buf);
-
+ */
+extern int proto_client_goodbye(Proto_Client_Handle ch, int tp);
+extern int proto_client_query(Proto_Client_Handle ch, Query_Types qt, int v1, int v2, int* buf);
 extern void proto_client_sample_board(maze_t* maze);
+extern int proto_client_move(Proto_Client_Handle ch, int tp, char move);
 
 #endif

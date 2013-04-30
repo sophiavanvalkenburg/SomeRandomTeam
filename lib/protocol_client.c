@@ -92,146 +92,249 @@ proto_client_session_lost_default_hdlr(Proto_Session *s) {
     return -1;
 }
 
-
 extern void
-proto_client_sample_board(maze_t* maze_ref){
+proto_client_sample_board(maze_t* maze_ref) {
 
-    item_t t1_flag = { .team = T1, .type = FLAG, .pos = {.r=8, .c=8}, .holder_id = -1};
-    item_t t2_flag = { .team = T2, .type = FLAG, .pos = {.r=5, .c=3}, .holder_id = 0};
-    item_t t1_jack = { .team = T1, .type = JACK, .pos = {.r=1, .c=1}, .holder_id = -1};
-    item_t t2_jack = { .team = T2, .type = JACK, .pos = {.r=1, .c=6}, .holder_id = 1};
-
-
-    cell_t cells[] = 
-    {
-        {.pos={.r=0,.c=0}, .type=WALL_CELL, .player_id=-1, .team=T1}, 
-        {.pos={.r=0,.c=1}, .type=WALL_CELL, .player_id=-1, .team=T1}, 
-        {.pos={.r=0,.c=2}, .type=WALL_CELL, .player_id=-1, .team=T1}, 
-        {.pos={.r=1,.c=2}, .type=WALL_CELL, .player_id=-1, .team=T1}, 
-        {.pos={.r=2,.c=2}, .type=WALL_CELL, .player_id=-1, .team=T1}, 
-        {.pos={.r=3,.c=2}, .type=WALL_CELL, .player_id=-1, .team=T1}, 
-        {.pos={.r=6,.c=2}, .type=WALL_CELL, .player_id=-1, .team=T1}, 
-        {.pos={.r=7,.c=2}, .type=WALL_CELL, .player_id=-1, .team=T1}, 
-        {.pos={.r=8,.c=2}, .type=WALL_CELL, .player_id=-1, .team=T1}, 
-        {.pos={.r=9,.c=0}, .type=WALL_CELL, .player_id=-1, .team=T1}, 
-        {.pos={.r=9,.c=1}, .type=WALL_CELL, .player_id=-1, .team=T1}, 
-        {.pos={.r=9,.c=2}, .type=WALL_CELL, .player_id=-1, .team=T1}, 
-        {.pos={.r=4,.c=4}, .type=WALL_CELL, .player_id=-1, .team=T1}, 
-        {.pos={.r=5,.c=4}, .type=WALL_CELL, .player_id=-1, .team=T1}, 
-        {.pos={.r=0,.c=7}, .type=WALL_CELL, .player_id=-1, .team=T2},  
-        {.pos={.r=0,.c=8}, .type=WALL_CELL, .player_id=-1, .team=T2}, 
-        {.pos={.r=0,.c=9}, .type=WALL_CELL, .player_id=-1, .team=T2}, 
-        {.pos={.r=1,.c=7}, .type=WALL_CELL, .player_id=-1, .team=T2}, 
-        {.pos={.r=1,.c=9}, .type=WALL_CELL, .player_id=-1, .team=T2}, 
-        {.pos={.r=2,.c=7}, .type=WALL_CELL, .player_id=-1, .team=T2}, 
-        {.pos={.r=2,.c=9}, .type=WALL_CELL, .player_id=-1, .team=T2}, 
-        {.pos={.r=3,.c=7}, .type=WALL_CELL, .player_id=-1, .team=T2}, 
-        {.pos={.r=3,.c=9}, .type=WALL_CELL, .player_id=-1, .team=T2}, 
-        {.pos={.r=4,.c=9}, .type=WALL_CELL, .player_id=-1, .team=T2}, 
-        {.pos={.r=5,.c=9}, .type=WALL_CELL, .player_id=-1, .team=T2}, 
-        {.pos={.r=6,.c=7}, .type=WALL_CELL, .player_id=-1, .team=T2}, 
-        {.pos={.r=6,.c=9}, .type=WALL_CELL, .player_id=-1, .team=T2}, 
-        {.pos={.r=7,.c=7}, .type=WALL_CELL, .player_id=-1, .team=T2}, 
-        {.pos={.r=7,.c=9}, .type=WALL_CELL, .player_id=-1, .team=T2}, 
-        {.pos={.r=8,.c=7}, .type=WALL_CELL, .player_id=-1, .team=T2}, 
-        {.pos={.r=8,.c=9}, .type=WALL_CELL, .player_id=-1, .team=T2}, 
-        {.pos={.r=9,.c=7}, .type=WALL_CELL, .player_id=-1, .team=T2}, 
-        {.pos={.r=9,.c=8}, .type=WALL_CELL, .player_id=-1, .team=T2}, 
-        {.pos={.r=9,.c=9}, .type=WALL_CELL, .player_id=-1, .team=T2}, 
-        {.pos={.r=4,.c=5}, .type=WALL_CELL, .player_id=-1, .team=T2}, 
-        {.pos={.r=5,.c=5}, .type=WALL_CELL, .player_id=-1, .team=T2}, 
-    
-        {.pos={.r=1,.c=0}, .type=HOME_CELL_1, .player_id=-1, .team=T1}, 
-        {.pos={.r=2,.c=0}, .type=HOME_CELL_1, .player_id=-1, .team=T1}, 
-        {.pos={.r=3,.c=0}, .type=HOME_CELL_1, .player_id=-1, .team=T1}, 
-        {.pos={.r=4,.c=0}, .type=HOME_CELL_1, .player_id=-1, .team=T1}, 
-        {.pos={.r=5,.c=0}, .type=HOME_CELL_1, .player_id=-1, .team=T1}, 
-        {.pos={.r=6,.c=0}, .type=HOME_CELL_1, .player_id=-1, .team=T1}, 
-        {.pos={.r=7,.c=0}, .type=HOME_CELL_1, .player_id=-1, .team=T1}, 
-        {.pos={.r=8,.c=0}, .type=HOME_CELL_1, .player_id=-1, .team=T1}, 
-        {.pos={.r=1,.c=1}, .type=HOME_CELL_1, .player_id=-1, .team=T1}, 
-        {.pos={.r=2,.c=1}, .type=HOME_CELL_1, .player_id=-1, .team=T1}, 
-        {.pos={.r=3,.c=1}, .type=HOME_CELL_1, .player_id=-1, .team=T1}, 
-        {.pos={.r=4,.c=1}, .type=HOME_CELL_1, .player_id=-1, .team=T1}, 
-        {.pos={.r=5,.c=1}, .type=HOME_CELL_1, .player_id=-1, .team=T1}, 
-        {.pos={.r=6,.c=1}, .type=HOME_CELL_1, .player_id=-1, .team=T1}, 
-        {.pos={.r=7,.c=1}, .type=HOME_CELL_1, .player_id=-1, .team=T1}, 
-        {.pos={.r=8,.c=1}, .type=HOME_CELL_1, .player_id=-1, .team=T1}, 
-        {.pos={.r=1,.c=8}, .type=HOME_CELL_2, .player_id=-1, .team=T2}, 
-        {.pos={.r=2,.c=8}, .type=HOME_CELL_2, .player_id=-1, .team=T2}, 
-        {.pos={.r=3,.c=8}, .type=HOME_CELL_2, .player_id=-1, .team=T2}, 
-        {.pos={.r=4,.c=8}, .type=HOME_CELL_2, .player_id= 3, .team=T2}, 
-        {.pos={.r=5,.c=8}, .type=HOME_CELL_2, .player_id=-1, .team=T2}, 
-        {.pos={.r=6,.c=8}, .type=HOME_CELL_2, .player_id=-1, .team=T2}, 
-        {.pos={.r=7,.c=8}, .type=HOME_CELL_2, .player_id=-1, .team=T2}, 
-        {.pos={.r=8,.c=8}, .type=HOME_CELL_2, .player_id=-1, .team=T2},
-
-        
-        {.pos={.r=0,.c=3}, .type=JAIL_CELL_1, .player_id=-1, .team=T1}, 
-        {.pos={.r=0,.c=4}, .type=JAIL_CELL_1, .player_id=-1, .team=T1}, 
-        {.pos={.r=1,.c=3}, .type=JAIL_CELL_1, .player_id=-1, .team=T1}, 
-        {.pos={.r=1,.c=4}, .type=JAIL_CELL_1, .player_id=-1, .team=T1}, 
-        {.pos={.r=8,.c=5}, .type=JAIL_CELL_2, .player_id=-1, .team=T2}, 
-        {.pos={.r=8,.c=6}, .type=JAIL_CELL_2, .player_id=-1, .team=T2}, 
-        {.pos={.r=9,.c=5}, .type=JAIL_CELL_2, .player_id= 2, .team=T2}, 
-        {.pos={.r=9,.c=6}, .type=JAIL_CELL_2, .player_id=-1, .team=T2}, 
+    item_t t1_flag = {.team = T1, .type = FLAG, .pos =
+        {.r = 8, .c = 8}, .holder_id = -1};
+    item_t t2_flag = {.team = T2, .type = FLAG, .pos =
+        {.r = 5, .c = 3}, .holder_id = 0};
+    item_t t1_jack = {.team = T1, .type = JACK, .pos =
+        {.r = 1, .c = 1}, .holder_id = -1};
+    item_t t2_jack = {.team = T2, .type = JACK, .pos =
+        {.r = 1, .c = 6}, .holder_id = 1};
 
 
-        {.pos={.r=2,.c=3}, .type=FLOOR_CELL, .player_id=-1, .team=T1}, 
-        {.pos={.r=2,.c=4}, .type=FLOOR_CELL, .player_id=-1, .team=T1}, 
-        {.pos={.r=3,.c=3}, .type=FLOOR_CELL, .player_id=-1, .team=T1}, 
-        {.pos={.r=3,.c=4}, .type=FLOOR_CELL, .player_id=-1, .team=T1}, 
-        {.pos={.r=4,.c=2}, .type=FLOOR_CELL, .player_id=-1, .team=T1}, 
-        {.pos={.r=4,.c=3}, .type=FLOOR_CELL, .player_id=-1, .team=T1}, 
-        {.pos={.r=5,.c=2}, .type=FLOOR_CELL, .player_id=-1, .team=T1}, 
-        {.pos={.r=5,.c=3}, .type=FLOOR_CELL, .player_id= 0, .team=T1}, 
-        {.pos={.r=6,.c=3}, .type=FLOOR_CELL, .player_id=-1, .team=T1}, 
-        {.pos={.r=6,.c=4}, .type=FLOOR_CELL, .player_id=-1, .team=T1}, 
-        {.pos={.r=7,.c=3}, .type=FLOOR_CELL, .player_id=-1, .team=T1}, 
-        {.pos={.r=7,.c=4}, .type=FLOOR_CELL, .player_id=-1, .team=T1}, 
-        {.pos={.r=8,.c=3}, .type=FLOOR_CELL, .player_id=-1, .team=T1}, 
-        {.pos={.r=8,.c=4}, .type=FLOOR_CELL, .player_id=-1, .team=T1}, 
-        {.pos={.r=9,.c=3}, .type=FLOOR_CELL, .player_id=-1, .team=T1}, 
-        {.pos={.r=9,.c=4}, .type=FLOOR_CELL, .player_id=-1, .team=T1}, 
-        {.pos={.r=0,.c=5}, .type=FLOOR_CELL, .player_id=-1, .team=T2},  
-        {.pos={.r=0,.c=6}, .type=FLOOR_CELL, .player_id=-1, .team=T2}, 
-        {.pos={.r=1,.c=5}, .type=FLOOR_CELL, .player_id=-1, .team=T2}, 
-        {.pos={.r=1,.c=6}, .type=FLOOR_CELL, .player_id= 1, .team=T2}, 
-        {.pos={.r=2,.c=5}, .type=FLOOR_CELL, .player_id=-1, .team=T2}, 
-        {.pos={.r=2,.c=6}, .type=FLOOR_CELL, .player_id=-1, .team=T2}, 
-        {.pos={.r=3,.c=5}, .type=FLOOR_CELL, .player_id=-1, .team=T2}, 
-        {.pos={.r=3,.c=6}, .type=FLOOR_CELL, .player_id=-1, .team=T2}, 
-        {.pos={.r=4,.c=6}, .type=FLOOR_CELL, .player_id=-1, .team=T2}, 
-        {.pos={.r=4,.c=7}, .type=FLOOR_CELL, .player_id=-1, .team=T2}, 
-        {.pos={.r=5,.c=6}, .type=FLOOR_CELL, .player_id=-1, .team=T2}, 
-        {.pos={.r=5,.c=7}, .type=FLOOR_CELL, .player_id=-1, .team=T2}, 
-        {.pos={.r=6,.c=5}, .type=FLOOR_CELL, .player_id=-1, .team=T2}, 
-        {.pos={.r=6,.c=6}, .type=FLOOR_CELL, .player_id=-1, .team=T2}, 
-        {.pos={.r=7,.c=5}, .type=FLOOR_CELL, .player_id=-1, .team=T2}, 
-        {.pos={.r=7,.c=6}, .type=FLOOR_CELL, .player_id=-1, .team=T2} 
+    cell_t cells[] = {
+        {.pos =
+            {.r = 0, .c = 0}, .type = WALL_CELL, .player_id = -1, .team = T1},
+        {.pos =
+            {.r = 0, .c = 1}, .type = WALL_CELL, .player_id = -1, .team = T1},
+        {.pos =
+            {.r = 0, .c = 2}, .type = WALL_CELL, .player_id = -1, .team = T1},
+        {.pos =
+            {.r = 1, .c = 2}, .type = WALL_CELL, .player_id = -1, .team = T1},
+        {.pos =
+            {.r = 2, .c = 2}, .type = WALL_CELL, .player_id = -1, .team = T1},
+        {.pos =
+            {.r = 3, .c = 2}, .type = WALL_CELL, .player_id = -1, .team = T1},
+        {.pos =
+            {.r = 6, .c = 2}, .type = WALL_CELL, .player_id = -1, .team = T1},
+        {.pos =
+            {.r = 7, .c = 2}, .type = WALL_CELL, .player_id = -1, .team = T1},
+        {.pos =
+            {.r = 8, .c = 2}, .type = WALL_CELL, .player_id = -1, .team = T1},
+        {.pos =
+            {.r = 9, .c = 0}, .type = WALL_CELL, .player_id = -1, .team = T1},
+        {.pos =
+            {.r = 9, .c = 1}, .type = WALL_CELL, .player_id = -1, .team = T1},
+        {.pos =
+            {.r = 9, .c = 2}, .type = WALL_CELL, .player_id = -1, .team = T1},
+        {.pos =
+            {.r = 4, .c = 4}, .type = WALL_CELL, .player_id = -1, .team = T1},
+        {.pos =
+            {.r = 5, .c = 4}, .type = WALL_CELL, .player_id = -1, .team = T1},
+        {.pos =
+            {.r = 0, .c = 7}, .type = WALL_CELL, .player_id = -1, .team = T2},
+        {.pos =
+            {.r = 0, .c = 8}, .type = WALL_CELL, .player_id = -1, .team = T2},
+        {.pos =
+            {.r = 0, .c = 9}, .type = WALL_CELL, .player_id = -1, .team = T2},
+        {.pos =
+            {.r = 1, .c = 7}, .type = WALL_CELL, .player_id = -1, .team = T2},
+        {.pos =
+            {.r = 1, .c = 9}, .type = WALL_CELL, .player_id = -1, .team = T2},
+        {.pos =
+            {.r = 2, .c = 7}, .type = WALL_CELL, .player_id = -1, .team = T2},
+        {.pos =
+            {.r = 2, .c = 9}, .type = WALL_CELL, .player_id = -1, .team = T2},
+        {.pos =
+            {.r = 3, .c = 7}, .type = WALL_CELL, .player_id = -1, .team = T2},
+        {.pos =
+            {.r = 3, .c = 9}, .type = WALL_CELL, .player_id = -1, .team = T2},
+        {.pos =
+            {.r = 4, .c = 9}, .type = WALL_CELL, .player_id = -1, .team = T2},
+        {.pos =
+            {.r = 5, .c = 9}, .type = WALL_CELL, .player_id = -1, .team = T2},
+        {.pos =
+            {.r = 6, .c = 7}, .type = WALL_CELL, .player_id = -1, .team = T2},
+        {.pos =
+            {.r = 6, .c = 9}, .type = WALL_CELL, .player_id = -1, .team = T2},
+        {.pos =
+            {.r = 7, .c = 7}, .type = WALL_CELL, .player_id = -1, .team = T2},
+        {.pos =
+            {.r = 7, .c = 9}, .type = WALL_CELL, .player_id = -1, .team = T2},
+        {.pos =
+            {.r = 8, .c = 7}, .type = WALL_CELL, .player_id = -1, .team = T2},
+        {.pos =
+            {.r = 8, .c = 9}, .type = WALL_CELL, .player_id = -1, .team = T2},
+        {.pos =
+            {.r = 9, .c = 7}, .type = WALL_CELL, .player_id = -1, .team = T2},
+        {.pos =
+            {.r = 9, .c = 8}, .type = WALL_CELL, .player_id = -1, .team = T2},
+        {.pos =
+            {.r = 9, .c = 9}, .type = WALL_CELL, .player_id = -1, .team = T2},
+        {.pos =
+            {.r = 4, .c = 5}, .type = WALL_CELL, .player_id = -1, .team = T2},
+        {.pos =
+            {.r = 5, .c = 5}, .type = WALL_CELL, .player_id = -1, .team = T2},
+
+        {.pos =
+            {.r = 1, .c = 0}, .type = HOME_CELL_1, .player_id = -1, .team = T1},
+        {.pos =
+            {.r = 2, .c = 0}, .type = HOME_CELL_1, .player_id = -1, .team = T1},
+        {.pos =
+            {.r = 3, .c = 0}, .type = HOME_CELL_1, .player_id = -1, .team = T1},
+        {.pos =
+            {.r = 4, .c = 0}, .type = HOME_CELL_1, .player_id = -1, .team = T1},
+        {.pos =
+            {.r = 5, .c = 0}, .type = HOME_CELL_1, .player_id = -1, .team = T1},
+        {.pos =
+            {.r = 6, .c = 0}, .type = HOME_CELL_1, .player_id = -1, .team = T1},
+        {.pos =
+            {.r = 7, .c = 0}, .type = HOME_CELL_1, .player_id = -1, .team = T1},
+        {.pos =
+            {.r = 8, .c = 0}, .type = HOME_CELL_1, .player_id = -1, .team = T1},
+        {.pos =
+            {.r = 1, .c = 1}, .type = HOME_CELL_1, .player_id = -1, .team = T1},
+        {.pos =
+            {.r = 2, .c = 1}, .type = HOME_CELL_1, .player_id = -1, .team = T1},
+        {.pos =
+            {.r = 3, .c = 1}, .type = HOME_CELL_1, .player_id = -1, .team = T1},
+        {.pos =
+            {.r = 4, .c = 1}, .type = HOME_CELL_1, .player_id = -1, .team = T1},
+        {.pos =
+            {.r = 5, .c = 1}, .type = HOME_CELL_1, .player_id = -1, .team = T1},
+        {.pos =
+            {.r = 6, .c = 1}, .type = HOME_CELL_1, .player_id = -1, .team = T1},
+        {.pos =
+            {.r = 7, .c = 1}, .type = HOME_CELL_1, .player_id = -1, .team = T1},
+        {.pos =
+            {.r = 8, .c = 1}, .type = HOME_CELL_1, .player_id = -1, .team = T1},
+        {.pos =
+            {.r = 1, .c = 8}, .type = HOME_CELL_2, .player_id = -1, .team = T2},
+        {.pos =
+            {.r = 2, .c = 8}, .type = HOME_CELL_2, .player_id = -1, .team = T2},
+        {.pos =
+            {.r = 3, .c = 8}, .type = HOME_CELL_2, .player_id = -1, .team = T2},
+        {.pos =
+            {.r = 4, .c = 8}, .type = HOME_CELL_2, .player_id = 3, .team = T2},
+        {.pos =
+            {.r = 5, .c = 8}, .type = HOME_CELL_2, .player_id = -1, .team = T2},
+        {.pos =
+            {.r = 6, .c = 8}, .type = HOME_CELL_2, .player_id = -1, .team = T2},
+        {.pos =
+            {.r = 7, .c = 8}, .type = HOME_CELL_2, .player_id = -1, .team = T2},
+        {.pos =
+            {.r = 8, .c = 8}, .type = HOME_CELL_2, .player_id = -1, .team = T2},
+
+
+        {.pos =
+            {.r = 0, .c = 3}, .type = JAIL_CELL_1, .player_id = -1, .team = T1},
+        {.pos =
+            {.r = 0, .c = 4}, .type = JAIL_CELL_1, .player_id = -1, .team = T1},
+        {.pos =
+            {.r = 1, .c = 3}, .type = JAIL_CELL_1, .player_id = -1, .team = T1},
+        {.pos =
+            {.r = 1, .c = 4}, .type = JAIL_CELL_1, .player_id = -1, .team = T1},
+        {.pos =
+            {.r = 8, .c = 5}, .type = JAIL_CELL_2, .player_id = -1, .team = T2},
+        {.pos =
+            {.r = 8, .c = 6}, .type = JAIL_CELL_2, .player_id = -1, .team = T2},
+        {.pos =
+            {.r = 9, .c = 5}, .type = JAIL_CELL_2, .player_id = 2, .team = T2},
+        {.pos =
+            {.r = 9, .c = 6}, .type = JAIL_CELL_2, .player_id = -1, .team = T2},
+        {.pos =
+            {.r = 2, .c = 3}, .type = FLOOR_CELL, .player_id = -1, .team = T1},
+        {.pos =
+            {.r = 2, .c = 4}, .type = FLOOR_CELL, .player_id = -1, .team = T1},
+        {.pos =
+            {.r = 3, .c = 3}, .type = FLOOR_CELL, .player_id = -1, .team = T1},
+        {.pos =
+            {.r = 3, .c = 4}, .type = FLOOR_CELL, .player_id = -1, .team = T1},
+        {.pos =
+            {.r = 4, .c = 2}, .type = FLOOR_CELL, .player_id = -1, .team = T1},
+        {.pos =
+            {.r = 4, .c = 3}, .type = FLOOR_CELL, .player_id = -1, .team = T1},
+        {.pos =
+            {.r = 5, .c = 2}, .type = FLOOR_CELL, .player_id = -1, .team = T1},
+        {.pos =
+            {.r = 5, .c = 3}, .type = FLOOR_CELL, .player_id = 0, .team = T1},
+        {.pos =
+            {.r = 6, .c = 3}, .type = FLOOR_CELL, .player_id = -1, .team = T1},
+        {.pos =
+            {.r = 6, .c = 4}, .type = FLOOR_CELL, .player_id = -1, .team = T1},
+        {.pos =
+            {.r = 7, .c = 3}, .type = FLOOR_CELL, .player_id = -1, .team = T1},
+        {.pos =
+            {.r = 7, .c = 4}, .type = FLOOR_CELL, .player_id = -1, .team = T1},
+        {.pos =
+            {.r = 8, .c = 3}, .type = FLOOR_CELL, .player_id = -1, .team = T1},
+        {.pos =
+            {.r = 8, .c = 4}, .type = FLOOR_CELL, .player_id = -1, .team = T1},
+        {.pos =
+            {.r = 9, .c = 3}, .type = FLOOR_CELL, .player_id = -1, .team = T1},
+        {.pos =
+            {.r = 9, .c = 4}, .type = FLOOR_CELL, .player_id = -1, .team = T1},
+        {.pos =
+            {.r = 0, .c = 5}, .type = FLOOR_CELL, .player_id = -1, .team = T2},
+        {.pos =
+            {.r = 0, .c = 6}, .type = FLOOR_CELL, .player_id = -1, .team = T2},
+        {.pos =
+            {.r = 1, .c = 5}, .type = FLOOR_CELL, .player_id = -1, .team = T2},
+        {.pos =
+            {.r = 1, .c = 6}, .type = FLOOR_CELL, .player_id = 1, .team = T2},
+        {.pos =
+            {.r = 2, .c = 5}, .type = FLOOR_CELL, .player_id = -1, .team = T2},
+        {.pos =
+            {.r = 2, .c = 6}, .type = FLOOR_CELL, .player_id = -1, .team = T2},
+        {.pos =
+            {.r = 3, .c = 5}, .type = FLOOR_CELL, .player_id = -1, .team = T2},
+        {.pos =
+            {.r = 3, .c = 6}, .type = FLOOR_CELL, .player_id = -1, .team = T2},
+        {.pos =
+            {.r = 4, .c = 6}, .type = FLOOR_CELL, .player_id = -1, .team = T2},
+        {.pos =
+            {.r = 4, .c = 7}, .type = FLOOR_CELL, .player_id = -1, .team = T2},
+        {.pos =
+            {.r = 5, .c = 6}, .type = FLOOR_CELL, .player_id = -1, .team = T2},
+        {.pos =
+            {.r = 5, .c = 7}, .type = FLOOR_CELL, .player_id = -1, .team = T2},
+        {.pos =
+            {.r = 6, .c = 5}, .type = FLOOR_CELL, .player_id = -1, .team = T2},
+        {.pos =
+            {.r = 6, .c = 6}, .type = FLOOR_CELL, .player_id = -1, .team = T2},
+        {.pos =
+            {.r = 7, .c = 5}, .type = FLOOR_CELL, .player_id = -1, .team = T2},
+        {.pos =
+            {.r = 7, .c = 6}, .type = FLOOR_CELL, .player_id = -1, .team = T2}
     };
 
-    player_t players[] = 
-    {
-        { .id = 0, .team = T1, .pos = {.r=5, .c=3}, .status = FREE },
-        { .id = 1, .team = T2, .pos = {.r=1, .c=6}, .status = FREE },
-        { .id = 2, .team = T1, .pos = {.r=9, .c=5}, .status = JAILED },
-        { .id = 3, .team = T2, .pos = {.r=4, .c=8}, .status = FREE }
+    player_t players[] = {
+        { .id = 0, .team = T1, .pos =
+            {.r = 5, .c = 3}, .status = FREE},
+        { .id = 1, .team = T2, .pos =
+            {.r = 1, .c = 6}, .status = FREE},
+        { .id = 2, .team = T1, .pos =
+            {.r = 9, .c = 5}, .status = JAILED},
+        { .id = 3, .team = T2, .pos =
+            {.r = 4, .c = 8}, .status = FREE}
     };
-   
+
     maze_ref->dim_r = 200;
     maze_ref->dim_c = 200;
-    
+
     int i;
-    for (i=0; i<100; i++){
+    for (i = 0; i < 100; i++) {
         cell_t c = cells[i];
         maze_ref->cells[c.pos.r][c.pos.c] = &cells[i];
     }
-    for (i=0; i<4; i++){
+    for (i = 0; i < 4; i++) {
         player_t p = players[i];
         maze_ref->players[p.id] = &players[i];
     }
-    
+
     maze_ref->t1_flag = &t1_flag;
     maze_ref->t2_flag = &t2_flag;
     maze_ref->t1_jack = &t1_jack;
@@ -239,8 +342,6 @@ proto_client_sample_board(maze_t* maze_ref){
     maze_ref->num_t1_players = 2;
     maze_ref->num_t2_players = 2;
 }
-
-
 
 /*
 int
@@ -402,6 +503,7 @@ proto_client_init(Proto_Client_Handle *ch) {
         proto_client_set_event_handler(c, mt, proto_client_event_null_handler);
 
     proto_client_set_event_handler(c, PROTO_MT_EVENT_BASE_UPDATE, proto_client_event_update_handler);
+
     /*
         proto_client_set_event_handler(c, PROTO_MT_EVENT_BASE_DISCONNECT, proto_client_event_disconnect_handler);
      */

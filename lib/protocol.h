@@ -47,6 +47,7 @@ typedef enum {
 
     // Events  
     PROTO_MT_EVENT_BASE_RESERVED_FIRST,
+    PROTO_MT_EVENT_BASE_GETMAP,
     PROTO_MT_EVENT_BASE_UPDATE,
     PROTO_MT_EVENT_BASE_DISCONNECT,
     PROTO_MT_EVENT_BASE_RESERVED_LAST
@@ -60,7 +61,8 @@ typedef enum {
     NUM_FLOOR,
     DIM,
     CINFO,
-    DUMP
+    DUMP,
+    MOVE
 } Query_Types;
 
 typedef enum {

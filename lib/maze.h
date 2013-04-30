@@ -5,7 +5,9 @@ typedef enum {
     MOVE_UP,
     MOVE_DOWN,
     MOVE_LEFT,
-    MOVE_RIGHT
+    MOVE_RIGHT,
+    DROP_FLAG,
+    DROP_HAM
 } Move_Type;
 
 typedef enum {
@@ -23,9 +25,9 @@ typedef enum {
 } Cell_Type;
 
 typedef enum {
-    NO_TEAM=0,
-    T1=1,
-    T2=2
+    NO_TEAM = 0,
+    T1 = 1,
+    T2 = 2
 } Team_Type;
 
 typedef enum {
@@ -64,15 +66,13 @@ typedef struct {
 #define NUM_ROW         200
 #define MAX_PLAYERS     400
 
-
 typedef struct {
-    
     int dim_c;
     int dim_r;
-    
+
     cell_t * cells[NUM_ROW][NUM_COLUMN];
-    player_t* players[MAX_PLAYERS];
-    
+    player_t * players[MAX_PLAYERS];
+
     int num_t1_players;
     int num_t2_players;
 

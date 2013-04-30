@@ -54,6 +54,7 @@ struct {
     Proto_MT_Handler base_req_handlers[PROTO_MT_REQ_BASE_RESERVED_LAST -
             PROTO_MT_REQ_BASE_RESERVED_FIRST - 1];
     maze_t maze;
+    int eventid;
 } Proto_Server;
 
 extern PortType proto_server_rpcport(void) {
@@ -318,7 +319,7 @@ proto_server_mt_hello_handler(Proto_Session *s) {
     Proto_Msg_Hdr h;
 
     fprintf(stderr, "proto_server_mt_hello_handler: invoked for session:\n");
-    proto_session_dump(s);
+    //proto_session_dump(s);
 
     pthread_mutex_lock(&Proto_Server.EventSubscribersLock);
     // setup dummy reply header : set correct reply message type and 
@@ -338,7 +339,13 @@ proto_server_mt_hello_handler(Proto_Session *s) {
          //full
          proto_session_body_marshall_int(s, -1);
      }*/
-    proto_session_body_marshall_int(s, T1);
+    player_t* ppt = maze_add_new_player(&Proto_Server.maze);
+    if (ppt == NULL) {
+        proto_session_body_marshall_int(s, -1);
+    } else {
+        //proto_session_body_marshall_int(s, ppt->team);
+        proto_session_body_marshall_int(s, ppt->id);
+    }
     pthread_mutex_unlock(&Proto_Server.EventSubscribersLock);
     rc = proto_session_send_msg(s, 1);
     return rc;
@@ -350,7 +357,7 @@ proto_server_mt_query_handler(Proto_Session *s) {
     Proto_Msg_Hdr h;
 
     fprintf(stderr, "proto_server_mt_query_handler: invoked for session:\n");
-    proto_session_dump(s);
+    //proto_session_dump(s);
     //read the move informtaion from s
     //1. query type
     //2-3 arguments
@@ -403,6 +410,34 @@ proto_server_mt_query_handler(Proto_Session *s) {
         case DUMP:
             reply1 = 1;
             maze_dump(&Proto_Server.maze);
+            break;
+        case MOVE:
+            //types
+            printf("MOVE!!! arg1: %d\n",arg1);
+            switch (arg1) {
+                case MOVE_UP:
+                    reply1 = maze_move_player(&Proto_Server.maze, arg2, arg1);
+                    //printf("UP!!! reply: %d\n", reply1);
+                    break;
+                case MOVE_DOWN:
+                    reply1 = maze_move_player(&Proto_Server.maze, arg2, arg1);
+                    break;
+                case MOVE_LEFT:
+                    reply1 = maze_move_player(&Proto_Server.maze, arg2, arg1);
+                    break;
+                case MOVE_RIGHT:
+                    reply1 = maze_move_player(&Proto_Server.maze, arg2, arg1);
+                    break;
+                case DROP_FLAG:
+                    reply1 = maze_drop_flag(&Proto_Server.maze, arg2);
+                    break;
+                case DROP_HAM:
+                    reply1 = maze_drop_jackhammer(&Proto_Server.maze, arg2);
+                    break;
+                default:
+                    reply1 = -2;
+                    break;
+            }
             break;
         default:
             reply1 = -1;
@@ -571,6 +606,8 @@ proto_server_init(void) {
         fprintf(stderr, "prot_server_init: net_setup_listen_socket: FAILED for RPCPort\n");
         return -1;
     }
+    
+    Proto_Server.eventid=0;
 
     Proto_Server.EventPort = Proto_Server.RPCPort + 1;
 
@@ -594,9 +631,8 @@ proto_server_init(void) {
     return 0;
 }
 
-
 extern int
-proto_server_testcases(void){
+proto_server_testcases(void) {
 
     maze_t* m = &Proto_Server.maze;
 
@@ -614,36 +650,36 @@ proto_server_testcases(void){
     cell_t* t1p2_cell = maze_get_cell(m, t1p2->pos.r, t1p2->pos.c);
     cell_t* t2p2_cell = maze_get_cell(m, t2p2->pos.r, t2p2->pos.c);
 
-    maze_print_player(m,t1p1);
-    maze_print_player(m,t2p1);
-    maze_print_player(m,t1p2);
-    maze_print_player(m,t2p2);
+    maze_print_player(m, t1p1);
+    maze_print_player(m, t2p1);
+    maze_print_player(m, t1p2);
+    maze_print_player(m, t2p2);
 
-    maze_print_cell(m,t1p1_cell);
-    maze_print_cell(m,t2p1_cell);
-    maze_print_cell(m,t1p2_cell);
-    maze_print_cell(m,t2p2_cell); 
+    maze_print_cell(m, t1p1_cell);
+    maze_print_cell(m, t2p1_cell);
+    maze_print_cell(m, t1p2_cell);
+    maze_print_cell(m, t2p2_cell);
 
     fprintf(stdout, "\nremove 2 players; attempt to remove nonexistant player\n\n");
 
-    
+
     int t1p1_id = t1p1->id;
     int t2p2_id = t2p2->id;
     maze_remove_player(m, t1p1_id);
     maze_remove_player(m, t2p2_id);
-    if (maze_remove_player(m, 5) <= 0){
-        fprintf(stdout, "player 5 does not exist\n"); 
+    if (maze_remove_player(m, 5) <= 0) {
+        fprintf(stdout, "player 5 does not exist\n");
     }
 
-    maze_print_player(m,maze_get_player(m,t1p1_id));
-    maze_print_player(m,t2p1);
-    maze_print_player(m,t1p2);
-    maze_print_player(m,maze_get_player(m,t2p2_id));
+    maze_print_player(m, maze_get_player(m, t1p1_id));
+    maze_print_player(m, t2p1);
+    maze_print_player(m, t1p2);
+    maze_print_player(m, maze_get_player(m, t2p2_id));
 
-    maze_print_cell(m,t1p1_cell);
-    maze_print_cell(m,t2p1_cell);
-    maze_print_cell(m,t1p2_cell);
-    maze_print_cell(m,t2p2_cell); 
+    maze_print_cell(m, t1p1_cell);
+    maze_print_cell(m, t2p1_cell);
+    maze_print_cell(m, t1p2_cell);
+    maze_print_cell(m, t2p2_cell);
 
     fprintf(stdout, "\nadd flag and jackhammers to players\n\n");
 
@@ -653,12 +689,12 @@ proto_server_testcases(void){
     maze_pick_up_flag(m, flag_cell, t2p1);
     maze_pick_up_jackhammer(m, jack_cell, t1p2);
 
-    maze_print_item(maze_get_player_flag(m,t2p1->id));
-    maze_print_item(maze_get_player_jackhammer(m,t1p2->id));
-    maze_print_player(m,t2p1);
-    maze_print_player(m,t1p2);
-    maze_print_cell(m,t2p1_cell);
-    maze_print_cell(m,t1p2_cell);
+    maze_print_item(maze_get_player_flag(m, t2p1->id));
+    maze_print_item(maze_get_player_jackhammer(m, t1p2->id));
+    maze_print_player(m, t2p1);
+    maze_print_player(m, t1p2);
+    maze_print_cell(m, t2p1_cell);
+    maze_print_cell(m, t1p2_cell);
 
     fprintf(stdout, "\nmove the players\n\n");
 
@@ -666,13 +702,13 @@ proto_server_testcases(void){
     maze_move_player(m, t1p2->id, MOVE_RIGHT);
     t2p1_cell = maze_get_cell(m, t2p1->pos.r, t2p1->pos.c);
     t1p2_cell = maze_get_cell(m, t1p2->pos.r, t1p2->pos.c);
- 
-    maze_print_item(maze_get_player_flag(m,t2p1->id));
-    maze_print_item(maze_get_player_jackhammer(m,t1p2->id));
-    maze_print_player(m,t2p1);
-    maze_print_player(m,t1p2);
-    maze_print_cell(m,t2p1_cell);
-    maze_print_cell(m,t1p2_cell);
+
+    maze_print_item(maze_get_player_flag(m, t2p1->id));
+    maze_print_item(maze_get_player_jackhammer(m, t1p2->id));
+    maze_print_player(m, t2p1);
+    maze_print_player(m, t1p2);
+    maze_print_cell(m, t2p1_cell);
+    maze_print_cell(m, t1p2_cell);
 
     fprintf(stdout, "\ntake away flags and jackhammers from players\n\n");
 
@@ -681,10 +717,10 @@ proto_server_testcases(void){
 
     maze_print_item(m->t1_flag);
     maze_print_item(m->t1_jack);
-    maze_print_player(m,t2p1);
-    maze_print_player(m,t1p2);
-    maze_print_cell(m,t2p1_cell);
-    maze_print_cell(m,t1p2_cell);
+    maze_print_player(m, t2p1);
+    maze_print_player(m, t1p2);
+    maze_print_cell(m, t2p1_cell);
+    maze_print_cell(m, t1p2_cell);
 
 
     return 1;
