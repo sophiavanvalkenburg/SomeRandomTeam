@@ -25,6 +25,7 @@
 #include "net.h"
 #include "protocol.h"
 #include "protocol_session.h"
+#include "maze.h"
 
 typedef void * Proto_Client_Handle;
 
@@ -48,5 +49,7 @@ extern int proto_client_move(Proto_Client_Handle ch, int tp, int move);
 */
 extern int proto_client_goodbye(Proto_Client_Handle ch,int tp);
 extern int proto_client_query(Proto_Client_Handle ch, Query_Types qt, int v1, int v2,int* buf);
+
+extern void proto_client_sample_board(maze_t* maze);
 
 #endif

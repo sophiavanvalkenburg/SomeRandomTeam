@@ -1,3 +1,6 @@
+#ifndef __MAZE_H__
+#define __MAZE_H__
+
 typedef enum {
     MOVE_UP,
     MOVE_DOWN,
@@ -141,3 +144,5 @@ extern Team_Type maze_test_win(maze_t* maze);
 extern int maze_test_team_win(maze_t* maze, Team_Type team);
 
 extern void maze_free_player_mem(maze_t* maze, int player_id);
+
+#endif

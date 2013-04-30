@@ -32,13 +32,6 @@
 #include "../uistandalone/uistandalone.h"
 
 #define STRLEN 81
-#define T1 '1'
-#define T2 '2'
-
-#define MOVE_LEFT 'a'
-#define MOVE_RIGHT 'd'
-#define MOVE_UP 'w'
-#define MOVE_DOWN 's'
 
 UI *ui;
 
@@ -558,6 +551,34 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e)
     return 1;
 }
 
+void
+client_state_to_ui(UI* ui){
+    maze_t maze;
+    bzero(&maze, sizeof(maze_t));
+    proto_client_sample_board(&maze);
+
+    //FIXME: needs to actually start from (player pos.r - board.height/2, player pos.c - board.width/2)
+    int i, j;
+    for (i=0; i < ui->ui_state.ui_dim_r; i++){
+        for (j=0; j < ui->ui_state.ui_dim_c; j++){
+            cell_t* c = maze.cells[i][j];
+            switch(c->type){
+                case WALL_CELL: 
+                    ui->ui_state.ui_cells[i][j] = (c->team == T1) ? REDWALL_S : GREENWALL_S;;
+                    break;
+                case FLOOR_CELL:
+                case HOME_CELL_1:
+                case HOME_CELL_2:
+                case JAIL_CELL_1:
+                case JAIL_CELL_2:
+                    ui->ui_state.ui_cells[i][j] = FLOOR_S;
+                    break;
+            }
+        }
+    }
+
+}
+
 int
 main(int argc, char **argv) {
     //  Client* c = (Client*)malloc(sizeof(Client));
@@ -580,8 +601,10 @@ main(int argc, char **argv) {
     doConnectCmd(c,argv[1],argv[2]);
     // WITH OSX ITS IS EASIEST TO KEEP UI ON MAIN THREAD
     // SO JUMP THROW HOOPS :-(
-    ui_main_loop(ui, 320, 320);
-
+    
+    client_state_to_ui(ui);
+    ui_main_loop(ui);
+    
     //    free(c);
     return 0;
 }

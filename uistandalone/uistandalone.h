@@ -24,9 +24,24 @@
 
 #include <SDL/SDL.h>   /* All SDL apps need this */
 
+#define SPRITE_H 32
+#define SPRITE_W 32
+#define SCREEN_H 320
+#define SCREEN_W 320
+
+
 typedef enum { 
   TEAMA_S=0, TEAMB_S, FLOOR_S, REDWALL_S, GREENWALL_S, LOGO_S, JACKHAMMER_S, REDFLAG_S, GREENFLAG_S, NUM_S 
 } SPRITE_INDEX;
+
+
+typedef struct {
+    //UI_Item* ui_items;
+    //UI_Player* ui_players;
+    int ui_dim_r;
+    int ui_dim_c;
+    SPRITE_INDEX ui_cells[SCREEN_H/SPRITE_H][SCREEN_W/SPRITE_W];
+} UI_State;
 
 struct UI_Struct {
   SDL_Surface *screen;
@@ -53,6 +68,8 @@ struct UI_Struct {
   uint32_t flag_teama_c;
   uint32_t flag_teamb_c;
   uint32_t jackhammer_c;
+
+  UI_State ui_state; 
 };
 
 typedef struct UI_Struct UI;
@@ -64,7 +81,7 @@ sval ui_move(UI *ui, sval xdir, sval ydir);
 sval ui_keypress(UI *ui, SDL_KeyboardEvent *e);
 void ui_update(UI *ui);
 void ui_quit(UI *ui);
-void ui_main_loop(UI *ui, uval h, uval w);
+void ui_main_loop(UI *ui);
 void ui_init(UI **ui);
 
 

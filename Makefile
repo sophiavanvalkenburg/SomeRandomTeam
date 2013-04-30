@@ -31,7 +31,7 @@ net:
 protocol_utils:
 	gcc $(CFLAGS) -c lib/protocol_utils.c
 
-protocol_client: protocol_utils protocol_session
+protocol_client: protocol_utils protocol_session maze
 	gcc $(CFLAGS) -c -pthread lib/protocol_client.c
 
 protocol_server: protocol_utils protocol_session

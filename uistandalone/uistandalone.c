@@ -33,10 +33,6 @@
 static void dummyPlayer_init(UI *ui);
 static void dummyPlayer_paint(UI *ui, SDL_Rect *t);
 
-
-#define SPRITE_H 32
-#define SPRITE_W 32
-
 #define UI_FLOOR_BMP "floor.bmp"
 #define UI_REDWALL_BMP "redwall.bmp"
 #define UI_GREENWALL_BMP "greenwall.bmp"
@@ -317,20 +313,27 @@ static sval
 ui_paintmap(UI *ui) 
 {
   SDL_Rect t;
-  int i, j;
+  int i=0;
+  int j=0;
   t.y = 0; t.x = 0; t.h = ui->tile_h; t.w = ui->tile_w; 
 
   for (t.y=0; t.y<ui->screen->h; t.y+=t.h) {
     for (t.x=0; t.x<ui->screen->w; t.x+=t.w) {
-      draw_cell(ui, FLOOR_S, &t, ui->screen);
+        SPRITE_INDEX si = ui->ui_state.ui_cells[i][j]; 
+        draw_cell(ui,si, &t, ui->screen);
+        j++;
     }
+    j=0;
+    i++;
   }
 
-  dummyPlayer_paint(ui, &t);
+  //dummyPlayer_paint(ui, &t);
 
   SDL_UpdateRect(ui->screen, 0, 0, ui->screen->w, ui->screen->h);
   return 1;
 }
+
+
 
 static sval
 ui_init_sdl(UI *ui, int32_t h, int32_t w, int32_t d)
@@ -477,15 +480,15 @@ ui_quit(UI *ui)
 }
 
 extern void
-ui_main_loop(UI *ui, uval h, uval w)
+ui_main_loop(UI *ui)
 {
   sval rc;
   
   assert(ui);
 
-  ui_init_sdl(ui, h, w, 32);
+  ui_init_sdl(ui, SCREEN_H, SCREEN_W, 32);
 
-  dummyPlayer_init(ui);
+  //dummyPlayer_init(ui);
 
   ui_paintmap(ui);
    
@@ -508,7 +511,8 @@ ui_init(UI **ui)
   
   (*ui)->tile_h = SPRITE_H;
   (*ui)->tile_w = SPRITE_W;
-
+  (*ui)->ui_state.ui_dim_r = SCREEN_H/SPRITE_H;
+  (*ui)->ui_state.ui_dim_c = SCREEN_W/SPRITE_W;
 }
 
 
