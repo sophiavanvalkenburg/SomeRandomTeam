@@ -32,15 +32,6 @@
 #include "../uistandalone/uistandalone.h"
 
 #define STRLEN 81
-#define T1 '1'
-#define T2 '2'
-
-/*
-#define MOVE_LEFT 'a'
-#define MOVE_RIGHT 'd'
-#define MOVE_UP 'w'
-#define MOVE_DOWN 's'
- */
 
 UI *ui;
 
