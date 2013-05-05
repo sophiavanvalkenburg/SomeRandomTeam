@@ -32,6 +32,10 @@
 #include "../uistandalone/uistandalone.h"
 
 #define STRLEN 81
+<<<<<<< HEAD
+=======
+
+>>>>>>> added initial map download feature
 
 UI *ui;
 
@@ -47,6 +51,7 @@ typedef struct ClientState {
     char type;
     int id;
     Proto_Client_Handle ph;
+    maze_t maze;
 } Client;
 
 Client client;
@@ -74,6 +79,20 @@ update_event_handler(Proto_Session *s) {
 static int
 proto_client_event_getmap_handler(Proto_Session *s) {
     fprintf(stderr, "receive map\n");
+    int n;
+    proto_session_body_unmarshall_int(s, 0, &n);
+    printf("num: %d\n", n);
+    int i;
+    int offset = sizeof (int);
+    for (i = 0; i < n; i++) {
+        cell_t* cell = malloc(sizeof (cell_t));
+        unwrap_cell(s, offset, cell);
+        offset+=sizeof(cell_t);
+        //printf("cell: %d,%d\n",cell->pos.r,cell->pos.c);
+        client.maze.cells[cell->pos.r][cell->pos.c]=malloc(sizeof(cell_t));
+        memcpy(client.maze.cells[cell->pos.r][cell->pos.c],cell,sizeof(cell_t));
+    }
+    client.maze;
     return 1;
 }
 

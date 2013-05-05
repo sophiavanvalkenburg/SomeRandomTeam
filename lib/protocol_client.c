@@ -32,12 +32,13 @@
 
 
 #include "protocol.h"
+#include "protocol_session.h"
 #include "protocol_utils.h"
 #include "protocol_client.h"
 #include "maze.h"
 
 typedef struct {
-    char board[9];
+    //char board[9];
     int type;
     Proto_Session rpc_session;
     Proto_Session event_session;
@@ -421,6 +422,11 @@ proto_client_event_update_handler(Proto_Session *s) {
     /*
         getBoardFromSession(s);
      */
+    printf("event update received\n");
+    player_t player;
+    unwrap_player(s,sizeof(int)*4+sizeof(item_t)*4,&player);
+    printf("%d,%d\n",player.pos.c,player.pos.r);
+    
 
     return 1;
 }
@@ -464,9 +470,12 @@ proto_client_event_dispatcher(void * arg) {
     for (;;) {
         if (proto_session_rcv_msg(s) == 1) {
             mt = proto_session_hdr_unmarshall_type(s);
+            printf("an event is received type=%d %d\n", mt, PROTO_MT_EVENT_BASE_UPDATE);
             if (mt > PROTO_MT_EVENT_BASE_RESERVED_FIRST &&
                     mt < PROTO_MT_EVENT_BASE_RESERVED_LAST) {
                 //ADD CODE
+                printf("here\n");
+
                 int i = mt - PROTO_MT_EVENT_BASE_RESERVED_FIRST - 1;
                 hdlr = c->base_event_handlers[i];
                 if (hdlr(s) < 0) goto leave;

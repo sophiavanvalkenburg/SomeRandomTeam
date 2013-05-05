@@ -21,25 +21,32 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  *****************************************************************************/
+#include "maze.h"
+#include "net.h"
 
 #define PROTO_SESSION_BUF_SIZE (4096 * 16)
 
 // There is some redundancy here in the lengths
 // but it should make debugging easier
+
 typedef struct {
-  FDType fd;
-  void *extra;   // space to attach session specific data
-  int slen;
-  int rlen;
-  Proto_Msg_Hdr shdr;
-  Proto_Msg_Hdr rhdr;
-  char sbuf[PROTO_SESSION_BUF_SIZE];
-  char rbuf[PROTO_SESSION_BUF_SIZE];
+    FDType fd;
+    void *extra; // space to attach session specific data
+    int slen;
+    int rlen;
+    Proto_Msg_Hdr shdr;
+    Proto_Msg_Hdr rhdr;
+    char sbuf[PROTO_SESSION_BUF_SIZE];
+    char rbuf[PROTO_SESSION_BUF_SIZE];
 } Proto_Session;
 
 // Define Proto_MT_Handler type as a pointer to a function that returns
 // an int and takes a Session pointer as an argument
 typedef int (*Proto_MT_Handler)(Proto_Session *);
+
+extern int wrap_maze(maze_t * maze, Proto_Session * s, int r);
+extern int unwrap_player(Proto_Session *s, int offset, player_t *v);
+extern int unwrap_cell(Proto_Session *s, int offset, cell_t *v);
 
 extern void proto_session_dump(Proto_Session *s);
 
@@ -51,33 +58,33 @@ extern void proto_session_hdr_marshall(Proto_Session *s, Proto_Msg_Hdr *h);
 extern Proto_Msg_Types proto_session_hdr_unmarshall_type(Proto_Session *s);
 extern void proto_session_hdr_unmarshall(Proto_Session *s, Proto_Msg_Hdr *h);
 
-extern int  proto_session_body_marshall_ll(Proto_Session *s, long long v);
-extern int  proto_session_body_unmarshall_ll(Proto_Session *s, int offset, 
-					     long long *v);
-extern int  proto_session_body_marshall_int(Proto_Session *s, int v);
-extern int  proto_session_body_unmarshall_int(Proto_Session *s, int offset, 
-					      int *v);
-extern int  proto_session_body_marshall_char(Proto_Session *s, char v);
-extern int  proto_session_body_unmarshall_char(Proto_Session *s, int offset,
-					       char *v);
-extern int  proto_session_body_reserve_space(Proto_Session *s, int num, 
-					     char **space);
-extern int  proto_session_body_marshall_bytes(Proto_Session *s, int num, 
-					      char *b);
-extern int  proto_session_body_unmarshall_bytes(Proto_Session *s, int offset, 
-						int num, char *b);
-extern int  proto_session_send_msg(Proto_Session *s, int reset);
-extern int  proto_session_rcv_msg(Proto_Session *s);
-extern int  proto_session_rpc(Proto_Session *s);
+extern int proto_session_body_marshall_ll(Proto_Session *s, long long v);
+extern int proto_session_body_unmarshall_ll(Proto_Session *s, int offset,
+        long long *v);
+extern int proto_session_body_marshall_int(Proto_Session *s, int v);
+extern int proto_session_body_unmarshall_int(Proto_Session *s, int offset,
+        int *v);
+extern int proto_session_body_marshall_char(Proto_Session *s, char v);
+extern int proto_session_body_unmarshall_char(Proto_Session *s, int offset,
+        char *v);
+extern int proto_session_body_reserve_space(Proto_Session *s, int num,
+        char **space);
+extern int proto_session_body_marshall_bytes(Proto_Session *s, int num,
+        char *b);
+extern int proto_session_body_unmarshall_bytes(Proto_Session *s, int offset,
+        int num, char *b);
+extern int proto_session_send_msg(Proto_Session *s, int reset);
+extern int proto_session_rcv_msg(Proto_Session *s);
+extern int proto_session_rpc(Proto_Session *s);
 
-static inline void 
+static inline void
 proto_session_set_data(Proto_Session *s, void *data) {
-  s->extra = data;
+    s->extra = data;
 }
 
-static inline void * 
+static inline void *
 proto_session_get_data(Proto_Session *s) {
-  return s->extra;
+    return s->extra;
 }
 
 

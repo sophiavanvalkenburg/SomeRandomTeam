@@ -57,6 +57,8 @@ struct {
     int eventid;
 } Proto_Server;
 
+void proto_server_send_all_state(FDType fd);
+
 extern PortType proto_server_rpcport(void) {
     return Proto_Server.RPCPort;
 }
@@ -168,6 +170,7 @@ proto_server_event_listen(void *arg) {
                 fprintf(stderr, "subscriber num %d\n", i);
             }
         }
+        proto_server_send_all_state(connfd);
     }
 }
 
@@ -348,6 +351,8 @@ proto_server_mt_hello_handler(Proto_Session *s) {
     }
     pthread_mutex_unlock(&Proto_Server.EventSubscribersLock);
     rc = proto_session_send_msg(s, 1);
+    //transfer whole game state
+
     return rc;
 }
 
@@ -413,7 +418,7 @@ proto_server_mt_query_handler(Proto_Session *s) {
             break;
         case MOVE:
             //types
-            printf("MOVE!!! arg1: %d\n",arg1);
+            printf("MOVE!!! arg1: %d\n", arg1);
             switch (arg1) {
                 case MOVE_UP:
                     reply1 = maze_move_player(&Proto_Server.maze, arg2, arg1);
@@ -606,8 +611,8 @@ proto_server_init(void) {
         fprintf(stderr, "prot_server_init: net_setup_listen_socket: FAILED for RPCPort\n");
         return -1;
     }
-    
-    Proto_Server.eventid=0;
+
+    Proto_Server.eventid = 0;
 
     Proto_Server.EventPort = Proto_Server.RPCPort + 1;
 
@@ -724,4 +729,39 @@ proto_server_testcases(void) {
 
 
     return 1;
+}
+
+void
+proto_server_send_all_state(FDType fd) {
+    printf("send all state to fd=%d PROTO_MT_EVENT_BASE_UPDATE %d\n", fd, PROTO_MT_EVENT_BASE_GETMAP);
+    pthread_mutex_lock(&Proto_Server.EventSubscribersLock);
+    int i;
+    for (i = 0; i < 200; i += 10) {
+        //organize data into eventsession
+        Proto_Msg_Hdr *h = malloc(sizeof (Proto_Msg_Hdr));
+        h->type = PROTO_MT_EVENT_BASE_GETMAP;
+        proto_session_hdr_marshall(&(Proto_Server.EventSession), h);
+        proto_session_body_marshall_int(&(Proto_Server.EventSession), 2000);
+        int j;
+        for (j = 0; j < 10; j++) {
+            if (wrap_maze(&(Proto_Server.maze), &(Proto_Server.EventSession), i + j) < 0) {
+                fprintf(stderr, "wrap maze error\n");
+            }
+        }
+        Proto_Server.EventSession.fd = fd;
+        if (Proto_Server.EventSession.fd != -1) {
+            if (proto_session_send_msg(&Proto_Server.EventSession, 0) < 0) {
+                // must have lost an event connection
+                close(Proto_Server.EventSession.fd);
+                fprintf(stderr, "session lost during sending all states\n");
+                Proto_Server.session_lost_handler(&Proto_Server.EventSession);
+            }
+            // FIXME: add ack message here to ensure that game is updated 
+            // correctly everywhere... at the risk of making server dependent
+            // on client behaviour  (use time out to limit impact... drop
+            // clients that misbehave but be carefull of introducing deadlocks
+        }
+        proto_session_reset_send(&Proto_Server.EventSession);
+    }
+    pthread_mutex_unlock(&Proto_Server.EventSubscribersLock);
 }

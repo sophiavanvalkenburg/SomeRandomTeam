@@ -334,7 +334,7 @@ proto_session_rpc(Proto_Session *s) {
     return rc;
 }
 
-extern int
+int
 wrap_player(player_t * player, Proto_Session *s) {
     if (s && ((s->slen + sizeof (player_t)) < PROTO_SESSION_BUF_SIZE)) {
         memcpy(s->sbuf + s->slen, player, sizeof (player_t));
@@ -345,7 +345,17 @@ wrap_player(player_t * player, Proto_Session *s) {
 }
 
 extern int
+unwrap_player(Proto_Session *s, int offset, player_t *v) {
+    if (s && ((s->rlen - (offset + sizeof (player_t))) >= 0)) {
+        *v = *((player_t *) (s->rbuf + offset));
+        return offset + sizeof (player_t);
+    }
+    return -1;
+}
+
+int
 wrap_cell(cell_t * cell, Proto_Session *s) {
+    printf("%d,%d %d\n", s->slen, sizeof (cell_t), PROTO_SESSION_BUF_SIZE);
     if (s && ((s->slen + sizeof (cell_t)) < PROTO_SESSION_BUF_SIZE)) {
         memcpy(s->sbuf + s->slen, cell, sizeof (cell_t));
         s->slen += sizeof (cell_t);
@@ -355,6 +365,15 @@ wrap_cell(cell_t * cell, Proto_Session *s) {
 }
 
 extern int
+unwrap_cell(Proto_Session *s, int offset, cell_t *v) {
+    if (s && ((s->rlen - (offset + sizeof (cell_t))) >= 0)) {
+        *v = *((cell_t *) (s->rbuf + offset));
+        return offset + sizeof (cell_t);
+    }
+    return -1;
+}
+
+int
 wrap_item(item_t * item, Proto_Session *s) {
     if (s && ((s->slen + sizeof (item_t)) < PROTO_SESSION_BUF_SIZE)) {
         memcpy(s->sbuf + s->slen, item, sizeof (item_t));
@@ -369,15 +388,15 @@ wrap_item(item_t * item, Proto_Session *s) {
  * dim_r
  * num_t1_players
  * num_t2_players
- * player_t 400
- * cell_t 200x200
  * t1_flag
  * t2_flag
  * t1_jack
  * t2_jack
+ * player_t 400
+ * cell_t 200x200
  */
 extern int
-wrap_maze(maze_t* maze, Proto_Session *s) {
+wrap_update(maze_t * maze, Proto_Session * s) {
     if (proto_session_body_marshall_int(s, maze->dim_c) == -1) {
         fprintf(stderr, "ERROR: marhsall dim_c\n");
         return -1;
@@ -390,14 +409,47 @@ wrap_maze(maze_t* maze, Proto_Session *s) {
         fprintf(stderr, "ERROR: marhsall num_t1_players\n");
         return -1;
     }
-    if (wrap_player(s, maze->num_t2_players) == -1) {
+    if (proto_session_body_marshall_int(s, maze->num_t2_players) == -1) {
         fprintf(stderr, "ERROR: marhsall num_t2_players\n");
         return -1;
     }
+
+    if (wrap_item(maze->t1_flag, s) == -1) {
+        fprintf(stderr, "ERROR: marhsall t1_flag\n");
+        return -1;
+    }
+    if (wrap_item(maze->t2_flag, s) == -1) {
+        fprintf(stderr, "ERROR: marhsall t2_flag\n");
+        return -1;
+    }
+    if (wrap_item(maze->t1_jack, s) == -1) {
+        fprintf(stderr, "ERROR: marhsall t1_jack\n");
+        return -1;
+    }
+    if (wrap_item(maze->t2_jack, s) == -1) {
+        fprintf(stderr, "ERROR: marhsall t2_jack\n");
+        return -1;
+    }
+
     int i;
-    for (i = 0; i < (maze->num_t1_players + maze->num_t2_players); i++)
-        if (wrap_player(&(maze->num_t2_players), s) == -1) {
+    for (i = 0; i < (maze->num_t1_players + maze->num_t2_players); i++) {
+        if (wrap_player((maze->players[i]), s) == -1) {
             fprintf(stderr, "ERROR: marhsall player_t\n");
             return -1;
         }
+    }
+
+    return 1;
+}
+
+extern int
+wrap_maze(maze_t * maze, Proto_Session * s, int r) {
+    int j;
+    for (j = 0; j < NUM_COLUMN; j++) {
+        if (wrap_cell((maze->cells[r][j]), s) == -1) {
+            fprintf(stderr, "ERROR: marhsall cell_t\n");
+            return -1;
+        }
+    }
+
 }
