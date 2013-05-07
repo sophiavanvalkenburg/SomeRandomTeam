@@ -33,9 +33,12 @@
 
 #define STRLEN 81
 
+
 UI *ui;
 
 void initGlobals(char *host, char *port);
+static int event_getmap_handler(Proto_Session *s);
+static int event_update_handler(Proto_Session *s);
 
 struct Globals {
     char host[STRLEN];
@@ -52,6 +55,29 @@ typedef struct ClientState {
 
 Client client;
 
+void*
+client_maze_init(maze_t* maze) {
+    memset(maze, 0, sizeof (maze_t));
+    maze->dim_c = NUM_COLUMN;
+    maze->dim_r = NUM_ROW;
+    int r;
+    int c;
+    for (r = 0; r < NUM_ROW; r++) {
+        for (c = 0; c < NUM_COLUMN; c++) {
+            maze->cells[r][c] = malloc(sizeof (cell_t));
+        }
+    }
+    maze->t1_flag = (item_t *) malloc(sizeof (item_t));
+    maze->t2_flag = (item_t *) malloc(sizeof (item_t));
+    maze->t1_jack = (item_t *) malloc(sizeof (item_t));
+    maze->t2_jack = (item_t *) malloc(sizeof (item_t));
+    int n;
+    for (n = 0; n < MAX_PLAYERS; n++) {
+        maze->players[n] = malloc(sizeof (player_t));
+    }
+    return;
+}
+
 static int
 clientInit(Client *C) {
     bzero(C, sizeof (Client));
@@ -61,6 +87,9 @@ clientInit(Client *C) {
         fprintf(stderr, "client: main: ERROR initializing proto system\n");
         return -1;
     }
+    client_maze_init(&(client.maze));
+    proto_client_set_event_handler(C->ph, PROTO_MT_EVENT_BASE_GETMAP, event_getmap_handler);
+    proto_client_set_event_handler(C->ph, PROTO_MT_EVENT_BASE_UPDATE, event_update_handler);
     return 1;
 }
 
@@ -73,7 +102,7 @@ update_event_handler(Proto_Session *s) {
 }
 
 static int
-proto_client_event_getmap_handler(Proto_Session *s) {
+event_getmap_handler(Proto_Session *s) {
     fprintf(stderr, "receive map\n");
     int n;
     proto_session_body_unmarshall_int(s, 0, &n);
@@ -82,13 +111,76 @@ proto_client_event_getmap_handler(Proto_Session *s) {
     int offset = sizeof (int);
     for (i = 0; i < n; i++) {
         cell_t* cell = malloc(sizeof (cell_t));
-        unwrap_cell(s, offset, cell);
-        offset+=sizeof(cell_t);
+        offset = unwrap_cell(s, offset, cell);
         //printf("cell: %d,%d\n",cell->pos.r,cell->pos.c);
-        client.maze.cells[cell->pos.r][cell->pos.c]=malloc(sizeof(cell_t));
-        memcpy(client.maze.cells[cell->pos.r][cell->pos.c],cell,sizeof(cell_t));
+        //client.maze.cells[cell->pos.r][cell->pos.c] = malloc(sizeof (cell_t));
+        memcpy(client.maze.cells[cell->pos.r][cell->pos.c], cell, sizeof (cell_t));
+        free(cell);
     }
-    client.maze;
+    return 1;
+}
+
+/*
+ * dim_c
+ * dim_r
+ * num_t1_players
+ * num_t2_players
+ * t1_flag
+ * t2_flag
+ * t1_jack
+ * t2_jack
+ * player_t 400
+ */
+static int
+event_update_handler(Proto_Session *s) {
+    fprintf(stderr, "receive update\n");
+    int offset = 0;
+    offset = proto_session_body_unmarshall_int(s, offset, &(client.maze.dim_c));
+    offset = proto_session_body_unmarshall_int(s, offset, &(client.maze.dim_r));
+    offset = proto_session_body_unmarshall_int(s, offset, &(client.maze.num_t1_players));
+    offset = proto_session_body_unmarshall_int(s, offset, &(client.maze.num_t2_players));
+    printf("start unwrap item\n");
+    fflush(stdout);
+    offset = unwrap_item(s, offset, (client.maze.t1_flag));
+    offset = unwrap_item(s, offset, (client.maze.t2_flag));
+    offset = unwrap_item(s, offset, (client.maze.t1_jack));
+    offset = unwrap_item(s, offset, (client.maze.t2_jack));
+    printf("start unwrap player\n");
+    fflush(stdout);
+    int i;
+    for (i = 0; i < (client.maze.num_t1_players + client.maze.num_t2_players); i++) {
+        player_t* player = malloc(sizeof (player_t));
+        if ((offset = unwrap_player(s, offset, player)) == -1) {
+            fprintf(stderr, "ERROR: unmarhsall player_t\n");
+            return -1;
+        }
+        memcpy(client.maze.players[player->id], player, sizeof (cell_t));
+        free(player);
+    }
+
+    printf("dim_c: %d\n", client.maze.dim_c);
+    printf("dim_r: %d\n", client.maze.dim_r);
+    printf("num_t1_players: %d\n", client.maze.num_t1_players);
+    printf("num_t2_players: %d\n", client.maze.num_t2_players);
+
+    /*
+        int i;
+        int offset = sizeof (int);
+        for (i = 0; i < n; i++) {
+            cell_t* cell = malloc(sizeof (cell_t));
+            unwrap_cell(s, offset, cell);
+            offset += sizeof (cell_t);
+            //printf("cell: %d,%d\n",cell->pos.r,cell->pos.c);
+            client.maze.cells[cell->pos.r][cell->pos.c] = malloc(sizeof (cell_t));
+            memcpy(client.maze.cells[cell->pos.r][cell->pos.c], cell, sizeof (cell_t));
+        }
+     */
+    /*
+        client.maze;
+        player_t player;
+        unwrap_player(s, sizeof (int) *4 + sizeof (item_t)*4, &player);
+        printf("%d,%d\n", player.pos.c, player.pos.r);
+     */
     return 1;
 }
 
@@ -106,7 +198,6 @@ startConnection(Client *C, char *host, PortType port, Proto_MT_Handler h) {
                     h);
         }
 #endif
-        proto_client_set_event_handler(C->ph, PROTO_MT_EVENT_BASE_GETMAP, proto_client_event_getmap_handler);
         return 1;
     }
     return 0;
@@ -602,11 +693,11 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e) {
 }
 
 void
-cell_state_to_ui(UI *ui, cell_t* c, int i, int j){
+cell_state_to_ui(UI *ui, cell_t* c, int i, int j) {
 
-    if (c==NULL){
+    if (c == NULL) {
         ui->ui_state.ui_cells[i][j] = -1;
-    }else{
+    } else {
         switch (c->type) {
             case WALL_CELL:
                 ui->ui_state.ui_cells[i][j] = (c->team == T1) ? REDWALL_S : GREENWALL_S;
@@ -624,21 +715,21 @@ cell_state_to_ui(UI *ui, cell_t* c, int i, int j){
 }
 
 void
-player_state_to_ui(UI *ui, maze_t *maze, player_t* player, int i, int j){
-   if (player != NULL){
-        ui->ui_state.ui_players[i][j] = (UI_Player *) malloc(sizeof(UI_Player));
+player_state_to_ui(UI *ui, maze_t *maze, player_t* player, int i, int j) {
+    if (player != NULL) {
+        ui->ui_state.ui_players[i][j] = (UI_Player *) malloc(sizeof (UI_Player));
         UI_Player *p = ui->ui_state.ui_players[i][j];
 
         p->id = player->id;
-        p->x = j; 
-        p->y = i; 
+        p->x = j;
+        p->y = i;
         p->team = player->team == T1 ? 0 : 1;
         p->state = 0;
         item_t *flag = maze_get_player_flag(maze, player->id);
-        if (flag){
+        if (flag) {
             p->state = flag->team == T1 ? 1 : 2;
         }
-        if (player->status == JAILED){
+        if (player->status == JAILED) {
             p->state = 3;
         }
     }
@@ -646,13 +737,13 @@ player_state_to_ui(UI *ui, maze_t *maze, player_t* player, int i, int j){
 }
 
 void
-item_state_to_ui(UI *ui, item_t* item, int i, int j, int ind){
-       if (item != NULL /*&& item->holder_id < 0*/){
-       ui->ui_state.ui_items[ind] = (UI_Item *) malloc(sizeof(UI_Item));
+item_state_to_ui(UI *ui, item_t* item, int i, int j, int ind) {
+    if (item != NULL /*&& item->holder_id < 0*/) {
+        ui->ui_state.ui_items[ind] = (UI_Item *) malloc(sizeof (UI_Item));
         UI_Item *ui_item = ui->ui_state.ui_items[ind];
         ui_item->x = j;
         ui_item->y = i;
-        switch(item->type){
+        switch (item->type) {
             case JACK:
                 ui_item->type = 0;
                 break;
@@ -660,28 +751,27 @@ item_state_to_ui(UI *ui, item_t* item, int i, int j, int ind){
                 ui_item->type = 1;
                 break;
         }
-       switch(item->team){
+        switch (item->team) {
             case T1:
                 ui_item->team = 0;
                 break;
             case T2:
                 ui_item->team = 1;
                 break;
-       } 
+        }
     }
 
 }
 
-
 void
-clear_ui_state(UI *ui){
+clear_ui_state(UI *ui) {
     int i, j;
     for (i = 0; i < ui->ui_state.ui_dim_r; i++) {
         for (j = 0; j < ui->ui_state.ui_dim_c; j++) {
 
             ui->ui_state.ui_cells[i][j] = -1;
 
-            if (ui->ui_state.ui_players[i][j] != NULL){
+            if (ui->ui_state.ui_players[i][j] != NULL) {
                 free(ui->ui_state.ui_players[i][j]);
                 ui->ui_state.ui_players[i][j] = NULL;
             }
@@ -689,8 +779,8 @@ clear_ui_state(UI *ui){
         }
     }
 
-    for (i=0; i< 4; i++){
-        if (ui->ui_state.ui_items[i] != NULL){
+    for (i = 0; i < 4; i++) {
+        if (ui->ui_state.ui_items[i] != NULL) {
             free(ui->ui_state.ui_items[i]);
             ui->ui_state.ui_items[i] = NULL;
         }
@@ -709,30 +799,30 @@ client_state_to_ui(UI* ui) {
 
     int id = client.id;
     player_t* me = maze_get_player(&maze, id);
-    if (me == NULL){
-        fprintf(stderr,"Player %d does not exist\n",id);
+    if (me == NULL) {
+        fprintf(stderr, "Player %d does not exist\n", id);
         return;
     }
-    
-    int start_row = me->pos.r - ui->ui_state.ui_dim_r/2;
-    int start_col = me->pos.c - ui->ui_state.ui_dim_c/2;
+
+    int start_row = me->pos.r - ui->ui_state.ui_dim_r / 2;
+    int start_col = me->pos.c - ui->ui_state.ui_dim_c / 2;
     int i, j;
     for (i = 0; i < ui->ui_state.ui_dim_r; i++) {
         for (j = 0; j < ui->ui_state.ui_dim_c; j++) {
-           // fprintf(stdout,"%d %d ", i, j);
-           // maze_print_cell(&maze, maze.cells[3][4]);
+            // fprintf(stdout,"%d %d ", i, j);
+            // maze_print_cell(&maze, maze.cells[3][4]);
 
-            cell_t* c = maze_get_cell(&maze, start_row+i, start_col+j);
+            cell_t* c = maze_get_cell(&maze, start_row + i, start_col + j);
             cell_state_to_ui(ui, c, i, j);
-            
-            if (c==NULL) continue;
-            
+
+            if (c == NULL) continue;
+
             player_t* player = maze_get_player(&maze, c->player_id);
             player_state_to_ui(ui, &maze, player, i, j);
 
             item_t* flag = maze_get_cell_flag(&maze, c);
-            if (flag){
-                switch(flag->team){
+            if (flag) {
+                switch (flag->team) {
                     case T1:
                         item_state_to_ui(ui, flag, i, j, 0);
                         break;
@@ -743,8 +833,8 @@ client_state_to_ui(UI* ui) {
             }
 
             item_t* jack = maze_get_cell_jackhammer(&maze, c);
-            if (jack){
-                switch(jack->team){
+            if (jack) {
+                switch (jack->team) {
                     case T1:
                         item_state_to_ui(ui, jack, i, j, 2);
                         break;
@@ -757,8 +847,6 @@ client_state_to_ui(UI* ui) {
     }
 
 }
-
-
 
 int
 main(int argc, char **argv) {
