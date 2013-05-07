@@ -54,6 +54,8 @@ struct {
     Proto_MT_Handler base_req_handlers[PROTO_MT_REQ_BASE_RESERVED_LAST -
             PROTO_MT_REQ_BASE_RESERVED_FIRST - 1];
     maze_t maze;
+    cell_t * updatelist[4000];
+    int listsize;
     int eventid;
 } Proto_Server;
 
@@ -178,10 +180,56 @@ void
 proto_server_post_event(void) {
     int i;
     int num;
-
+    printf("proto_server_post_event\n");
     pthread_mutex_lock(&Proto_Server.EventSubscribersLock);
     //organize data into eventsession
+    Proto_Msg_Hdr *h = malloc(sizeof (Proto_Msg_Hdr));
+    h->type = PROTO_MT_EVENT_BASE_UPDATE;
+    proto_session_hdr_marshall(&(Proto_Server.EventSession), h);
+    if (wrap_update(&(Proto_Server.maze), &(Proto_Server.EventSession)) < 0) {
+        fprintf(stderr, "wrap maze error\n");
+    }
+    i = 0;
+    num = Proto_Server.EventNumSubscribers;
+    while (num) {
+        Proto_Server.EventSession.fd = Proto_Server.EventSubscribers[i];
+        if (Proto_Server.EventSession.fd != -1) {
+            num--;
+            if (proto_session_send_msg(&Proto_Server.EventSession, 0) < 0) {
+                // must have lost an event connection
+                close(Proto_Server.EventSession.fd);
+                Proto_Server.EventSubscribers[i] = -1;
+                Proto_Server.EventNumSubscribers--;
+                Proto_Server.session_lost_handler(&Proto_Server.EventSession);
+            }
+            // FIXME: add ack message here to ensure that game is updated 
+            // correctly everywhere... at the risk of making server dependent
+            // on client behaviour  (use time out to limit impact... drop
+            // clients that misbehave but be carefull of introducing deadlocks
+        }
+        i++;
+    }
+    proto_session_reset_send(&Proto_Server.EventSession);
+    pthread_mutex_unlock(&Proto_Server.EventSubscribersLock);
+}
 
+extern void
+proto_server_post_map(void) {
+    int i;
+    int num;
+    printf("proto_server_post_map\n");
+    pthread_mutex_lock(&Proto_Server.EventSubscribersLock);
+    //organize data into eventsession
+    Proto_Msg_Hdr *h = malloc(sizeof (Proto_Msg_Hdr));
+    h->type = PROTO_MT_EVENT_BASE_GETMAP;
+    proto_session_hdr_marshall(&(Proto_Server.EventSession), h);
+    proto_session_body_marshall_int(&(Proto_Server.EventSession), Proto_Server.listsize);
+    int j;
+    for (j = 0; j < Proto_Server.listsize; j++) {
+        if (wrap_cell(Proto_Server.updatelist[j], &(Proto_Server.EventSession)) < 0) {
+            fprintf(stderr, "wrap maze error\n");
+        }
+    }
     i = 0;
     num = Proto_Server.EventNumSubscribers;
     while (num) {
@@ -358,6 +406,8 @@ proto_server_mt_hello_handler(Proto_Session *s) {
 
 static int
 proto_server_mt_query_handler(Proto_Session *s) {
+    pthread_mutex_lock(&Proto_Server.EventSubscribersLock);
+
     int rc = 1;
     Proto_Msg_Hdr h;
 
@@ -421,17 +471,17 @@ proto_server_mt_query_handler(Proto_Session *s) {
             printf("MOVE!!! arg1: %d\n", arg1);
             switch (arg1) {
                 case MOVE_UP:
-                    reply1 = maze_move_player(&Proto_Server.maze, arg2, arg1);
+                    reply1 = maze_move_player(&Proto_Server.maze, arg2, arg1, Proto_Server.updatelist, &(Proto_Server.listsize));
                     //printf("UP!!! reply: %d\n", reply1);
                     break;
                 case MOVE_DOWN:
-                    reply1 = maze_move_player(&Proto_Server.maze, arg2, arg1);
+                    reply1 = maze_move_player(&Proto_Server.maze, arg2, arg1, Proto_Server.updatelist, &(Proto_Server.listsize));
                     break;
                 case MOVE_LEFT:
-                    reply1 = maze_move_player(&Proto_Server.maze, arg2, arg1);
+                    reply1 = maze_move_player(&Proto_Server.maze, arg2, arg1, Proto_Server.updatelist, &(Proto_Server.listsize));
                     break;
                 case MOVE_RIGHT:
-                    reply1 = maze_move_player(&Proto_Server.maze, arg2, arg1);
+                    reply1 = maze_move_player(&Proto_Server.maze, arg2, arg1, Proto_Server.updatelist, &(Proto_Server.listsize));
                     break;
                 case DROP_FLAG:
                     reply1 = maze_drop_flag(&Proto_Server.maze, arg2);
@@ -468,6 +518,7 @@ proto_server_mt_query_handler(Proto_Session *s) {
 
     printf("query handler: sending message back\n");
     rc = proto_session_send_msg(s, 1);
+    pthread_mutex_unlock(&Proto_Server.EventSubscribersLock);
 
     return rc;
 }
@@ -563,6 +614,11 @@ proto_server_init(void) {
 
     //load the maze
     proto_server_load_maze();
+
+    for (i = 0; i < 4000; i++) {
+        Proto_Server.updatelist[i] = malloc(sizeof (cell_t));
+    }
+    Proto_Server.listsize = 0;
 
     /* printf("rows:%d\tcols:%d\n",maze_get_num_rows(&Proto_Server.maze),maze_get_num_cols(&Proto_Server.maze));
      printf("home1:%d\thome2:%d\tjail1:%d\tjail2:%d\twall:%d\tfloor:%d\n",   maze_get_num_home_cells(&Proto_Server.maze,T1),
@@ -703,8 +759,8 @@ proto_server_testcases(void) {
 
     fprintf(stdout, "\nmove the players\n\n");
 
-    maze_move_player(m, t2p1->id, MOVE_DOWN);
-    maze_move_player(m, t1p2->id, MOVE_RIGHT);
+    maze_move_player(&Proto_Server.maze, t2p1->id, MOVE_DOWN, Proto_Server.updatelist, &(Proto_Server.listsize));
+    maze_move_player(&Proto_Server.maze, t1p2->id, MOVE_RIGHT, Proto_Server.updatelist, &(Proto_Server.listsize));
     t2p1_cell = maze_get_cell(m, t2p1->pos.r, t2p1->pos.c);
     t1p2_cell = maze_get_cell(m, t1p2->pos.r, t1p2->pos.c);
 
@@ -733,7 +789,7 @@ proto_server_testcases(void) {
 
 void
 proto_server_send_all_state(FDType fd) {
-    printf("send all state to fd=%d PROTO_MT_EVENT_BASE_UPDATE %d\n", fd, PROTO_MT_EVENT_BASE_GETMAP);
+    printf("send all state to fd=%d PROTO_MT_EVENT_BASE_GETMAP %d\n", fd, PROTO_MT_EVENT_BASE_GETMAP);
     pthread_mutex_lock(&Proto_Server.EventSubscribersLock);
     int i;
     for (i = 0; i < 200; i += 10) {
@@ -763,5 +819,28 @@ proto_server_send_all_state(FDType fd) {
         }
         proto_session_reset_send(&Proto_Server.EventSession);
     }
+
+    //organize data into eventsession
+    Proto_Msg_Hdr *h = malloc(sizeof (Proto_Msg_Hdr));
+    h->type = PROTO_MT_EVENT_BASE_UPDATE;
+    proto_session_hdr_marshall(&(Proto_Server.EventSession), h);
+    if (wrap_update(&(Proto_Server.maze), &(Proto_Server.EventSession)) < 0) {
+        fprintf(stderr, "wrap maze error\n");
+    }
+    Proto_Server.EventSession.fd = fd;
+    if (Proto_Server.EventSession.fd != -1) {
+        if (proto_session_send_msg(&Proto_Server.EventSession, 0) < 0) {
+            // must have lost an event connection
+            close(Proto_Server.EventSession.fd);
+            fprintf(stderr, "session lost during sending all states\n");
+            Proto_Server.session_lost_handler(&Proto_Server.EventSession);
+        }
+        // FIXME: add ack message here to ensure that game is updated 
+        // correctly everywhere... at the risk of making server dependent
+        // on client behaviour  (use time out to limit impact... drop
+        // clients that misbehave but be carefull of introducing deadlocks
+    }
+    proto_session_reset_send(&Proto_Server.EventSession);
+
     pthread_mutex_unlock(&Proto_Server.EventSubscribersLock);
 }

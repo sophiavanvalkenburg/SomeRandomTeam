@@ -45,8 +45,11 @@ typedef struct {
 typedef int (*Proto_MT_Handler)(Proto_Session *);
 
 extern int wrap_maze(maze_t * maze, Proto_Session * s, int r);
+extern int wrap_cell(cell_t * cell, Proto_Session *s);
+extern int wrap_update(maze_t * maze, Proto_Session * s);
 extern int unwrap_player(Proto_Session *s, int offset, player_t *v);
 extern int unwrap_cell(Proto_Session *s, int offset, cell_t *v);
+extern int unwrap_item(Proto_Session *s, int offset, item_t *v);
 
 extern void proto_session_dump(Proto_Session *s);
 

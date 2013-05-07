@@ -35,9 +35,10 @@ extern PortType proto_server_rpcport(void);
 extern PortType proto_server_eventport(void);
 extern PortType proto_server_listenport(void);
 extern Proto_Session *proto_server_event_session(void);
-extern int    proto_server_start_rpc_loop(void);
+extern int proto_server_start_rpc_loop(void);
 
 extern void proto_server_post_event(void);
+extern void proto_server_post_map(void);
 
 extern int proto_server_testcases(void);
 #endif

@@ -353,9 +353,9 @@ unwrap_player(Proto_Session *s, int offset, player_t *v) {
     return -1;
 }
 
-int
+extern int
 wrap_cell(cell_t * cell, Proto_Session *s) {
-    printf("%d,%d %d\n", s->slen, sizeof (cell_t), PROTO_SESSION_BUF_SIZE);
+    //printf("%d,%d %d\n", s->slen, sizeof (cell_t), PROTO_SESSION_BUF_SIZE);
     if (s && ((s->slen + sizeof (cell_t)) < PROTO_SESSION_BUF_SIZE)) {
         memcpy(s->sbuf + s->slen, cell, sizeof (cell_t));
         s->slen += sizeof (cell_t);
@@ -383,6 +383,15 @@ wrap_item(item_t * item, Proto_Session *s) {
     return -1;
 }
 
+extern int
+unwrap_item(Proto_Session *s, int offset, item_t *v) {
+    if (s && ((s->rlen - (offset + sizeof (item_t))) >= 0)) {
+        *v = *((item_t *) (s->rbuf + offset));
+        return offset + sizeof (item_t);
+    }
+    return -1;
+}
+
 /*
  * dim_c
  * dim_r
@@ -393,7 +402,6 @@ wrap_item(item_t * item, Proto_Session *s) {
  * t1_jack
  * t2_jack
  * player_t 400
- * cell_t 200x200
  */
 extern int
 wrap_update(maze_t * maze, Proto_Session * s) {
