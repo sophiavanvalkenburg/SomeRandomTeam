@@ -458,7 +458,7 @@ doQuitCmd(Client *C) {
         printf("not connected\n");
         return -1;
     }
-    int rc = proto_client_goodbye(C->ph, 1);
+    int rc = proto_client_goodbye(C->ph, client.id);
     if (rc < 0) {
         fprintf(stdout, "Error: problem disconnecting\n");
         return 1;

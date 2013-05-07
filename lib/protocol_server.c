@@ -580,7 +580,7 @@ proto_server_mt_goodbye_handler(Proto_Session * s) {
 
     int clientType;
     proto_session_body_unmarshall_int(s, 0, &clientType);
-    printf("goodbye handler: clienttype %d\n", clientType);
+    printf("goodbye handler: client player id %d\n", clientType);
     bzero(&h, sizeof (Proto_Msg_Hdr));
     bzero(&(s->sbuf), sizeof (int) *2);
     s->slen = 0;
@@ -593,6 +593,7 @@ proto_server_mt_goodbye_handler(Proto_Session * s) {
     rc = proto_session_send_msg(s, 1);
 
     if (rc) {
+        maze_remove_player(&(Proto_Server.maze), clientType);
         proto_server_post_disconnect_event(clientType);
         close(s->fd);
     }
