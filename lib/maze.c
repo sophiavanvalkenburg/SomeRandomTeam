@@ -642,7 +642,7 @@ maze_drop_flag(maze_t* maze, int player_id) {
 }
 
 extern int
-maze_move_player(maze_t* maze, int player_id, Move_Type move, maze_t** list, int* sizept) {
+maze_move_player(maze_t* maze, int player_id, Move_Type move, cell_t** list, int* sizept) {
     player_t* p = maze_get_player(maze, player_id);
     if (p == NULL) return 0;
 

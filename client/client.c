@@ -39,6 +39,7 @@ UI *ui;
 void initGlobals(char *host, char *port);
 static int event_getmap_handler(Proto_Session *s);
 static int event_update_handler(Proto_Session *s);
+static void client_state_to_ui(UI* ui);
 
 struct Globals {
     char host[STRLEN];
@@ -103,10 +104,10 @@ update_event_handler(Proto_Session *s) {
 
 static int
 event_getmap_handler(Proto_Session *s) {
-    fprintf(stderr, "receive map\n");
+    //fprintf(stderr, "receive map\n");
     int n;
     proto_session_body_unmarshall_int(s, 0, &n);
-    printf("num: %d\n", n);
+    //printf("num: %d\n", n);
     int i;
     int offset = sizeof (int);
     for (i = 0; i < n; i++) {
@@ -117,6 +118,9 @@ event_getmap_handler(Proto_Session *s) {
         memcpy(client.maze.cells[cell->pos.r][cell->pos.c], cell, sizeof (cell_t));
         free(cell);
     }
+
+    client_state_to_ui(ui);
+
     return 1;
 }
 
@@ -133,19 +137,19 @@ event_getmap_handler(Proto_Session *s) {
  */
 static int
 event_update_handler(Proto_Session *s) {
-    fprintf(stderr, "receive update\n");
+    //fprintf(stderr, "receive update\n");
     int offset = 0;
     offset = proto_session_body_unmarshall_int(s, offset, &(client.maze.dim_c));
     offset = proto_session_body_unmarshall_int(s, offset, &(client.maze.dim_r));
     offset = proto_session_body_unmarshall_int(s, offset, &(client.maze.num_t1_players));
     offset = proto_session_body_unmarshall_int(s, offset, &(client.maze.num_t2_players));
-    printf("start unwrap item\n");
+    //printf("start unwrap item\n");
     fflush(stdout);
     offset = unwrap_item(s, offset, (client.maze.t1_flag));
     offset = unwrap_item(s, offset, (client.maze.t2_flag));
     offset = unwrap_item(s, offset, (client.maze.t1_jack));
     offset = unwrap_item(s, offset, (client.maze.t2_jack));
-    printf("start unwrap player\n");
+    //printf("start unwrap player\n");
     fflush(stdout);
     int i;
     for (i = 0; i < (client.maze.num_t1_players + client.maze.num_t2_players); i++) {
@@ -154,7 +158,7 @@ event_update_handler(Proto_Session *s) {
             fprintf(stderr, "ERROR: unmarhsall player_t\n");
             return -1;
         }
-        memcpy(client.maze.players[player->id], player, sizeof (cell_t));
+        memcpy(client.maze.players[player->id], player, sizeof (player_t));
         free(player);
     }
 
@@ -181,6 +185,10 @@ event_update_handler(Proto_Session *s) {
         unwrap_player(s, sizeof (int) *4 + sizeof (item_t)*4, &player);
         printf("%d,%d\n", player.pos.c, player.pos.r);
      */
+
+    
+    client_state_to_ui(ui);
+
     return 1;
 }
 
@@ -782,11 +790,12 @@ clear_ui_state(UI *ui) {
 
 }
 
-void
+
+static void
 client_state_to_ui(UI* ui) {
-    maze_t maze;
-    bzero(&maze, sizeof (maze_t));
-    proto_client_sample_board(&maze);
+    maze_t maze = client.maze;
+    //bzero(&maze, sizeof (maze_t));
+    //proto_client_sample_board(&maze);
 
     clear_ui_state(ui);
 
@@ -863,7 +872,7 @@ main(int argc, char **argv) {
     doConnectCmd(c, argv[1], argv[2]);
     // WITH OSX ITS IS EASIEST TO KEEP UI ON MAIN THREAD
     // SO JUMP THROW HOOPS :-(
-    client_state_to_ui(ui);
+
     ui_main_loop(ui);
     //    free(c);
     return 0;
