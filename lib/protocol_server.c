@@ -251,6 +251,7 @@ proto_server_post_map(void) {
         i++;
     }
     proto_session_reset_send(&Proto_Server.EventSession);
+    Proto_Server.listsize = 0;
     pthread_mutex_unlock(&Proto_Server.EventSubscribersLock);
 }
 
