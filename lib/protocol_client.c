@@ -93,10 +93,8 @@ proto_client_session_lost_default_hdlr(Proto_Session *s) {
     return -1;
 }
 
-extern void
-proto_client_sample_board(maze_t* maze_ref) {
-
-    item_t t1_flag = {.team = T1, .type = FLAG, .pos =
+/** defining some global test variables **/
+item_t t1_flag = {.team = T1, .type = FLAG, .pos =
         {.r = 8, .c = 8}, .holder_id = -1};
     item_t t2_flag = {.team = T2, .type = FLAG, .pos =
         {.r = 5, .c = 3}, .holder_id = 0};
@@ -322,6 +320,10 @@ proto_client_sample_board(maze_t* maze_ref) {
         { .id = 3, .team = T2, .pos =
             {.r = 4, .c = 8}, .status = FREE}
     };
+
+
+extern void
+proto_client_sample_board(maze_t* maze_ref) {
 
     maze_ref->dim_r = 200;
     maze_ref->dim_c = 200;

@@ -29,10 +29,6 @@
 
 /* A lot of this code comes from http://www.libsdl.org/cgi/docwiki.cgi */
 
-/* Forward declaration of some dummy player code */
-static void dummyPlayer_init(UI *ui);
-static void dummyPlayer_paint(UI *ui, SDL_Rect *t);
-
 #define UI_FLOOR_BMP "floor.bmp"
 #define UI_REDWALL_BMP "redwall.bmp"
 #define UI_GREENWALL_BMP "greenwall.bmp"
@@ -45,13 +41,6 @@ static void dummyPlayer_paint(UI *ui, SDL_Rect *t);
 
 typedef enum {UI_SDLEVENT_UPDATE, UI_SDLEVENT_QUIT} UI_SDL_Event;
 
-struct UI_Player_Struct {
-  SDL_Surface *img;
-  uval base_clip_x;
-  SDL_Rect clip;
-};
-typedef struct UI_Player_Struct UI_Player;
-
 static inline SDL_Surface *
 ui_player_img(UI *ui, int team)
 {  
@@ -59,6 +48,18 @@ ui_player_img(UI *ui, int team)
     : ui->sprites[TEAMB_S].img;
 }
 
+static inline SDL_Surface *
+ui_item_img(UI *ui, int type, int team)
+{
+    //jackhammer
+    if (type == 0)
+        return ui->sprites[JACKHAMMER_S].img;
+    //flags
+    if (team == 0)
+        return ui->sprites[REDFLAG_S].img;
+    if (team == 1)
+        return ui->sprites[GREENFLAG_S].img;
+}
 static inline sval 
 pxSpriteOffSet(int team, int state)
 {
@@ -71,11 +72,11 @@ pxSpriteOffSet(int team, int state)
 }
 
 static sval
-ui_uip_init(UI *ui, UI_Player **p, int id, int team)
+ui_uip_init(UI *ui, UI_Image **p, int id, int team)
 {
-  UI_Player *ui_p;
+  UI_Image *ui_p;
   
-  ui_p = (UI_Player *)malloc(sizeof(UI_Player));
+  ui_p = (UI_Image *)malloc(sizeof(UI_Image));
   if (!ui_p) return 0;
 
   ui_p->img = ui_player_img(ui, team);
@@ -87,6 +88,24 @@ ui_uip_init(UI *ui, UI_Player **p, int id, int team)
   return 1;
 }
 
+static sval 
+ui_uitem_init(UI *ui, UI_Image **uimg, int type, int team){
+    
+  UI_Image *ui_img;
+  
+  ui_img = (UI_Image *)malloc(sizeof(UI_Image));
+  if (!ui_img) return 0;
+
+  ui_img->img = ui_item_img(ui, type, team);
+  ui_img->clip.w = SPRITE_W;
+  ui_img->clip.h = SPRITE_H;
+  ui_img->clip.y = 0;
+    ui_img->base_clip_x = 0;
+
+  *uimg = ui_img;
+
+   
+};
 /*
  * Return the pixel value at (x, y)
  * NOTE: The surface must be locked before calling this!
@@ -319,15 +338,30 @@ ui_paintmap(UI *ui)
 
   for (t.y=0; t.y<ui->screen->h; t.y+=t.h) {
     for (t.x=0; t.x<ui->screen->w; t.x+=t.w) {
+        
         SPRITE_INDEX si = ui->ui_state.ui_cells[i][j]; 
-        draw_cell(ui,si, &t, ui->screen);
+        if(si != -1) draw_cell(ui,si, &t, ui->screen);
         j++;
     }
     j=0;
     i++;
   }
 
-  //dummyPlayer_paint(ui, &t);
+  for (i=0; i < ui->ui_state.ui_dim_r; i++){    
+      for (j=0; j < ui->ui_state.ui_dim_c; j++){
+        UI_Player *p = ui->ui_state.ui_players[i][j];
+        if (p != NULL) {
+            ui_player_paint(ui, p, &t);
+        }
+      }
+  }
+
+for (i=0; i < 4 ; i++){
+    UI_Item *ui_item = ui->ui_state.ui_items[i];
+    if (ui_item != NULL){
+        ui_item_paint(ui, ui_item, &t); 
+    }
+}
 
   SDL_UpdateRect(ui->screen, 0, 0, ui->screen->w, ui->screen->h);
   return 1;
@@ -515,37 +549,34 @@ ui_init(UI **ui)
   (*ui)->ui_state.ui_dim_c = SCREEN_W/SPRITE_W;
 }
 
-
-// Kludgy dummy player for testing purposes
-struct DummyPlayerDesc {
-  pthread_mutex_t lock;
-  UI_Player *uip;
-  int id;
-  int x, y;
-  int team;
-  int state;
-} dummyPlayer;
+/*
+static void 
+ui_player_init(UI *ui, UI_Player* p) 
+{
+  p->id = 0;
+  p->x = 0; p->y = 0; p->team = 0; p->state = 0;
+  ui_uip_init(ui, &(p->uip), p->id, p->team); 
+}
+*/
 
 static void 
-dummyPlayer_init(UI *ui) 
+ui_player_paint(UI *ui, UI_Player* p, SDL_Rect *t)
 {
-  pthread_mutex_init(&(dummyPlayer.lock), NULL);
-  dummyPlayer.id = 0;
-  dummyPlayer.x = 0; dummyPlayer.y = 0; dummyPlayer.team = 0; dummyPlayer.state = 0;
-  ui_uip_init(ui, &dummyPlayer.uip, dummyPlayer.id, dummyPlayer.team); 
-}
+    ui_uip_init(ui,&(p->uimg), p->id, p->team);
+    t->y = p->y * t->h; 
+    t->x = p->x * t->w;
+    p->uimg->clip.x = p->uimg->base_clip_x + pxSpriteOffSet(p->team, p->state);
+    SDL_BlitSurface(p->uimg->img, &(p->uimg->clip), ui->screen, t);
+ }
 
 static void 
-dummyPlayer_paint(UI *ui, SDL_Rect *t)
-{
-  pthread_mutex_lock(&dummyPlayer.lock);
-    t->y = dummyPlayer.y * t->h; t->x = dummyPlayer.x * t->w;
-    dummyPlayer.uip->clip.x = dummyPlayer.uip->base_clip_x +
-      pxSpriteOffSet(dummyPlayer.team, dummyPlayer.state);
-    SDL_BlitSurface(dummyPlayer.uip->img, &(dummyPlayer.uip->clip), ui->screen, t);
-  pthread_mutex_unlock(&dummyPlayer.lock);
-}
-
+ui_item_paint(UI *ui, UI_Item *item, SDL_Rect *t){
+    ui_uitem_init(ui,&(item->uimg), item->type, item->team);
+    t->y = item->y * t->h; 
+    t->x = item->x * t->w;
+    SDL_BlitSurface(item->uimg->img, NULL, ui->screen, t); 
+};
+/*
 int
 ui_dummy_left(UI *ui)
 {
@@ -641,3 +672,5 @@ ui_dummy_inc_id(UI *ui)
   pthread_mutex_unlock(&dummyPlayer.lock);
   return 2;
 }
+
+*/

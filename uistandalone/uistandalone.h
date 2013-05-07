@@ -34,10 +34,30 @@ typedef enum {
   TEAMA_S=0, TEAMB_S, FLOOR_S, REDWALL_S, GREENWALL_S, LOGO_S, JACKHAMMER_S, REDFLAG_S, GREENFLAG_S, NUM_S 
 } SPRITE_INDEX;
 
+typedef struct {
+  SDL_Surface *img;
+  uval base_clip_x;
+  SDL_Rect clip;
+} UI_Image;
 
 typedef struct {
-    //UI_Item* ui_items;
-    //UI_Player* ui_players;
+  UI_Image *uimg;
+  int id;
+  int x, y;
+  int team;
+  int state;
+} UI_Player;
+
+typedef struct {
+    UI_Image *uimg;
+    int x, y;
+    int type;
+    int team;
+} UI_Item;
+
+typedef struct {
+    UI_Item* ui_items[4];
+    UI_Player* ui_players[SCREEN_H/SPRITE_H][SCREEN_W/SPRITE_W];
     int ui_dim_r;
     int ui_dim_c;
     SPRITE_INDEX ui_cells[SCREEN_H/SPRITE_H][SCREEN_W/SPRITE_W];
@@ -74,6 +94,12 @@ struct UI_Struct {
 
 typedef struct UI_Struct UI;
 
+
+static void ui_player_init(UI *ui, UI_Player *p);
+static void ui_player_paint(UI *ui, UI_Player *p, SDL_Rect *t);
+static void ui_item_paint(UI *ui, UI_Item *item, SDL_Rect *t);
+static sval ui_uip_init(UI *ui, UI_Image **uip, int id, int team);
+static sval ui_uitem_init(UI *ui, UI_Image **uimg, int type, int team);
 
 sval ui_zoom(UI *ui, sval fac);
 sval ui_pan(UI *ui, sval xdir, sval ydir);

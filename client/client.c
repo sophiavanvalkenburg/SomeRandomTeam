@@ -32,10 +32,6 @@
 #include "../uistandalone/uistandalone.h"
 
 #define STRLEN 81
-<<<<<<< HEAD
-=======
-
->>>>>>> added initial map download feature
 
 UI *ui;
 
@@ -533,7 +529,7 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e) {
             int rc = proto_client_move(client.ph, client.type, MOVE_LEFT);
             if (rc) {
                 fprintf(stderr, "%s: move left\n", __func__);
-                return ui_dummy_left(ui);
+                //return ui_dummy_left(ui);
             } else {
                 return 1;
             }
@@ -542,7 +538,7 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e) {
             int rc = proto_client_move(client.ph, client.type, MOVE_RIGHT);
             if (rc) {
                 fprintf(stderr, "%s: move right\n", __func__);
-                return ui_dummy_right(ui);
+                //return ui_dummy_right(ui);
             } else {
                 return 1;
             }
@@ -551,7 +547,7 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e) {
             int rc = proto_client_move(client.ph, client.type, MOVE_UP);
             if (rc) {
                 fprintf(stderr, "%s: move up\n", __func__);
-                return ui_dummy_up(ui);
+                //return ui_dummy_up(ui);
             } else {
                 return 1;
             }
@@ -560,34 +556,34 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e) {
             int rc = proto_client_move(client.ph, client.type, MOVE_DOWN);
             if (rc) {
                 fprintf(stderr, "%s: move down\n", __func__);
-                return ui_dummy_down(ui);
+                //return ui_dummy_down(ui);
             } else {
                 return 1;
             }
         }
         if (sym == SDLK_r && mod == KMOD_NONE) {
             fprintf(stderr, "%s: dummy pickup red flag\n", __func__);
-            return ui_dummy_pickup_red(ui);
+            //return ui_dummy_pickup_red(ui);
         }
         if (sym == SDLK_g && mod == KMOD_NONE) {
             fprintf(stderr, "%s: dummy pickup green flag\n", __func__);
-            return ui_dummy_pickup_green(ui);
+            //return ui_dummy_pickup_green(ui);
         }
         if (sym == SDLK_j && mod == KMOD_NONE) {
             fprintf(stderr, "%s: dummy jail\n", __func__);
-            return ui_dummy_jail(ui);
+            //return ui_dummy_jail(ui);
         }
         if (sym == SDLK_n && mod == KMOD_NONE) {
             fprintf(stderr, "%s: dummy normal state\n", __func__);
-            return ui_dummy_normal(ui);
+            //return ui_dummy_normal(ui);
         }
         if (sym == SDLK_t && mod == KMOD_NONE) {
             fprintf(stderr, "%s: dummy toggle team\n", __func__);
-            return ui_dummy_toggle_team(ui);
+            //return ui_dummy_toggle_team(ui);
         }
         if (sym == SDLK_i && mod == KMOD_NONE) {
             fprintf(stderr, "%s: dummy inc player id \n", __func__);
-            return ui_dummy_inc_id(ui);
+            //return ui_dummy_inc_id(ui);
         }
         if (sym == SDLK_q) return -1;
         if (sym == SDLK_z && mod == KMOD_NONE) return ui_zoom(ui, 1);
@@ -606,33 +602,163 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e) {
 }
 
 void
+cell_state_to_ui(UI *ui, cell_t* c, int i, int j){
+
+    if (c==NULL){
+        ui->ui_state.ui_cells[i][j] = -1;
+    }else{
+        switch (c->type) {
+            case WALL_CELL:
+                ui->ui_state.ui_cells[i][j] = (c->team == T1) ? REDWALL_S : GREENWALL_S;
+                ;
+                break;
+            case FLOOR_CELL:
+            case HOME_CELL_1:
+            case HOME_CELL_2:
+            case JAIL_CELL_1:
+            case JAIL_CELL_2:
+                ui->ui_state.ui_cells[i][j] = FLOOR_S;
+                break;
+        }
+    }
+}
+
+void
+player_state_to_ui(UI *ui, maze_t *maze, player_t* player, int i, int j){
+   if (player != NULL){
+        ui->ui_state.ui_players[i][j] = (UI_Player *) malloc(sizeof(UI_Player));
+        UI_Player *p = ui->ui_state.ui_players[i][j];
+
+        p->id = player->id;
+        p->x = j; 
+        p->y = i; 
+        p->team = player->team == T1 ? 0 : 1;
+        p->state = 0;
+        item_t *flag = maze_get_player_flag(maze, player->id);
+        if (flag){
+            p->state = flag->team == T1 ? 1 : 2;
+        }
+        if (player->status == JAILED){
+            p->state = 3;
+        }
+    }
+
+}
+
+void
+item_state_to_ui(UI *ui, item_t* item, int i, int j, int ind){
+       if (item != NULL /*&& item->holder_id < 0*/){
+       ui->ui_state.ui_items[ind] = (UI_Item *) malloc(sizeof(UI_Item));
+        UI_Item *ui_item = ui->ui_state.ui_items[ind];
+        ui_item->x = j;
+        ui_item->y = i;
+        switch(item->type){
+            case JACK:
+                ui_item->type = 0;
+                break;
+            case FLAG:
+                ui_item->type = 1;
+                break;
+        }
+       switch(item->team){
+            case T1:
+                ui_item->team = 0;
+                break;
+            case T2:
+                ui_item->team = 1;
+                break;
+       } 
+    }
+
+}
+
+
+void
+clear_ui_state(UI *ui){
+    int i, j;
+    for (i = 0; i < ui->ui_state.ui_dim_r; i++) {
+        for (j = 0; j < ui->ui_state.ui_dim_c; j++) {
+
+            ui->ui_state.ui_cells[i][j] = -1;
+
+            if (ui->ui_state.ui_players[i][j] != NULL){
+                free(ui->ui_state.ui_players[i][j]);
+                ui->ui_state.ui_players[i][j] = NULL;
+            }
+
+        }
+    }
+
+    for (i=0; i< 4; i++){
+        if (ui->ui_state.ui_items[i] != NULL){
+            free(ui->ui_state.ui_items[i]);
+            ui->ui_state.ui_items[i] = NULL;
+        }
+
+    }
+
+}
+
+void
 client_state_to_ui(UI* ui) {
     maze_t maze;
     bzero(&maze, sizeof (maze_t));
     proto_client_sample_board(&maze);
 
-    //FIXME: needs to actually start from (player pos.r - board.height/2, player pos.c - board.width/2)
+    clear_ui_state(ui);
+
+    int id = client.id;
+    player_t* me = maze_get_player(&maze, id);
+    if (me == NULL){
+        fprintf(stderr,"Player %d does not exist\n",id);
+        return;
+    }
+    
+    int start_row = me->pos.r - ui->ui_state.ui_dim_r/2;
+    int start_col = me->pos.c - ui->ui_state.ui_dim_c/2;
     int i, j;
     for (i = 0; i < ui->ui_state.ui_dim_r; i++) {
         for (j = 0; j < ui->ui_state.ui_dim_c; j++) {
-            cell_t* c = maze.cells[i][j];
-            switch (c->type) {
-                case WALL_CELL:
-                    ui->ui_state.ui_cells[i][j] = (c->team == T1) ? REDWALL_S : GREENWALL_S;
-                    ;
-                    break;
-                case FLOOR_CELL:
-                case HOME_CELL_1:
-                case HOME_CELL_2:
-                case JAIL_CELL_1:
-                case JAIL_CELL_2:
-                    ui->ui_state.ui_cells[i][j] = FLOOR_S;
-                    break;
+           // fprintf(stdout,"%d %d ", i, j);
+           // maze_print_cell(&maze, maze.cells[3][4]);
+
+            cell_t* c = maze_get_cell(&maze, start_row+i, start_col+j);
+            cell_state_to_ui(ui, c, i, j);
+            
+            if (c==NULL) continue;
+            
+            player_t* player = maze_get_player(&maze, c->player_id);
+            player_state_to_ui(ui, &maze, player, i, j);
+
+            item_t* flag = maze_get_cell_flag(&maze, c);
+            if (flag){
+                switch(flag->team){
+                    case T1:
+                        item_state_to_ui(ui, flag, i, j, 0);
+                        break;
+                    case T2:
+                        item_state_to_ui(ui, flag, i, j, 1);
+                        break;
+                }
+            }
+
+            item_t* jack = maze_get_cell_jackhammer(&maze, c);
+            if (jack){
+                switch(jack->team){
+                    case T1:
+                        item_state_to_ui(ui, jack, i, j, 2);
+                        break;
+                    case T2:
+                        item_state_to_ui(ui, jack, i, j, 3);
+                        break;
+                }
             }
         }
     }
 
 }
+
+
 
 int
 main(int argc, char **argv) {

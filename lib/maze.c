@@ -164,7 +164,14 @@ maze_get_num_cols(maze_t* maze) {
 
 extern cell_t*
 maze_get_cell(maze_t* maze, int row, int col) {
-    return maze->cells[row][col];
+    if (row >= maze->dim_r || col >= maze->dim_c 
+            || row < 0 || col < 0){
+        
+        return NULL;
+    }else{
+
+        return maze->cells[row][col];
+    }
 }
 
 extern Cell_Type
