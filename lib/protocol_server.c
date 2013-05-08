@@ -57,6 +57,7 @@ struct {
     cell_t * updatelist[4000];
     int listsize;
     int eventid;
+    int sendcounter;
 } Proto_Server;
 
 void proto_server_send_all_state(FDType fd);
@@ -181,11 +182,12 @@ proto_server_post_event(void) {
     int i;
     int num;
     //printf("proto_server_post_event\n");
-    pthread_mutex_lock(&Proto_Server.EventSubscribersLock);
+    //pthread_mutex_lock(&Proto_Server.EventSubscribersLock);
     //organize data into eventsession
     Proto_Msg_Hdr *h = malloc(sizeof (Proto_Msg_Hdr));
     h->type = PROTO_MT_EVENT_BASE_UPDATE;
     proto_session_hdr_marshall(&(Proto_Server.EventSession), h);
+    proto_session_body_marshall_int(&(Proto_Server.EventSession), Proto_Server.sendcounter);
     if (wrap_update(&(Proto_Server.maze), &(Proto_Server.EventSession)) < 0) {
         fprintf(stderr, "wrap maze error\n");
     }
@@ -210,7 +212,7 @@ proto_server_post_event(void) {
         i++;
     }
     proto_session_reset_send(&Proto_Server.EventSession);
-    pthread_mutex_unlock(&Proto_Server.EventSubscribersLock);
+    //pthread_mutex_unlock(&Proto_Server.EventSubscribersLock);
 }
 
 extern void
@@ -218,11 +220,12 @@ proto_server_post_map(void) {
     int i;
     int num;
     //printf("proto_server_post_map\n");
-    pthread_mutex_lock(&Proto_Server.EventSubscribersLock);
+    //pthread_mutex_lock(&Proto_Server.EventSubscribersLock);
     //organize data into eventsession
     Proto_Msg_Hdr *h = malloc(sizeof (Proto_Msg_Hdr));
     h->type = PROTO_MT_EVENT_BASE_GETMAP;
     proto_session_hdr_marshall(&(Proto_Server.EventSession), h);
+    proto_session_body_marshall_int(&(Proto_Server.EventSession), Proto_Server.sendcounter);
     proto_session_body_marshall_int(&(Proto_Server.EventSession), Proto_Server.listsize);
     int j;
     for (j = 0; j < Proto_Server.listsize; j++) {
@@ -254,6 +257,15 @@ proto_server_post_map(void) {
     }
     proto_session_reset_send(&Proto_Server.EventSession);
     Proto_Server.listsize = 0;
+    //pthread_mutex_unlock(&Proto_Server.EventSubscribersLock);
+}
+
+extern void
+proto_server_post() {
+    pthread_mutex_lock(&Proto_Server.EventSubscribersLock);
+    proto_server_post_event();
+    proto_server_post_map();
+    Proto_Server.sendcounter++;
     pthread_mutex_unlock(&Proto_Server.EventSubscribersLock);
 }
 
@@ -623,6 +635,7 @@ proto_server_init(void) {
         Proto_Server.updatelist[i] = malloc(sizeof (cell_t));
     }
     Proto_Server.listsize = 0;
+    Proto_Server.sendcounter = 0;
 
     /* printf("rows:%d\tcols:%d\n",maze_get_num_rows(&Proto_Server.maze),maze_get_num_cols(&Proto_Server.maze));
      printf("home1:%d\thome2:%d\tjail1:%d\tjail2:%d\twall:%d\tfloor:%d\n",   maze_get_num_home_cells(&Proto_Server.maze,T1),
@@ -801,6 +814,7 @@ proto_server_send_all_state(FDType fd) {
         Proto_Msg_Hdr *h = malloc(sizeof (Proto_Msg_Hdr));
         h->type = PROTO_MT_EVENT_BASE_GETMAP;
         proto_session_hdr_marshall(&(Proto_Server.EventSession), h);
+        proto_session_body_marshall_int(&(Proto_Server.EventSession), Proto_Server.sendcounter);
         proto_session_body_marshall_int(&(Proto_Server.EventSession), 2000);
         int j;
         for (j = 0; j < 10; j++) {
@@ -828,6 +842,7 @@ proto_server_send_all_state(FDType fd) {
     Proto_Msg_Hdr *h = malloc(sizeof (Proto_Msg_Hdr));
     h->type = PROTO_MT_EVENT_BASE_UPDATE;
     proto_session_hdr_marshall(&(Proto_Server.EventSession), h);
+    proto_session_body_marshall_int(&(Proto_Server.EventSession), Proto_Server.sendcounter);
     if (wrap_update(&(Proto_Server.maze), &(Proto_Server.EventSession)) < 0) {
         fprintf(stderr, "wrap maze error\n");
     }

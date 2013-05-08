@@ -50,6 +50,7 @@ typedef struct ClientState {
     int data;
     char type;
     int id;
+    int sendcounter;
     Proto_Client_Handle ph;
     maze_t maze;
 } Client;
@@ -106,10 +107,18 @@ static int
 event_getmap_handler(Proto_Session *s) {
     //fprintf(stderr, "receive map\n");
     int n;
-    proto_session_body_unmarshall_int(s, 0, &n);
-    //printf("num: %d\n", n);
+    int counter;
+    int offset = 0;
+    offset = proto_session_body_unmarshall_int(s, offset, &counter);
+    if (counter < client.sendcounter) {
+        return 1;
+    } else {
+        client.sendcounter = counter;
+    }
+    offset = proto_session_body_unmarshall_int(s, offset, &n);
+    printf("num: %d\n", n);
     int i;
-    int offset = sizeof (int);
+
     for (i = 0; i < n; i++) {
         cell_t* cell = malloc(sizeof (cell_t));
         offset = unwrap_cell(s, offset, cell);
@@ -141,6 +150,13 @@ static int
 event_update_handler(Proto_Session *s) {
     //fprintf(stderr, "receive update\n");
     int offset = 0;
+    int counter;
+    offset = proto_session_body_unmarshall_int(s, offset, &counter);
+    if (counter < client.sendcounter) {
+        return 1;
+    } else {
+        client.sendcounter = counter;
+    }
     offset = proto_session_body_unmarshall_int(s, offset, &(client.maze.dim_c));
     offset = proto_session_body_unmarshall_int(s, offset, &(client.maze.dim_r));
     offset = proto_session_body_unmarshall_int(s, offset, &(client.maze.num_t1_players));
@@ -636,7 +652,7 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e) {
             }
         }
         if (sym == SDLK_RIGHT && mod == KMOD_NONE) {
-            int rc = doMove(&client, MOVE_RIGHT); 
+            int rc = doMove(&client, MOVE_RIGHT);
             if (rc) {
                 fprintf(stderr, "%s: move right\n", __func__);
                 return 2;
@@ -645,7 +661,7 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e) {
             }
         }
         if (sym == SDLK_UP && mod == KMOD_NONE) {
-            int rc = doMove(&client, MOVE_UP); 
+            int rc = doMove(&client, MOVE_UP);
             if (rc) {
                 fprintf(stderr, "%s: move up\n", __func__);
                 return 2;
@@ -653,8 +669,8 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e) {
                 return 1;
             }
         }
-        if (sym == SDLK_DOWN && mod == KMOD_NONE) { 
-            int rc = doMove(&client, MOVE_DOWN); 
+        if (sym == SDLK_DOWN && mod == KMOD_NONE) {
+            int rc = doMove(&client, MOVE_DOWN);
             if (rc) {
                 fprintf(stderr, "%s: move down\n", __func__);
                 return 2;
@@ -663,7 +679,7 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e) {
             }
         }
         if (sym == SDLK_f && mod == KMOD_NONE) {
-            int rc = doMove(&client, DROP_FLAG); 
+            int rc = doMove(&client, DROP_FLAG);
             if (rc) {
                 fprintf(stderr, "%s: drop flag\n", __func__);
                 return 2;
@@ -672,7 +688,7 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e) {
             }
         }
         if (sym == SDLK_j && mod == KMOD_NONE) {
-            int rc = doMove(&client, DROP_HAM); 
+            int rc = doMove(&client, DROP_HAM);
             if (rc) {
                 fprintf(stderr, "%s: drop jackhammer\n", __func__);
                 return 2;
@@ -680,7 +696,7 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e) {
                 return 1;
             }
         }
-    
+
         if (sym == SDLK_q) return -1;
         if (sym == SDLK_z && mod == KMOD_NONE) return ui_zoom(ui, 1);
         if (sym == SDLK_z && mod & KMOD_SHIFT) return ui_zoom(ui, -1);
