@@ -837,7 +837,7 @@ client_state_to_ui(UI* ui) {
     //bzero(&maze, sizeof (maze_t));
     //proto_client_sample_board(&maze);
 
-    //clear_ui_state(ui);
+    clear_ui_state(ui);
 
     int id = client.id;
     player_t* me = maze_get_player(&maze, id);
