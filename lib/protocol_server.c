@@ -607,6 +607,7 @@ proto_server_mt_goodbye_handler(Proto_Session * s) {
     rc = proto_session_send_msg(s, 1);
 
     if (rc) {
+        proto_server_remove_event_subscriber(s->fd);
         maze_remove_player(&(Proto_Server.maze), clientType);
         proto_server_post_disconnect_event(clientType);
         close(s->fd);

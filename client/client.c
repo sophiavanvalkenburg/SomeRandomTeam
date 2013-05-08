@@ -696,7 +696,7 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e) {
                 return 1;
             }
         }
-    
+    /*
         if (sym == SDLK_t && mod == KMOD_NONE) {
             int i, j;
             for (i=0; i< ui->ui_state.ui_dim_r; i++){
@@ -715,9 +715,18 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e) {
                 return 1;
             
         }
+*/
 
+        if (sym == SDLK_q){
+            int rc = doQuitCmd(&client);
+            if (rc) {
+                fprintf(stderr, "%s: quit\n", __func__);
+                return -1;
+            } else {
+                return 1;
+            }
+        }
 
-        if (sym == SDLK_q) return -1;
         if (sym == SDLK_z && mod == KMOD_NONE) return ui_zoom(ui, 1);
         if (sym == SDLK_z && mod & KMOD_SHIFT) return ui_zoom(ui, -1);
         if (sym == SDLK_LEFT && mod & KMOD_SHIFT) return ui_pan(ui, -1, 0);
