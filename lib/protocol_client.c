@@ -472,11 +472,10 @@ proto_client_event_dispatcher(void * arg) {
     for (;;) {
         if (proto_session_rcv_msg(s) == 1) {
             mt = proto_session_hdr_unmarshall_type(s);
-            printf("an event is received type=%d %d\n", mt, PROTO_MT_EVENT_BASE_UPDATE);
+            //printf("an event is received type=%d %d\n", mt, PROTO_MT_EVENT_BASE_UPDATE);
             if (mt > PROTO_MT_EVENT_BASE_RESERVED_FIRST &&
                     mt < PROTO_MT_EVENT_BASE_RESERVED_LAST) {
                 //ADD CODE
-                printf("here\n");
 
                 int i = mt - PROTO_MT_EVENT_BASE_RESERVED_FIRST - 1;
                 hdlr = c->base_event_handlers[i];

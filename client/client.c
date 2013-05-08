@@ -116,9 +116,11 @@ event_getmap_handler(Proto_Session *s) {
         //printf("cell: %d,%d\n",cell->pos.r,cell->pos.c);
         //client.maze.cells[cell->pos.r][cell->pos.c] = malloc(sizeof (cell_t));
         memcpy(client.maze.cells[cell->pos.r][cell->pos.c], cell, sizeof (cell_t));
+        if (cell && cell->pos.r == 90 && cell->pos.c == 3)  maze_print_cell(&client.maze, cell);
         free(cell);
     }
 
+    //maze_print_cell(&client.maze, maze_get_cell(&client.maze, 90, 3));
     client_state_to_ui(ui);
 
     return 1;
@@ -162,11 +164,11 @@ event_update_handler(Proto_Session *s) {
         free(player);
     }
 
-    printf("dim_c: %d\n", client.maze.dim_c);
-    printf("dim_r: %d\n", client.maze.dim_r);
-    printf("num_t1_players: %d\n", client.maze.num_t1_players);
-    printf("num_t2_players: %d\n", client.maze.num_t2_players);
-
+    //printf("dim_c: %d\n", client.maze.dim_c);
+    //printf("dim_r: %d\n", client.maze.dim_r);
+    //printf("num_t1_players: %d\n", client.maze.num_t1_players);
+    //printf("num_t2_players: %d\n", client.maze.num_t2_players);
+    
     /*
         int i;
         int offset = sizeof (int);
@@ -628,7 +630,7 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e) {
             int rc = doMove(&client, MOVE_LEFT);
             if (rc) {
                 fprintf(stderr, "%s: move left\n", __func__);
-                //return ui_dummy_left(ui);
+                return 2;
             } else {
                 return 1;
             }
@@ -637,7 +639,7 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e) {
             int rc = doMove(&client, MOVE_RIGHT); 
             if (rc) {
                 fprintf(stderr, "%s: move right\n", __func__);
-                //return ui_dummy_right(ui);
+                return 2;
             } else {
                 return 1;
             }
@@ -646,7 +648,7 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e) {
             int rc = doMove(&client, MOVE_UP); 
             if (rc) {
                 fprintf(stderr, "%s: move up\n", __func__);
-                //return ui_dummy_up(ui);
+                return 2;
             } else {
                 return 1;
             }
@@ -655,7 +657,7 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e) {
             int rc = doMove(&client, MOVE_DOWN); 
             if (rc) {
                 fprintf(stderr, "%s: move down\n", __func__);
-                //return ui_dummy_down(ui);
+                return 2;
             } else {
                 return 1;
             }
@@ -664,6 +666,7 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e) {
             int rc = doMove(&client, DROP_FLAG); 
             if (rc) {
                 fprintf(stderr, "%s: drop flag\n", __func__);
+                return 2;
             } else {
                 return 1;
             }
@@ -672,6 +675,7 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e) {
             int rc = doMove(&client, DROP_HAM); 
             if (rc) {
                 fprintf(stderr, "%s: drop jackhammer\n", __func__);
+                return 2;
             } else {
                 return 1;
             }
@@ -760,6 +764,7 @@ item_state_to_ui(UI *ui, item_t* item, int i, int j, int ind) {
                 ui_item->team = 1;
                 break;
         }
+
     }
 
 }
@@ -819,7 +824,7 @@ client_state_to_ui(UI* ui) {
 
             if (c == NULL) continue;
 
-            player_t* player = maze_get_player(&maze, c->player_id);
+            player_t* player = maze_get_player_at_pos(&maze, start_row+i, start_col+j);
             player_state_to_ui(ui, &maze, player, i, j);
 
             item_t* flag = maze_get_cell_flag(&maze, c);

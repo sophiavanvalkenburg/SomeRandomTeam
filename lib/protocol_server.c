@@ -180,7 +180,7 @@ void
 proto_server_post_event(void) {
     int i;
     int num;
-    printf("proto_server_post_event\n");
+    //printf("proto_server_post_event\n");
     pthread_mutex_lock(&Proto_Server.EventSubscribersLock);
     //organize data into eventsession
     Proto_Msg_Hdr *h = malloc(sizeof (Proto_Msg_Hdr));
@@ -217,7 +217,7 @@ extern void
 proto_server_post_map(void) {
     int i;
     int num;
-    printf("proto_server_post_map\n");
+    //printf("proto_server_post_map\n");
     pthread_mutex_lock(&Proto_Server.EventSubscribersLock);
     //organize data into eventsession
     Proto_Msg_Hdr *h = malloc(sizeof (Proto_Msg_Hdr));
@@ -226,6 +226,8 @@ proto_server_post_map(void) {
     proto_session_body_marshall_int(&(Proto_Server.EventSession), Proto_Server.listsize);
     int j;
     for (j = 0; j < Proto_Server.listsize; j++) {
+        if(Proto_Server.updatelist[j]->pos.r == 90 && Proto_Server.updatelist[j]->pos.c == 3) 
+            maze_print_cell(&Proto_Server.maze, Proto_Server.updatelist[j]);
         if (wrap_cell(Proto_Server.updatelist[j], &(Proto_Server.EventSession)) < 0) {
             fprintf(stderr, "wrap maze error\n");
         }

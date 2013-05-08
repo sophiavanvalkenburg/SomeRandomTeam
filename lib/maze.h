@@ -113,6 +113,7 @@ extern item_t* maze_get_flag(maze_t* maze, Team_Type team);
 extern item_t* maze_get_jackhammer(maze_t* maze, Team_Type team);
 
 extern player_t* maze_get_player(maze_t* maze, int player_id);
+extern player_t* maze_get_player_at_pos(maze_t* maze, int i, int j);
 extern cell_t* maze_get_player_cell(maze_t*, int player_id);
 //extern int maze_set_player(maze_t* maze, player_t* player, cell_t* cell);
 extern int maze_get_next_free_player_index(maze_t* maze);

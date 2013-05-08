@@ -328,10 +328,12 @@ draw_cell(UI *ui, SPRITE_INDEX si, SDL_Rect *t, SDL_Surface *s)
     SDL_BlitSurface(ts, NULL, s, t);
 }
 
-static sval
+extern  sval
 ui_paintmap(UI *ui) 
 {
-  SDL_Rect t;
+    if (!ui || !ui->screen) return 0;
+  
+    SDL_Rect t;
   int i=0;
   int j=0;
   t.y = 0; t.x = 0; t.h = ui->tile_h; t.w = ui->tile_w; 
@@ -359,6 +361,7 @@ ui_paintmap(UI *ui)
 for (i=0; i < 4 ; i++){
     UI_Item *ui_item = ui->ui_state.ui_items[i];
     if (ui_item != NULL){
+        fprintf(stdout, "x:%d, y:%d\n", ui_item->x, ui_item->y);
         ui_item_paint(ui, ui_item, &t); 
     }
 }
@@ -463,7 +466,8 @@ ui_process(UI *ui)
     default:
       fprintf(stderr, "%s: e.type=%d NOT Handled\n", __func__, e.type);
     }
-    if (rc==2) { ui_paintmap(ui); }
+    //if (rc==2) { ui_paintmap(ui); }
+    ui_paintmap(ui);
     if (rc<0) break;
   }
   return rc;
@@ -533,7 +537,6 @@ ui_main_loop(UI *ui)
 
   ui_shutdown_sdl();
 }
-
 
 extern void
 ui_init(UI **ui)

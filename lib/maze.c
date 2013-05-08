@@ -433,6 +433,17 @@ maze_get_player(maze_t* maze, int player_id) {
     }
 }
 
+extern player_t* 
+maze_get_player_at_pos(maze_t* maze, int i, int j){
+    int k;
+    for (k=0; k < MAX_PLAYERS; k++){
+        player_t* p = maze_get_player(maze, k);
+        if (p->pos.r == i && p->pos.c == j){
+            return p;
+        }
+    }
+    return NULL;
+};
 /*** methods for printing **/
 
 extern void
@@ -735,9 +746,9 @@ maze_move_player(maze_t* maze, int player_id, Move_Type move, cell_t** list, int
     }
 
     maze_move_player_to_cell(maze, old_cell, new_cell, p);
-    memcpy(list[*sizept], old_cell, sizeof (size_t));
+    memcpy(list[*sizept], old_cell, sizeof (cell_t *));
     *sizept = *sizept + 1;
-    memcpy(list[*sizept], new_cell, sizeof (size_t));
+    memcpy(list[*sizept], new_cell, sizeof (cell_t *));
     *sizept = *sizept + 1;
     printf("move num %d\n", *sizept);
     return 1;

@@ -44,7 +44,7 @@ doUpdateClients(void) {
 void*
 updateLoop(void) {
     while (1) {
-        sleep(1);
+        usleep(10000);
         doUpdateClients();
     }
 }

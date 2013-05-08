@@ -94,6 +94,7 @@ struct UI_Struct {
 
 typedef struct UI_Struct UI;
 
+extern sval ui_paintmap(UI *ui);
 
 static void ui_player_init(UI *ui, UI_Player *p);
 static void ui_player_paint(UI *ui, UI_Player *p, SDL_Rect *t);
