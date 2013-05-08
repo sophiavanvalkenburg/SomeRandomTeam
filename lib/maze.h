@@ -128,7 +128,7 @@ extern char maze_cell_to_char(Cell_Type ct);
 
 extern player_t* maze_add_new_player(maze_t* maze);
 extern int maze_remove_player(maze_t* maze, int player_id);
-extern int maze_move_player(maze_t* maze, int player_id, Move_Type move, maze_t** list, int* sizept);
+extern int maze_move_player(maze_t* maze, int player_id, Move_Type move, cell_t** list, int* sizept);
 extern int maze_drop_jackhammer(maze_t* maze, int player_id);
 extern int maze_drop_flag(maze_t* maze, int player_id);
 

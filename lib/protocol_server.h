@@ -40,5 +40,7 @@ extern int proto_server_start_rpc_loop(void);
 extern void proto_server_post_event(void);
 extern void proto_server_post_map(void);
 
+extern void proto_server_post();
+
 extern int proto_server_testcases(void);
 #endif
