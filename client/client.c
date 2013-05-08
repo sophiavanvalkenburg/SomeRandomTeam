@@ -116,7 +116,7 @@ event_getmap_handler(Proto_Session *s) {
         client.sendcounter = counter;
     }
     offset = proto_session_body_unmarshall_int(s, offset, &n);
-    printf("num: %d\n", n);
+    //printf("num: %d\n", n);
     int i;
 
     for (i = 0; i < n; i++) {
@@ -696,6 +696,26 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e) {
                 return 1;
             }
         }
+    
+        if (sym == SDLK_t && mod == KMOD_NONE) {
+            int i, j;
+            for (i=0; i< ui->ui_state.ui_dim_r; i++){
+                for (j=0; j < ui->ui_state.ui_dim_c; j++){
+                    SPRITE_INDEX si = ui->ui_state.ui_cells[i][j];
+                   switch(si){
+                        case FLOOR_S: fprintf(stdout, "%d %d FLOOR_S\n", i, j); break;
+                        case REDWALL_S: fprintf(stdout, "%d %d REDWALL_S\n", i, j); break;
+                        case GREENWALL_S: fprintf(stdout, "%d %d GREENWALL_S\n", i, j); break;
+                    } 
+
+                }
+            
+            }
+    
+                return 1;
+            
+        }
+
 
         if (sym == SDLK_q) return -1;
         if (sym == SDLK_z && mod == KMOD_NONE) return ui_zoom(ui, 1);
@@ -722,7 +742,6 @@ cell_state_to_ui(UI *ui, cell_t* c, int i, int j) {
         switch (c->type) {
             case WALL_CELL:
                 ui->ui_state.ui_cells[i][j] = (c->team == T1) ? REDWALL_S : GREENWALL_S;
-                ;
                 break;
             case FLOOR_CELL:
             case HOME_CELL_1:
@@ -818,7 +837,7 @@ client_state_to_ui(UI* ui) {
     //bzero(&maze, sizeof (maze_t));
     //proto_client_sample_board(&maze);
 
-    clear_ui_state(ui);
+    //clear_ui_state(ui);
 
     int id = client.id;
     player_t* me = maze_get_player(&maze, id);
@@ -842,6 +861,8 @@ client_state_to_ui(UI* ui) {
 
             player_t* player = maze_get_player_at_pos(&maze, start_row+i, start_col+j);
             player_state_to_ui(ui, &maze, player, i, j);
+
+            //if (player != NULL) maze_print_cell(&maze, maze_get_cell(&maze, player->pos.r, player->pos.c));
 
             item_t* flag = maze_get_cell_flag(&maze, c);
             if (flag) {
