@@ -814,7 +814,7 @@ proto_server_send_all_state(FDType fd) {
         Proto_Msg_Hdr *h = malloc(sizeof (Proto_Msg_Hdr));
         h->type = PROTO_MT_EVENT_BASE_GETMAP;
         proto_session_hdr_marshall(&(Proto_Server.EventSession), h);
-        proto_session_body_marshall_int(&(Proto_Server.EventSession), Proto_Server.sendcounter);
+        proto_session_body_marshall_int(&(Proto_Server.EventSession), -1);
         proto_session_body_marshall_int(&(Proto_Server.EventSession), 2000);
         int j;
         for (j = 0; j < 10; j++) {
@@ -842,7 +842,7 @@ proto_server_send_all_state(FDType fd) {
     Proto_Msg_Hdr *h = malloc(sizeof (Proto_Msg_Hdr));
     h->type = PROTO_MT_EVENT_BASE_UPDATE;
     proto_session_hdr_marshall(&(Proto_Server.EventSession), h);
-    proto_session_body_marshall_int(&(Proto_Server.EventSession), Proto_Server.sendcounter);
+    proto_session_body_marshall_int(&(Proto_Server.EventSession), -1);
     if (wrap_update(&(Proto_Server.maze), &(Proto_Server.EventSession)) < 0) {
         fprintf(stderr, "wrap maze error\n");
     }
