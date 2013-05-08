@@ -352,7 +352,8 @@ proto_server_start_rpc_loop(void) {
 static int
 proto_session_lost_default_handler(Proto_Session *s) {
     fprintf(stderr, "Session lost [server side]...:\n");
-    proto_session_dump(s);
+    //proto_session_dump(s);
+    
     return -1;
 }
 
@@ -607,7 +608,7 @@ proto_server_mt_goodbye_handler(Proto_Session * s) {
     rc = proto_session_send_msg(s, 1);
 
     if (rc) {
-        proto_server_remove_event_subscriber(s->fd);
+        //proto_server_remove_event_subscriber(s->fd);
         maze_remove_player(&(Proto_Server.maze), clientType);
         proto_server_post_disconnect_event(clientType);
         close(s->fd);
