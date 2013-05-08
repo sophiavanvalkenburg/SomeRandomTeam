@@ -26,8 +26,8 @@
 
 #define SPRITE_H 32
 #define SPRITE_W 32
-#define SCREEN_H 320
-#define SCREEN_W 320
+#define SCREEN_H 320*2
+#define SCREEN_W 320*2
 
 
 typedef enum { 

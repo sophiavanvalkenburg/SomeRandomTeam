@@ -89,6 +89,7 @@ clientInit(Client *C) {
         fprintf(stderr, "client: main: ERROR initializing proto system\n");
         return -1;
     }
+    client.sendcounter = 0x7FFFFFFFF;
     client_maze_init(&(client.maze));
     proto_client_set_event_handler(C->ph, PROTO_MT_EVENT_BASE_GETMAP, event_getmap_handler);
     proto_client_set_event_handler(C->ph, PROTO_MT_EVENT_BASE_UPDATE, event_update_handler);
@@ -110,7 +111,9 @@ event_getmap_handler(Proto_Session *s) {
     int counter;
     int offset = 0;
     offset = proto_session_body_unmarshall_int(s, offset, &counter);
-    if (counter < client.sendcounter) {
+    if (counter == -1) {
+        client.sendcounter = 0;
+    } else if (counter < client.sendcounter) {
         return 1;
     } else {
         client.sendcounter = counter;
@@ -125,7 +128,7 @@ event_getmap_handler(Proto_Session *s) {
         //printf("cell: %d,%d\n",cell->pos.r,cell->pos.c);
         //client.maze.cells[cell->pos.r][cell->pos.c] = malloc(sizeof (cell_t));
         memcpy(client.maze.cells[cell->pos.r][cell->pos.c], cell, sizeof (cell_t));
-        if (cell && cell->pos.r == 90 && cell->pos.c == 3)  maze_print_cell(&client.maze, cell);
+        if (cell && cell->pos.r == 90 && cell->pos.c == 3) maze_print_cell(&client.maze, cell);
         free(cell);
     }
 
@@ -152,7 +155,9 @@ event_update_handler(Proto_Session *s) {
     int offset = 0;
     int counter;
     offset = proto_session_body_unmarshall_int(s, offset, &counter);
-    if (counter < client.sendcounter) {
+    if (counter == -1) {
+        client.sendcounter = 0;
+    } else if (counter < client.sendcounter) {
         return 1;
     } else {
         client.sendcounter = counter;
@@ -184,7 +189,7 @@ event_update_handler(Proto_Session *s) {
     //printf("dim_r: %d\n", client.maze.dim_r);
     //printf("num_t1_players: %d\n", client.maze.num_t1_players);
     //printf("num_t2_players: %d\n", client.maze.num_t2_players);
-    
+
     /*
         int i;
         int offset = sizeof (int);
@@ -204,7 +209,7 @@ event_update_handler(Proto_Session *s) {
         printf("%d,%d\n", player.pos.c, player.pos.r);
      */
 
-    
+
     client_state_to_ui(ui);
 
     return 1;
@@ -696,28 +701,7 @@ ui_keypress(UI *ui, SDL_KeyboardEvent *e) {
                 return 1;
             }
         }
-    /*
-        if (sym == SDLK_t && mod == KMOD_NONE) {
-            int i, j;
-            for (i=0; i< ui->ui_state.ui_dim_r; i++){
-                for (j=0; j < ui->ui_state.ui_dim_c; j++){
-                    SPRITE_INDEX si = ui->ui_state.ui_cells[i][j];
-                   switch(si){
-                        case FLOOR_S: fprintf(stdout, "%d %d FLOOR_S\n", i, j); break;
-                        case REDWALL_S: fprintf(stdout, "%d %d REDWALL_S\n", i, j); break;
-                        case GREENWALL_S: fprintf(stdout, "%d %d GREENWALL_S\n", i, j); break;
-                    } 
-
-                }
-            
-            }
-    
-                return 1;
-            
-        }
-*/
-
-        if (sym == SDLK_q){
+            if (sym == SDLK_q){
             int rc = doQuitCmd(&client);
             if (rc) {
                 fprintf(stderr, "%s: quit\n", __func__);
@@ -839,14 +823,13 @@ clear_ui_state(UI *ui) {
 
 }
 
-
 static void
 client_state_to_ui(UI* ui) {
     maze_t maze = client.maze;
     //bzero(&maze, sizeof (maze_t));
     //proto_client_sample_board(&maze);
 
-    //clear_ui_state(ui);
+    clear_ui_state(ui);
 
     int id = client.id;
     player_t* me = maze_get_player(&maze, id);
@@ -868,7 +851,7 @@ client_state_to_ui(UI* ui) {
 
             if (c == NULL) continue;
 
-            player_t* player = maze_get_player_at_pos(&maze, start_row+i, start_col+j);
+            player_t* player = maze_get_player_at_pos(&maze, start_row + i, start_col + j);
             player_state_to_ui(ui, &maze, player, i, j);
 
             //if (player != NULL) maze_print_cell(&maze, maze_get_cell(&maze, player->pos.r, player->pos.c));
