@@ -26,396 +26,891 @@
 #include "../lib/types.h"
 #include "../lib/protocol_client.h"
 #include "../lib/protocol_utils.h"
+#include "../lib/maze.h"
+#include "../uistandalone/types.h"
+#include "../uistandalone/tty.h"
+#include "../uistandalone/uistandalone.h"
 
 #define STRLEN 81
-#define X 'X'
-#define O 'O'
-#define Q '?'
+
+
+UI *ui;
 
 void initGlobals(char *host, char *port);
+static int event_getmap_handler(Proto_Session *s);
+static int event_update_handler(Proto_Session *s);
+static void client_state_to_ui(UI* ui);
 
 struct Globals {
-  char host[STRLEN];
-  PortType port;
+    char host[STRLEN];
+    PortType port;
 } globals;
 
-
-typedef struct ClientState  {
-  int data;
-  char type; // X, O, or ?
-  Proto_Client_Handle ph;
+typedef struct ClientState {
+    int data;
+    char type;
+    int id;
+    int sendcounter;
+    Proto_Client_Handle ph;
+    maze_t maze;
 } Client;
 
-static int
-clientInit(Client *C)
-{
-  bzero(C, sizeof(Client));
-  C->type = Q;
-  // initialize the client protocol subsystem
-  if (proto_client_init(&(C->ph))<0) {
-    fprintf(stderr, "client: main: ERROR initializing proto system\n");
-    return -1;
-  }
-  return 1;
+Client client;
+
+void*
+client_maze_init(maze_t* maze) {
+    memset(maze, 0, sizeof (maze_t));
+    maze->dim_c = NUM_COLUMN;
+    maze->dim_r = NUM_ROW;
+    int r;
+    int c;
+    for (r = 0; r < NUM_ROW; r++) {
+        for (c = 0; c < NUM_COLUMN; c++) {
+            maze->cells[r][c] = malloc(sizeof (cell_t));
+        }
+    }
+    maze->t1_flag = (item_t *) malloc(sizeof (item_t));
+    maze->t2_flag = (item_t *) malloc(sizeof (item_t));
+    maze->t1_jack = (item_t *) malloc(sizeof (item_t));
+    maze->t2_jack = (item_t *) malloc(sizeof (item_t));
+    int n;
+    for (n = 0; n < MAX_PLAYERS; n++) {
+        maze->players[n] = malloc(sizeof (player_t));
+    }
+    return;
 }
 
-
 static int
-update_event_handler(Proto_Session *s)
-{
-  Client *C = proto_session_get_data(s);
-
-  fprintf(stderr, "%s: called", __func__);
-  return 1;
-}
-
-
-int 
-startConnection(Client *C, char *host, PortType port, Proto_MT_Handler h)
-{
-  if (globals.host[0]!=0 && globals.port!=0) {
-    if (proto_client_connect(C->ph, host, port)!=0) {
-      fprintf(stderr, "failed to connect\n");
-      return -1;
+clientInit(Client *C) {
+    bzero(C, sizeof (Client));
+    C->type = T1;
+    // initialize the client protocol subsystem
+    if (proto_client_init(&(C->ph)) < 0) {
+        fprintf(stderr, "client: main: ERROR initializing proto system\n");
+        return -1;
     }
-    proto_session_set_data(proto_client_event_session(C->ph), C);
-#if 0
-    if (h != NULL) {
-      proto_client_set_event_handler(C->ph, PROTO_MT_EVENT_BASE_UPDATE, 
-				     h);
-    }
-#endif
+    client.sendcounter = 0x7FFFFFFFF;
+    client_maze_init(&(client.maze));
+    proto_client_set_event_handler(C->ph, PROTO_MT_EVENT_BASE_GETMAP, event_getmap_handler);
+    proto_client_set_event_handler(C->ph, PROTO_MT_EVENT_BASE_UPDATE, event_update_handler);
     return 1;
-  }
-  return 0;
 }
 
+static int
+update_event_handler(Proto_Session *s) {
+    //Client *C = proto_session_get_data(s);
+
+    fprintf(stderr, "%s: called", __func__);
+    return 1;
+}
+
+static int
+event_getmap_handler(Proto_Session *s) {
+    //fprintf(stderr, "receive map\n");
+    int n;
+    int counter;
+    int offset = 0;
+    offset = proto_session_body_unmarshall_int(s, offset, &counter);
+    if (counter == -1) {
+        client.sendcounter = 0;
+    } else if (counter < client.sendcounter) {
+        return 1;
+    } else {
+        client.sendcounter = counter;
+    }
+    offset = proto_session_body_unmarshall_int(s, offset, &n);
+    //printf("num: %d\n", n);
+    int i;
+
+    for (i = 0; i < n; i++) {
+        cell_t* cell = malloc(sizeof (cell_t));
+        offset = unwrap_cell(s, offset, cell);
+        //printf("cell: %d,%d\n",cell->pos.r,cell->pos.c);
+        //client.maze.cells[cell->pos.r][cell->pos.c] = malloc(sizeof (cell_t));
+        memcpy(client.maze.cells[cell->pos.r][cell->pos.c], cell, sizeof (cell_t));
+        if (cell && cell->pos.r == 90 && cell->pos.c == 3) maze_print_cell(&client.maze, cell);
+        free(cell);
+    }
+
+    //maze_print_cell(&client.maze, maze_get_cell(&client.maze, 90, 3));
+    client_state_to_ui(ui);
+
+    return 1;
+}
+
+/*
+ * dim_c
+ * dim_r
+ * num_t1_players
+ * num_t2_players
+ * t1_flag
+ * t2_flag
+ * t1_jack
+ * t2_jack
+ * player_t 400
+ */
+static int
+event_update_handler(Proto_Session *s) {
+    //fprintf(stderr, "receive update\n");
+    int offset = 0;
+    int counter;
+    offset = proto_session_body_unmarshall_int(s, offset, &counter);
+    if (counter == -1) {
+        client.sendcounter = 0;
+    } else if (counter < client.sendcounter) {
+        return 1;
+    } else {
+        client.sendcounter = counter;
+    }
+    offset = proto_session_body_unmarshall_int(s, offset, &(client.maze.dim_c));
+    offset = proto_session_body_unmarshall_int(s, offset, &(client.maze.dim_r));
+    offset = proto_session_body_unmarshall_int(s, offset, &(client.maze.num_t1_players));
+    offset = proto_session_body_unmarshall_int(s, offset, &(client.maze.num_t2_players));
+    //printf("start unwrap item\n");
+    fflush(stdout);
+    offset = unwrap_item(s, offset, (client.maze.t1_flag));
+    offset = unwrap_item(s, offset, (client.maze.t2_flag));
+    offset = unwrap_item(s, offset, (client.maze.t1_jack));
+    offset = unwrap_item(s, offset, (client.maze.t2_jack));
+    //printf("start unwrap player\n");
+    fflush(stdout);
+    int i;
+    for (i = 0; i < (client.maze.num_t1_players + client.maze.num_t2_players); i++) {
+        player_t* player = malloc(sizeof (player_t));
+        if ((offset = unwrap_player(s, offset, player)) == -1) {
+            fprintf(stderr, "ERROR: unmarhsall player_t\n");
+            return -1;
+        }
+        memcpy(client.maze.players[player->id], player, sizeof (player_t));
+        free(player);
+    }
+
+    //printf("dim_c: %d\n", client.maze.dim_c);
+    //printf("dim_r: %d\n", client.maze.dim_r);
+    //printf("num_t1_players: %d\n", client.maze.num_t1_players);
+    //printf("num_t2_players: %d\n", client.maze.num_t2_players);
+
+    /*
+        int i;
+        int offset = sizeof (int);
+        for (i = 0; i < n; i++) {
+            cell_t* cell = malloc(sizeof (cell_t));
+            unwrap_cell(s, offset, cell);
+            offset += sizeof (cell_t);
+            //printf("cell: %d,%d\n",cell->pos.r,cell->pos.c);
+            client.maze.cells[cell->pos.r][cell->pos.c] = malloc(sizeof (cell_t));
+            memcpy(client.maze.cells[cell->pos.r][cell->pos.c], cell, sizeof (cell_t));
+        }
+     */
+    /*
+        client.maze;
+        player_t player;
+        unwrap_player(s, sizeof (int) *4 + sizeof (item_t)*4, &player);
+        printf("%d,%d\n", player.pos.c, player.pos.r);
+     */
+
+
+    client_state_to_ui(ui);
+
+    return 1;
+}
+
+int
+startConnection(Client *C, char *host, PortType port, Proto_MT_Handler h) {
+    if (globals.host[0] != 0 && globals.port != 0) {
+        if (proto_client_connect(C->ph, host, port) != 0) {
+            fprintf(stderr, "failed to connect\n");
+            return -1;
+        }
+        proto_session_set_data(proto_client_event_session(C->ph), C);
+#if 0
+        if (h != NULL) {
+            proto_client_set_event_handler(C->ph, PROTO_MT_EVENT_BASE_UPDATE,
+                    h);
+        }
+#endif
+        return 1;
+    }
+    return 0;
+}
 
 char *
-prompt(Client *C, int menu) 
-{
-  //char *MenuString = malloc(5*sizeof(char));
-  //sprintf(MenuString,"\n%c> ",C->type);
-  int ret;
-  char *c = malloc(sizeof(char) * STRLEN);;
+prompt(Client *C, int menu) {
+    //int ret;
+    char *c = malloc(sizeof (char) * STRLEN);
+    ;
 
-  if (menu) printf("\n%c>",C->type);
-  fflush(stdout);
-  fgets(c,STRLEN,stdin);
-  return c;
+    if (menu) printf("\n%c>", C->id);
+    fflush(stdout);
+    fgets(c, STRLEN, stdin);
+    return c;
+
 }
 
 
 // FIXME:  this is ugly maybe the speration of the proto_client code and
 //         the game code is dumb
-int
-game_process_reply(Client *C)
-{
-  Proto_Session *s;
-
-  s = proto_client_rpc_session(C->ph);
-
-  fprintf(stderr, "%s: do something %p\n", __func__, s);
-
-  return 1;
-}
-
-
-int 
-doRPCCmd(Client *C, char *c) 
-{
-  int rc=-1;
-/*
-  switch (c) {
-  case 'h':  
-    {
-      rc = proto_client_hello(C->ph);
-      printf("hello: rc=%x\n", rc);
-      if (rc > 0) game_process_reply(C);
-    }
-    break;
-  case 'm':
-    scanf("%c", &c);
-    rc = proto_client_move(C->ph, c);
-    break;
-  case 'g':
-    rc = proto_client_goodbye(C->ph);
-    break;
-  default:
-    printf("%s: unknown command %c\n", __func__, c);
-  }
-  */
-  // NULL MT OVERRIDE ;-)
-  printf("%s: rc=0x%x\n", __func__, rc);
-  if (rc == 0xdeadbeef) rc=1;
-  return rc;
-}
 
 int
-doRPC(Client *C)
-{
-  int rc;
-  char *c;
+game_process_reply(Client *C) {
+    Proto_Session *s;
 
-  printf("enter (h|m<c>|g): ");
-  fgets(c,STRLEN,stdin);
-  rc=doRPCCmd(C,c);
+    s = proto_client_rpc_session(C->ph);
 
-  printf("doRPC: rc=0x%x\n", rc);
+    fprintf(stderr, "%s: do something %p\n", __func__, s);
 
-  return rc;
-}
-
-
-int 
-docmd(Client *C, char *cmd)
-{
-  int rc = 1, i = 0, j = 0;  
-  char *token;
-  char *commands[5];
-  
-  
-  token = strtok(cmd, " ");
-  commands[i] = (char *) malloc (strlen(token)*sizeof(char));
-  strcpy(commands[i], token);
-  i++;
-  
-  while (token != NULL) {
-	token = strtok(NULL, ":");
-	if (token) {
-		commands[i] = (char *) malloc (strlen(token)*sizeof(char));
-		strcpy(commands[i], token);
-		i++;
-	}
-  }
-	
-  /*for (j = 0; j < 5; j++) 
-	printf("command[%d] is %s\n", j, commands[j]);
-*/  
-  
-  
-  // if i == 1, then other commands. if i > 1, then connect.
-  
-  if (i == 1) {
-  
- 	if (streql(cmd,"disconnect\n"))
-	{
-		rc = doDisconnectCmd(C);
-	}
-	else if (streql(cmd,"\n"))
-	{
-		rc = doEnterCmd(C);
-	}
-	else if (streql(cmd,"where\n"))
-	{
-		rc = doWhereCmd(C);
-	}
-	else if (streql(cmd,"quit\n"))
-	{
-		rc = doQuitCmd(C);
-	}
-	else if (streql(cmd,"1\n") || streql(cmd,"2\n") || streql(cmd,"3\n")
-				|| streql(cmd,"4\n") || streql(cmd,"5\n") || streql(cmd,"6\n")
-				|| streql(cmd,"7\n") || streql(cmd,"8\n") || streql(cmd,"9\n")
-			)
-	{
-		rc = doMoveCmd(C,atoi(cmd));
-	}
-	else
-	{
-		rc = doDefaultCmd(C);
-	}
-  }
-  
-  else {
-	// connect 
-    if (streql(commands[0], "connect")) 
-      rc = doConnectCmd(C,commands[1], commands[2]);
-    else
-      rc = doDefaultCmd(C);
-  }
-  
-  return rc;
-}
-
-int
-doConnectCmd(Client *C, char *host, char *port)
-{
-    initGlobals(host, port);
-
-    // ok startup our connection to the server
-    if ( startConnection(C, globals.host, globals.port, update_event_handler) < 0){
-        fprintf(stderr, "ERROR: Not able to connect to %s:%d\n",globals.host, globals.port);
-        return -1;
-    }else{
-        int rc = proto_client_hello(C->ph);
-        if (rc == 1){
-            C->type = X;
-        }else if (rc == 0){
-            C->type = O;
-        }
-    
-        fprintf(stdout, "Connected to %s:%d : You are %c\n", globals.host, globals.port,C->type);
-	if(C->type != X && C->type!=O){
-		printf("no more player accepted, you are a spectator.");	
-	}
-    }
-    
     return 1;
 }
 
-int
-doDisconnectCmd(Client *C)
-{
-    int tp;
-    if (C->type == 'X'){
-        tp = 1;
-    }else{
-        tp = 0;
-    }
-  if(globals.host==NULL || globals.port==0){
-    printf("not connected\n");
-    return 1;
-  }
-    int rc =  proto_client_goodbye(C->ph,tp);
-    if (rc < 0){
-        fprintf(stdout,"Error: problem disconnecting\n");
-    }
-    return rc;
-}
+int doNumHomeCmd(Client* C, char* team) {
 
-int
-doEnterCmd(Client *C)
-{
-  return getBoardFromSessionHelper(C->ph);
-}
-
-int
-doWhereCmd(Client *C)
-{
-if (globals.host != NULL && globals.port != 0){
-    fprintf(stdout, "Connected to %s:%d\n",globals.host, globals.port); 
-}else{
-    fprintf(stdout, "Not connected\n");
-}
-return 1;
-}
-
-int 
-doQuitCmd(Client *C)
-{
-    if (doDisconnectCmd(C)) {
-        return -1;
-    }else{
+    if (globals.host == NULL || globals.port == 0) {
+        fprintf(stdout, "Not connected\n");
         return 1;
     }
+
+    //first input type
+    int tp;
+    if (*team == T1) {
+        tp = T1;
+    } else if (*team == T2) {
+        tp = T2;
+    } else {
+        fprintf(stderr, "invalid team selection\n");
+        return -1;
+    }
+    int* buf = malloc(sizeof (int) *3);
+    int rc = proto_client_query(C->ph, NUM_HOME, tp, 0, buf);
+    // printf("do move command: rc = %d\n",rc);
+    if (rc < 0) {
+        //error
+        fprintf(stderr, "There was a problem getting the number of home cells\n");
+
+    } else {
+        printf("Home Cells for Team %c : %d\n", tp, *buf);
+    }
+    return 1;
 }
 
-int
-doMoveCmd(Client *C, int move)
-{
-    if (globals.host == NULL || globals.port == 0){
+int doNumJailCmd(Client* C, char* team) {
+
+    if (globals.host == NULL || globals.port == 0) {
+        fprintf(stdout, "Not connected\n");
+        return 1;
+    }
+
+    //first input type
+    int tp;
+    if (*team == T1) {
+        tp = T1;
+    } else if (*team == T2) {
+        tp = T2;
+    } else {
+        fprintf(stderr, "invalid team selection\n");
+        return -1;
+    }
+    int* buf = malloc(sizeof (int) *3);
+    int rc = proto_client_query(C->ph, NUM_JAIL, tp, 0, buf);
+    // printf("do move command: rc = %d\n",rc);
+    if (rc < 0) {
+        //error
+        fprintf(stderr, "There was a problem getting the number of jail cells\n");
+
+    } else {
+        printf("Jail Cells for Team %c : %d\n", tp, *buf);
+    }
+    return 1;
+}
+
+int doNumWallCmd(Client* C) {
+
+    if (globals.host == NULL || globals.port == 0) {
+        fprintf(stdout, "Not connected\n");
+        return 1;
+    }
+
+    //first input type
+    int* buf = malloc(sizeof (int) *3);
+    int rc = proto_client_query(C->ph, NUM_WALL, 0, 0, buf);
+    // printf("do move command: rc = %d\n",rc);
+
+    if (rc < 0) {
+        //error
+        fprintf(stderr, "There was a problem getting the number of wall cells\n");
+
+    } else {
+        printf("Wall Cells: %d\n", *buf);
+    }
+
+    return 1;
+
+}
+
+int doNumFloorCmd(Client* C) {
+
+    if (globals.host == NULL || globals.port == 0) {
+        fprintf(stdout, "Not connected\n");
+        return 1;
+    }
+
+    //first input type
+    int* buf = malloc(sizeof (int) *3);
+    int rc = proto_client_query(C->ph, NUM_FLOOR, 0, 0, buf);
+    // printf("do move command: rc = %d\n",rc);
+
+    if (rc < 0) {
+        //error
+        fprintf(stderr, "There was a problem getting the number of floor cells\n");
+
+    } else {
+        printf("Floor Cells: %d\n", *buf);
+    }
+    return 1;
+}
+
+int doDimCmd(Client* C) {
+    if (globals.host == NULL || globals.port == 0) {
         fprintf(stdout, "Not connected");
         return 1;
     }
 
     //first input type
-	int tp;
-	if(C->type == X){
-		tp=1;
-	}else if(C->type == O){
-		tp=0;
-	}else{
-		fprintf(stderr,"do move command: invalid type %c\n",C->type);
-		return -1;
-	}
-	int rc = proto_client_move(C->ph,tp,move);
-	//	printf("do move command: rc = %d\n",rc);
-	if(rc == 1){
-		//valid
-	  
-	}else if(rc==0){
-		//invalid: not a valid move
-	  fprintf(stderr,"Not a valid move!\n");
-	}else{
-		//invalid: not your turn
-	  fprintf(stderr,"Not your turn yet!\n");
-	}
-	return 1;
+    int* buf = malloc(sizeof (int) *3);
+    int rc = proto_client_query(C->ph, DIM, 0, 0, buf);
+    // printf("do move command: rc = %d\n",rc);
+    if (rc < 0) {
+        //error
+        fprintf(stderr, "There was a problem getting the number of floor cells\n");
+
+    } else {
+        printf("number of columns: %d\nnumber of rows: %d\n", *buf, *(int*) ((int*) buf + 1));
+    }
+    return 1;
+}
+
+int doCInfoCmd(Client* C, char *x, char* y) {
+
+    if (globals.host == NULL || globals.port == 0) {
+        fprintf(stdout, "Not connected");
+        return 1;
+    }
+
+    //first input type
+    int xaxis = atoi(x);
+    int yaxis = atoi(y);
+    int* buf = malloc(sizeof (int) *3);
+    int rc = proto_client_query(C->ph, CINFO, xaxis, yaxis, buf);
+    // printf("do move command: rc = %d\n",rc);
+    if (rc < 0) {
+        //error
+        fprintf(stderr, "There was a problem getting the number of floor cells\n");
+
+    } else {
+        char *tp = malloc(100);
+        switch (*buf) {
+            case FLOOR_CELL:
+                memcpy(tp, "FLOOR_CELL", 10);
+                break;
+            case WALL_CELL:
+                memcpy(tp, "WALL_CELL", 9);
+                break;
+            case HOME_CELL_1:
+            case HOME_CELL_2:
+                memcpy(tp, "HOME_CELL", 9);
+                break;
+            case JAIL_CELL_1:
+            case JAIL_CELL_2:
+                memcpy(tp, "JAIL_CELL", 9);
+                break;
+        }
+
+        printf("Type: %s\nTeam: %d\nOccupancy: ", tp, *(int*) ((int*) buf + 1));
+        if (*(int*) ((int*) buf + 2)) {
+            printf("Occupied\n");
+        } else {
+            printf("Unoccupied\n");
+        }
+    }
+    return 1;
+}
+
+int doDumpCmd(Client* C) {
+
+    if (globals.host == NULL || globals.port == 0) {
+        fprintf(stdout, "Not connected");
+        return 1;
+    }
+
+    //first input type
+    int* buf = malloc(sizeof (int) *3);
+    int rc = proto_client_query(C->ph, DUMP, 0, 0, buf);
+    // printf("do move command: rc = %d\n",rc);
+    if (rc < 0) {
+        //error
+        fprintf(stderr, "There was a problem sending dump msg to server\n");
+
+    } else {
+        printf("sent dump msg");
+    }
+    return 1;
 }
 
 int
-doDefaultCmd(Client *C)
-{
-    fprintf(stdout, "not a valid command");
-return 1;
-}
-
-void *
-shell(void *arg)
-{
-  Client *C = arg;
-  char *c;
-  int rc;
-  int menu=1;
-
-  while (1) {
-    if ((c=prompt(C,menu))!=0) rc=docmd(C, c);
-    if (rc<0) break;
-    if (rc==1) menu=1; else menu=0;
-  }
-
-  fprintf(stderr, "terminating\n");
-  fflush(stdout);
-  return NULL;
-}
-
-void 
-usage(char *pgm)
-{
-  fprintf(stderr, "USAGE: %s <port|<<host port> [shell] [gui]>>\n"
-           "  port     : rpc port of a game server if this is only argument\n"
-           "             specified then host will default to localhost and\n"
-	     "             only the graphical user interface will be started\n"
-           "  host port: if both host and port are specifed then the game\n"
-	     "examples:\n" 
-           " %s 12345 : starts client connecting to localhost:12345\n"
-	  " %s localhost 12345 : starts client connecting to locaalhost:12345\n",
-	  pgm, pgm, pgm, pgm);
- 
-}
-
-void
-initGlobals(char *host, char *port)
-{
-  bzero(&globals, sizeof(globals));
-
-  strncpy(globals.host, host, STRLEN);
-  globals.port = atoi(port);
-
-}
-
-int
-streql(char *c1, char *c2)
-{
+streql(char *c1, char *c2) {
     return strcmp(c1, c2) == 0;
 }
 
+int
+doConnectCmd(Client *C, char *host, char *port) {
+    initGlobals(host, port);
 
-int 
-main(int argc, char **argv)
-{
-  Client c;
+    // ok startup our connection to the server
+    if (startConnection(C, globals.host, globals.port, update_event_handler) < 0) {
+        fprintf(stderr, "ERROR: Not able to connect to %s:%d\n", globals.host, globals.port);
+        exit(-1);
+    } else {
+        int rc = proto_client_hello(C->ph);
+        if (rc >= 0) {
+            C->id = rc;
+        } else if (rc == -1) {
+            fprintf(stderr, "ERROR: Not able to initialize player, probably the game is full\n");
+            exit(-1);
+        }
 
- // initGlobals(argc, argv);
+        fprintf(stdout, "Connected to %s:%d, player ID: %d\n", globals.host, globals.port, C->id);
+    }
 
-  if (clientInit(&c) < 0) {
-    fprintf(stderr, "ERROR: clientInit failed\n");
-    return -1;
-  }    
-
-shell(&c);
-
-  return 0;
+    return 1;
 }
+
+int
+doQuitCmd(Client *C) {
+    if (globals.host == NULL || globals.port == 0) {
+        printf("not connected\n");
+        return -1;
+    }
+    int rc = proto_client_goodbye(C->ph, client.id);
+    if (rc < 0) {
+        fprintf(stdout, "Error: problem disconnecting\n");
+        return 1;
+    } else {
+        printf("You Quit\n");
+        return -1;
+    }
+}
+
+int
+doMove(Client *C, Move_Type m) {
+    if (globals.host == NULL || globals.port == 0) {
+        fprintf(stdout, "Not connected\n");
+        return 1;
+    }
+
+    //first input type
+    int* buf = malloc(sizeof (int) *3);
+    int rc = proto_client_query(C->ph, MOVE, m, C->id, buf);
+
+    if (rc < 0) {
+        //error
+        fprintf(stderr, "There was a problem sending a move\n");
+
+    } else {
+        printf("ACK number: %d\n", *buf);
+        if (*buf == 0) {
+            fprintf(stderr, "The server rejects the move\n");
+        } else if (*buf == -2) {
+            fprintf(stderr, "The server cannot identify the move\n");
+        }
+    }
+    return 1;
+}
+
+int
+doDefaultCmd(Client * C) {
+    fprintf(stdout, "not a valid command");
+    return 1;
+}
+
+int
+docmd(Client *C, char *cmd) {
+    int rc = 1, i = 0, j = 0;
+    char* arg0 = malloc(100);
+    char* arg1 = malloc(100);
+    char* arg2 = malloc(100);
+
+    while (*(char*) (cmd + i) != ' ' && *(char*) (cmd + i) != '\n') {
+        i++;
+    }
+    memcpy(arg0, (char*) (cmd), i);
+    i++;
+    j = i;
+
+    if (streql(arg0, "numhome")) {
+        while (*(char*) (cmd + j) != ' ' && *(char*) (cmd + j) != ':' && *(char*) (cmd + j) != '\n') {
+            j++;
+        }
+        memcpy(arg1, (char*) (cmd + i), 1);
+        j++;
+        //        printf("arg1 : %s\n", arg1);
+        rc = doNumHomeCmd(C, arg1);
+    } else if (streql(arg0, "numjail")) {
+        while (*(char*) (cmd + j) != ' ' && *(char*) (cmd + j) != ':' && *(char*) (cmd + j) != '\n') {
+            j++;
+        }
+        memcpy(arg1, (char*) (cmd + i), 1);
+        j++;
+        rc = doNumJailCmd(C, arg1);
+    } else if (streql(arg0, "numwall")) {
+        rc = doNumWallCmd(C);
+    } else if (streql(arg0, "numfloor")) {
+        rc = doNumFloorCmd(C);
+    } else if (streql(arg0, "dim")) {
+        rc = doDimCmd(C);
+    } else if (streql(arg0, "cinfo")) {
+        while (*(char*) (cmd + j) != ' ' && *(char*) (cmd + j) != ':' && j < 100) {
+            j++;
+        }
+        memcpy(arg1, (char*) (cmd + i), j - i);
+        j++;
+        memcpy(arg2, (char*) (cmd + j), strlen(cmd) - j - 1);
+        /*
+           printf("command: %s,%s\n", arg1, arg2);
+         */
+        rc = doCInfoCmd(C, arg1, arg2);
+    } else if (streql(arg0, "dump")) {
+        rc = doDumpCmd(C);
+    } else if (streql(arg0, "quit")) {
+        rc = doQuitCmd(C);
+    } else if (streql(arg0, "a")) {
+        printf("a ->do rpc: up\n");
+        doMove(C, MOVE_UP);
+        //ui_dummy_up(ui);
+        rc = 2;
+    } else if (streql(arg0, "z")) {
+        printf("z ->do rpc: down\n");
+        doMove(C, MOVE_DOWN);
+        //ui_dummy_down(ui);
+        rc = 2;
+    } else if (streql(arg0, ",")) {
+        printf(", ->do rpc: left\n");
+        doMove(C, MOVE_LEFT);
+        //ui_dummy_left(ui);
+        rc = 2;
+    } else if (streql(arg0, ".")) {
+        printf(". ->do rpc: right\n");
+        doMove(C, MOVE_RIGHT);
+        //ui_dummy_right(ui);
+        rc = 2;
+    } else {
+        rc = doDefaultCmd(C);
+
+    }
+    if (rc == 2) ui_update(ui);
+    return rc;
+}
+
+void *
+shell(void *arg) {
+    Client *C = arg;
+    char *c;
+    int rc;
+    int menu = 1;
+
+    //pthread_detach(pthread_self());
+
+
+    while (1) {
+        if ((c = prompt(C, menu)) != 0) rc = docmd(C, c);
+        if (rc < 0) break;
+        if (rc == 1) menu = 1;
+        else menu = 0;
+    }
+
+    fprintf(stderr, "terminating\n");
+    fflush(stdout);
+    ui_quit(ui);
+    return NULL;
+}
+
+void
+initGlobals(char *host, char *port) {
+    bzero(&globals, sizeof (globals));
+
+    strncpy(globals.host, host, STRLEN);
+    globals.port = atoi(port);
+    printf("%s %d", globals.host, globals.port);
+}
+
+extern sval
+ui_keypress(UI *ui, SDL_KeyboardEvent *e) {
+    SDLKey sym = e->keysym.sym;
+    SDLMod mod = e->keysym.mod;
+
+    if (e->type == SDL_KEYDOWN) {
+        if (sym == SDLK_LEFT && mod == KMOD_NONE) {
+            int rc = doMove(&client, MOVE_LEFT);
+            if (rc) {
+                fprintf(stderr, "%s: move left\n", __func__);
+                return 2;
+            } else {
+                return 1;
+            }
+        }
+        if (sym == SDLK_RIGHT && mod == KMOD_NONE) {
+            int rc = doMove(&client, MOVE_RIGHT);
+            if (rc) {
+                fprintf(stderr, "%s: move right\n", __func__);
+                return 2;
+            } else {
+                return 1;
+            }
+        }
+        if (sym == SDLK_UP && mod == KMOD_NONE) {
+            int rc = doMove(&client, MOVE_UP);
+            if (rc) {
+                fprintf(stderr, "%s: move up\n", __func__);
+                return 2;
+            } else {
+                return 1;
+            }
+        }
+        if (sym == SDLK_DOWN && mod == KMOD_NONE) {
+            int rc = doMove(&client, MOVE_DOWN);
+            if (rc) {
+                fprintf(stderr, "%s: move down\n", __func__);
+                return 2;
+            } else {
+                return 1;
+            }
+        }
+        if (sym == SDLK_f && mod == KMOD_NONE) {
+            int rc = doMove(&client, DROP_FLAG);
+            if (rc) {
+                fprintf(stderr, "%s: drop flag\n", __func__);
+                return 2;
+            } else {
+                return 1;
+            }
+        }
+        if (sym == SDLK_j && mod == KMOD_NONE) {
+            int rc = doMove(&client, DROP_HAM);
+            if (rc) {
+                fprintf(stderr, "%s: drop jackhammer\n", __func__);
+                return 2;
+            } else {
+                return 1;
+            }
+        }
+            if (sym == SDLK_q){
+            int rc = doQuitCmd(&client);
+            if (rc) {
+                fprintf(stderr, "%s: quit\n", __func__);
+                return -1;
+            } else {
+                return 1;
+            }
+        }
+
+        if (sym == SDLK_z && mod == KMOD_NONE) return ui_zoom(ui, 1);
+        if (sym == SDLK_z && mod & KMOD_SHIFT) return ui_zoom(ui, -1);
+        if (sym == SDLK_LEFT && mod & KMOD_SHIFT) return ui_pan(ui, -1, 0);
+        if (sym == SDLK_RIGHT && mod & KMOD_SHIFT) return ui_pan(ui, 1, 0);
+        if (sym == SDLK_UP && mod & KMOD_SHIFT) return ui_pan(ui, 0, -1);
+        if (sym == SDLK_DOWN && mod & KMOD_SHIFT) return ui_pan(ui, 0, 1);
+        else {
+            fprintf(stderr, "%s: key pressed: %d\n", __func__, sym);
+        }
+    } else {
+        fprintf(stderr, "%s: key released: %d\n", __func__, sym);
+    }
+    return 1;
+}
+
+void
+cell_state_to_ui(UI *ui, cell_t* c, int i, int j) {
+
+    if (c == NULL) {
+        ui->ui_state.ui_cells[i][j] = -1;
+    } else {
+        switch (c->type) {
+            case WALL_CELL:
+                ui->ui_state.ui_cells[i][j] = (c->team == T1) ? REDWALL_S : GREENWALL_S;
+                break;
+            case FLOOR_CELL:
+            case HOME_CELL_1:
+            case HOME_CELL_2:
+            case JAIL_CELL_1:
+            case JAIL_CELL_2:
+                ui->ui_state.ui_cells[i][j] = FLOOR_S;
+                break;
+        }
+    }
+}
+
+void
+player_state_to_ui(UI *ui, maze_t *maze, player_t* player, int i, int j) {
+    if (player != NULL) {
+        ui->ui_state.ui_players[i][j] = (UI_Player *) malloc(sizeof (UI_Player));
+        UI_Player *p = ui->ui_state.ui_players[i][j];
+
+        p->id = player->id;
+        p->x = j;
+        p->y = i;
+        p->team = player->team == T1 ? 0 : 1;
+        p->state = 0;
+        item_t *flag = maze_get_player_flag(maze, player->id);
+        if (flag) {
+            p->state = flag->team == T1 ? 1 : 2;
+        }
+        if (player->status == JAILED) {
+            p->state = 3;
+        }
+    }
+
+}
+
+void
+item_state_to_ui(UI *ui, item_t* item, int i, int j, int ind) {
+    if (item != NULL /*&& item->holder_id < 0*/) {
+        ui->ui_state.ui_items[ind] = (UI_Item *) malloc(sizeof (UI_Item));
+        UI_Item *ui_item = ui->ui_state.ui_items[ind];
+        ui_item->x = j;
+        ui_item->y = i;
+        switch (item->type) {
+            case JACK:
+                ui_item->type = 0;
+                break;
+            case FLAG:
+                ui_item->type = 1;
+                break;
+        }
+        switch (item->team) {
+            case T1:
+                ui_item->team = 0;
+                break;
+            case T2:
+                ui_item->team = 1;
+                break;
+        }
+
+    }
+
+}
+
+void
+clear_ui_state(UI *ui) {
+    int i, j;
+    for (i = 0; i < ui->ui_state.ui_dim_r; i++) {
+        for (j = 0; j < ui->ui_state.ui_dim_c; j++) {
+
+            ui->ui_state.ui_cells[i][j] = -1;
+
+            if (ui->ui_state.ui_players[i][j] != NULL) {
+                free(ui->ui_state.ui_players[i][j]);
+                ui->ui_state.ui_players[i][j] = NULL;
+            }
+
+        }
+    }
+
+    for (i = 0; i < 4; i++) {
+        if (ui->ui_state.ui_items[i] != NULL) {
+            free(ui->ui_state.ui_items[i]);
+            ui->ui_state.ui_items[i] = NULL;
+        }
+
+    }
+
+}
+
+static void
+client_state_to_ui(UI* ui) {
+    maze_t maze = client.maze;
+    //bzero(&maze, sizeof (maze_t));
+    //proto_client_sample_board(&maze);
+
+    clear_ui_state(ui);
+
+    int id = client.id;
+    player_t* me = maze_get_player(&maze, id);
+    if (me == NULL) {
+        fprintf(stderr, "Player %d does not exist\n", id);
+        return;
+    }
+
+    int start_row = me->pos.r - ui->ui_state.ui_dim_r / 2;
+    int start_col = me->pos.c - ui->ui_state.ui_dim_c / 2;
+    int i, j;
+    for (i = 0; i < ui->ui_state.ui_dim_r; i++) {
+        for (j = 0; j < ui->ui_state.ui_dim_c; j++) {
+            // fprintf(stdout,"%d %d ", i, j);
+            // maze_print_cell(&maze, maze.cells[3][4]);
+
+            cell_t* c = maze_get_cell(&maze, start_row + i, start_col + j);
+            cell_state_to_ui(ui, c, i, j);
+
+            if (c == NULL) continue;
+
+            player_t* player = maze_get_player_at_pos(&maze, start_row + i, start_col + j);
+            player_state_to_ui(ui, &maze, player, i, j);
+
+            //if (player != NULL) maze_print_cell(&maze, maze_get_cell(&maze, player->pos.r, player->pos.c));
+
+            item_t* flag = maze_get_cell_flag(&maze, c);
+            if (flag) {
+                switch (flag->team) {
+                    case T1:
+                        item_state_to_ui(ui, flag, i, j, 0);
+                        break;
+                    case T2:
+                        item_state_to_ui(ui, flag, i, j, 1);
+                        break;
+                }
+            }
+
+            item_t* jack = maze_get_cell_jackhammer(&maze, c);
+            if (jack) {
+                switch (jack->team) {
+                    case T1:
+                        item_state_to_ui(ui, jack, i, j, 2);
+                        break;
+                    case T2:
+                        item_state_to_ui(ui, jack, i, j, 3);
+                        break;
+                }
+            }
+        }
+    }
+
+}
+
+int
+main(int argc, char **argv) {
+    //  Client* c = (Client*)malloc(sizeof(Client));
+    Client* c = &client;
+
+
+    if (clientInit(c) < 0) {
+        fprintf(stderr, "ERROR: clientInit failed\n");
+        return -1;
+    }
+
+    pthread_t tid;
+
+    tty_init(/*STDIN_FILENO*/0);
+
+    ui_init(&(ui));
+
+    pthread_create(&tid, NULL, shell, c);
+
+    doConnectCmd(c, argv[1], argv[2]);
+    // WITH OSX ITS IS EASIEST TO KEEP UI ON MAIN THREAD
+    // SO JUMP THROW HOOPS :-(
+
+    ui_main_loop(ui);
+    //    free(c);
+    return 0;
+}
+
+
 

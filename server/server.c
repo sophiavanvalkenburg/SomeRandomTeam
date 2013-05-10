@@ -28,95 +28,124 @@
 #include "../lib/protocol_server.h"
 #include "../lib/protocol_utils.h"
 
-int 
-doUpdateClients(void)
-{
-  Proto_Session *s;
-  Proto_Msg_Hdr hdr;
+int
+doUpdateClients(void) {
+    Proto_Session *s;
+    Proto_Msg_Hdr hdr;
 
-  s = proto_server_event_session();
-  hdr.type = PROTO_MT_EVENT_BASE_UPDATE;
-  proto_session_hdr_marshall(s, &hdr);
-  proto_server_post_event();  
-  return 1;
+    s = proto_server_event_session();
+    hdr.type = PROTO_MT_EVENT_BASE_UPDATE;
+    proto_session_hdr_marshall(s, &hdr);
+    proto_server_post();
+    return 1;
+}
+
+void*
+updateLoop(void) {
+    while (1) {
+        usleep(10000);
+        doUpdateClients();
+    }
+}
+
+int
+performTestCases(void) {
+    return proto_server_testcases();
 }
 
 char MenuString[] =
-  "d/D-debug on/off u-update clients q-quit";
+        "d/D-debug on/off u-update clients q-quit";
 
-int 
-docmd(char cmd)
-{
-  int rc = 1;
+int
+docmd(char cmd) {
+    int rc = 1;
 
-  switch (cmd) {
-  case 'd':
-    proto_debug_on();
-    break;
-  case 'D':
-    proto_debug_off();
-    break;
-  case 'u':
-    rc = doUpdateClients();
-    break;
-  case 'q':
-    rc=-1;
-    break;
-  case '\n':
-  case ' ':
-    rc=1;
-  break;
-  default:
-    printf("Unkown Command\n");
-  }
-  return rc;
+    switch (cmd) {
+        case 'd':
+            proto_debug_on();
+            break;
+        case 'D':
+            proto_debug_off();
+            break;
+        case 'u':
+            rc = doUpdateClients();
+            break;
+        case 't':
+            rc = performTestCases();
+            break;
+        case 'q':
+            rc = -1;
+            break;
+        case '\n':
+        case ' ':
+            rc = 1;
+            break;
+        default:
+            printf("Unkown Command\n");
+    }
+    return rc;
 }
 
 int
-prompt(int menu) 
-{
-  int ret;
-  int c=0;
+prompt(int menu) {
+    //int ret;
+    int c = 0;
 
-  if (menu) printf("%s:", MenuString);
-  fflush(stdout);
-  c=getchar();;
-  return c;
+    if (menu) printf("%s:", MenuString);
+    fflush(stdout);
+    c = getchar();
+    ;
+    return c;
 }
 
 void *
-shell(void *arg)
-{
-  int c;
-  int rc=1;
-  int menu=1;
+shell(void *arg) {
+    int c;
+    int rc = 1;
+    int menu = 1;
 
-  while (1) {
-    if ((c=prompt(menu))!=0) rc=docmd(c);
-    if (rc<0) break;
-    if (rc==1) menu=1; else menu=0;
-  }
-  fprintf(stderr, "terminating\n");
-  fflush(stdout);
-  return NULL;
+    while (1) {
+        if ((c = prompt(menu)) != 0) rc = docmd(c);
+        if (rc < 0) break;
+        if (rc == 1) menu = 1;
+        else menu = 0;
+    }
+    fprintf(stderr, "terminating\n");
+    fflush(stdout);
+    return NULL;
 }
 
 int
-main(int argc, char **argv)
-{ 
-  if (proto_server_init()<0) {
-    fprintf(stderr, "ERROR: failed to initialize proto_server subsystem\n");
-    exit(-1);
-  }
+main(int argc, char **argv) {
+    if (proto_server_init() < 0) {
+        fprintf(stderr, "ERROR: failed to initialize proto_server subsystem\n");
+        exit(-1);
+    }
 
-  fprintf(stderr, "RPC Port: %d, Event Port: %d\n", proto_server_rpcport(), 
-	  proto_server_eventport());
+    fprintf(stderr, "RPC Port: %d, Event Port: %d\n", proto_server_rpcport(),
+            proto_server_eventport());
 
-  if (proto_server_start_rpc_loop()<0) {
-    fprintf(stderr, "ERROR: failed to start rpc loop\n");
-    exit(-1);
-  }
-    
-  shell(NULL);
+    if (proto_server_start_rpc_loop() < 0) {
+        fprintf(stderr, "ERROR: failed to start rpc loop\n");
+        exit(-1);
+    }
 
+    pthread_t tid;
+
+    pthread_create(&tid, NULL, updateLoop, NULL);
+
+    /*
+        int pid = fork();
+        if (pid == 0) {
+            while (1) {
+                sleep(1);
+                doUpdateClients();
+            }
+        } else {
+            shell(NULL);
+        }
+     */
+    shell(NULL);
+
+    return 0;
 }

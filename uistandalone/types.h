@@ -1,5 +1,5 @@
-#ifndef __DA_GAME_NET_H__
-#define __DA_GAME_NET_H__
+#ifndef __DA_GAME_TYPES_H__
+#define __DA_GAME_TYPES_H__
 /******************************************************************************
 * Copyright (C) 2011 by Jonathan Appavoo, Boston University
 *
@@ -22,18 +22,10 @@
 * THE SOFTWARE.
 *****************************************************************************/
 
-typedef int FDType;
-typedef int PortType;
+#include <stdint.h>
 
-#define LISTENQ 1024
+/* native word sized unsigned and signed values */
+typedef unsigned long uval;
+typedef long sval;
 
-extern int     net_setup_listen_socket(FDType *fd, PortType *port);
-extern int     net_setup_connection(FDType *fd, char *host, PortType port);
-extern int     net_listen(FDType fd);
-extern int     net_accept(FDType fd);
-
-extern ssize_t net_writen(FDType fd, const void *vptr, size_t n);
-extern ssize_t net_readn(FDType fd, void *vptr, size_t n);
-
-#endif
-
+#endif /* __DA_GAME_TYPES_H__ */
